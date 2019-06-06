@@ -1,0 +1,15 @@
+M12	7.53e-5
+M23	2.509e-3
+S12	0.304
+S13	0.0219
+S23	0.528
+dCP	1
+
+anti	1
+
+baseline	295.0
+density		2.6
+
+output1	"oscil_m_anti.dat"
+output2	"prob3_m_anti.dat"
+matrix  "matrix.dat"

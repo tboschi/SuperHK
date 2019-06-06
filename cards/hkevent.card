@@ -1,0 +1,73 @@
+#PMNS oscillation parameters
+#M12	7.54e-5
+#M23	2.509e-3
+#S12	0.0
+#S13	0.0
+#S23	0.0
+#dCP	0.0	# in pi units
+
+#M12	7.6e-5
+#M23	2.4e-3
+#S12	0.320
+#S13	0.0256584
+#S23	0.5
+#dCP	0	# in pi units
+
+M12	7.53e-5
+M23	2.509e-3
+S12	0.304
+S13	0.0219
+S23	0.528
+dCP	0.314159	# in pi units
+
+#earth density profile between JPARK and SK
+density_profile	"data/DensityProfileTochibora.dat"
+oscillation	"osctest.root"
+
+#scaling T2K to T2HK : 187kt / 22.5kt x 1.04 model scaling
+#scale		8.3
+#scale		8.632
+
+#POT for neutrino mode and antineutrino mode in units of 1e21
+#POT_0		 6.75
+#POT_B		20.25
+
+#outputs
+#out_0		"outFHC.root"
+#out_B		"outRHC.root"
+out_0		"output/valor190423_outFHC_half2.root"
+out_B		"output/valor190423_outRHC_half2.root"
+
+#flux files
+#flux_0		"cards/nu_flux_m0.card"
+#flux_B		"cards/nu_flux_mB.card"
+flux_0		"cards/valor_flux_m0.card"
+flux_B		"cards/valor_flux_mB.card"
+
+#reconstruction file cards - neutrino mode
+#reco_nuE0_nuE0_m0	"cards/osc3_nuE0_nuE0_m0.card"
+#reco_nuM0_nuM0_m0	"cards/osc3_nuM0_nuM0_m0.card"
+#reco_nuM0_nuE0_m0	"cards/osc3_nuM0_nuE0_m0.card"
+#reco_nuEB_nuEB_m0	"cards/osc3_nuEB_nuEB_m0.card"
+#reco_nuMB_nuMB_m0	"cards/osc3_nuMB_nuMB_m0.card"
+#reco_nuMB_nuEB_m0	"cards/osc3_nuMB_nuEB_m0.card"
+reco_nuE0_nuE0_FHC	"cards/valor_nuE0_nuE0_FHC.card"
+reco_nuM0_nuM0_FHC	"cards/valor_nuM0_nuM0_FHC.card"
+reco_nuM0_nuE0_FHC	"cards/valor_nuM0_nuE0_FHC.card"
+reco_nuEB_nuEB_FHC	"cards/valor_nuEB_nuEB_FHC.card"
+reco_nuMB_nuMB_FHC	"cards/valor_nuMB_nuMB_FHC.card"
+reco_nuMB_nuEB_FHC	"cards/valor_nuMB_nuEB_FHC.card"
+
+#reconstruction file cards - antineutrino mode
+#reco_nuE0_nuE0_mB	"cards/osc3_nuE0_nuE0_mB.card"
+#reco_nuM0_nuM0_mB	"cards/osc3_nuM0_nuM0_mB.card"
+#reco_nuM0_nuE0_mB	"cards/osc3_nuM0_nuE0_mB.card"
+#reco_nuEB_nuEB_mB	"cards/osc3_nuEB_nuEB_mB.card"
+#reco_nuMB_nuMB_mB	"cards/osc3_nuMB_nuMB_mB.card"
+#reco_nuMB_nuEB_mB	"cards/osc3_nuMB_nuEB_mB.card"
+reco_nuE0_nuE0_RHC	"cards/valor_nuE0_nuE0_RHC.card"
+reco_nuM0_nuM0_RHC	"cards/valor_nuM0_nuM0_RHC.card"
+reco_nuM0_nuE0_RHC	"cards/valor_nuM0_nuE0_RHC.card"
+reco_nuEB_nuEB_RHC	"cards/valor_nuEB_nuEB_RHC.card"
+reco_nuMB_nuMB_RHC	"cards/valor_nuMB_nuMB_RHC.card"
+reco_nuMB_nuEB_RHC	"cards/valor_nuMB_nuEB_RHC.card"

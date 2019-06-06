@@ -1,0 +1,8 @@
+#root file of flux file
+flux_path	"data/valor190314/hk_flux_and_weights_tochi.root"
+
+#TH1D objects to use inside the file -- flux ratios
+nu_E0	"flux_nu_mode_nue_ratio"
+nu_M0	"flux_nu_mode_numu_ratio"
+nu_EB	"flux_nu_mode_nuebar_ratio"
+nu_MB	"flux_nu_mode_numubar_ratio"
