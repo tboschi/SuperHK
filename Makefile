@@ -16,7 +16,7 @@ CXXFLAGS := $(CXXFLAGS) -fPIC -std=c++11 -O3 -march=native -mavx $(ROOTCXX) -I$(
 #apps and exctuables
 CPP =	pmns	\
 	penalty	\
-	simple		\
+	simple	\
 	newosc2	\
 	#exclusion
 	#PredictEvents	\
