@@ -22,11 +22,9 @@ int main(int argc, char** argv)
 	CardDealer *cd = new CardDealer(cardFile);
 
 	std::string treeName, files, outname;
-	double dvf;
 	cd->Get("tree", treeName);
 	cd->Get("files", files);
-	//cd->Get("output", outname);
-	//cd->Get("division", dvf);
+	cd->Get("output", outname);
 
 	std::string mode[6] = {"nuE0_nuE0", "nuM0_nuM0", "nuM0_nuE0", "nuEB_nuEB", "nuMB_nuMB", "nuMB_nuEB"};
 	std::string chan[6] = {"E_CCQE", "M_CCQE", "E_CCnQE", "M_CCnQE", "E_NC", "M_NC"};
@@ -107,9 +105,10 @@ int main(int argc, char** argv)
 	{
 		std::string name(current->GetTitle());
 		std::cout << "Reading " << name << "\t";
-		name.insert(name.find(".root"), "_oscillated");
-		std::cout << "into " << name << "\n";
-		TFile * outf = new TFile(name.c_str(), "RECREATE");
+		std::string base = name.substr(name.find_last_of('/')+1);
+		base = outname + "/" + base;
+		std::cout << "into " << base << "\n";
+		TFile * outf = new TFile(base.c_str(), "RECREATE");
 		outf->cd();
 
 		TTree *newt = new TTree("mcTree", ch->GetTitle());

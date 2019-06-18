@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 		TTree* error   = static_cast<TTree*>(inf->Get("errorTree"));
 		TTree* sX2_old = static_cast<TTree*>(inf->Get("stepX2Tree"));
 
-		name = name.insert(name.find(".root"), "_corrected");
+		name = name.insert(name.find(".0"), "_corrected");
 		TFile *out = new TFile(name.c_str(), "RECREATE");
 
 		TTree *sX2_new = sX2_old->CloneTree(0);

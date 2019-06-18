@@ -1,7 +1,7 @@
 .PHONY: clean
 
 INCDIR =	include
-ProbINC =	../OscAna/T2HKK/Prob3++
+ProbINC =	../T2HKK/Prob3++
 APPDIR =	app
 BINDIR =	bin
 LIBDIR =	lib
@@ -17,7 +17,7 @@ CXXFLAGS := $(CXXFLAGS) -fPIC -std=c++11 -O3 -march=native -mavx $(ROOTCXX) -I$(
 CPP =	pmns	\
 	penalty	\
 	simple	\
-	newosc2	\
+	oscillator	\
 	#exclusion
 	#PredictEvents	\
 	ValorEvents	\

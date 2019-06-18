@@ -1,7 +1,7 @@
 #gaussian priors for ASIMOV A
 #	value	sigma
-p_M23	2.4e-3	0.015e-3
-p_S13	0.025658	0.0131
-p_S23	0.500	0.017
+p_M23	2.4e-3		0.015e-3
+p_S13	0.0256584	0.00132
+p_S23	0.500		0.017
 
-files	"../data/hkdr/{stat,syst}/cont_*.root" 
+files "/home/tboschi/data/errorstudy/0/sensitivity/NH/syst_*/SpaghettiSens.SKT2HK.*.root"
