@@ -61,8 +61,11 @@ double Oscillator::Probability(Nu in, Nu out, double energy)
 	int nEntr = oFlav + iFlav*nDim;
 	Eigen::MatrixXd tM = TransitionMatrix(energy).cwiseAbs2();
 	//std::vector<double> tV(tM.data(), tM.data() + tM.size());
+	//std::cout << "Matrix " << tM(oFlav, iFlav) << "\tvector " << tV.at(nEntr) << std::endl;
 	//return tV.at(nEntr);
+	return tM(oFlav, iFlav);
 
+	/*
 	std::map<double, std::vector<double> >::iterator ilut = FindEnergy(ten);
 
 	if (ilut != mLUT.end())	//value already computed and save
@@ -76,6 +79,7 @@ double Oscillator::Probability(Nu in, Nu out, double energy)
 
 		return tV.at(nEntr);
 	}
+	*/
 }
 
 

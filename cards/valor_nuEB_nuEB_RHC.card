@@ -1,6 +1,6 @@
 #root file of flux file
 #reco_path	"data/valor190319/enu_erec_nuebar_crs_nuebar_anu.root"
-reco_path	"../VALOR/190423/enu_erec_nuebar_crs_nuebar_anu.root"
+reco_path	"../errorstudy/reconstruction/enu_erec_nuebar_crs_nuebar_anu.root"
 scale		1
 
 #TH2D objects to use inside the file

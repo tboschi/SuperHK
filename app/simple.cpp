@@ -8,12 +8,16 @@
 #include "physics/Oscillator.h"
 
 #include "TF1.h"
+#include "TKey.h"
+#include "TRandom3.h"
 
+void output(std::ofstream &out, double &m12, double &m23, double &s12, double &s13, double &s23, double &dCP);
 void output(std::ofstream &out, std::map<std::string, double> &mInt);
 int main(int argc, char** argv)
 {
 	std::string cardFile = argv[1];
 
+	TRandom3 *mt = new TRandom3();
 	CardDealer *cd = new CardDealer(cardFile);
 
 	std::string texFHC, texRHC;
@@ -25,6 +29,10 @@ int main(int argc, char** argv)
 	//set up oscillation
 	std::string densityFile;
 	cd->Get("density_profile", densityFile);
+
+	double random;
+	cd->Get("random", random);
+	bool krandom = random;
 
 	double M12, M23;
 	double S12, S13, S23;
@@ -63,12 +71,41 @@ int main(int argc, char** argv)
 	TF1* f1 = new TF1("const", "[0]", 0, 1);
 	f1->SetParameter(0, 1.0);
 
-	std::map<std::string, double> numevts;
+	std::map<std::string, std::string> syserre;
+	std::map<std::string, std::string>::iterator is;
+	cd->Get("systematic_", syserre);
+	std::map<std::string, TH1D*> hsys;
+	std::cout << "syserre " << syserre.size() << std::endl;
+	for (is = syserre.begin(); is != syserre.end(); ++is)
+	{
+		TFile *sysFile = new TFile(is->second.c_str());
+		TIter next(sysFile->GetListOfKeys());
+		TKey *k = (TKey*) next();
+
+		hsys[is->first] = static_cast<TH1D*>(k->ReadObj()->Clone());
+		int nBin = hsys[is->first]->GetNbinsX();
+		double lo = hsys[is->first]->GetXaxis()->GetBinLowEdge(1);
+		double up = hsys[is->first]->GetXaxis()->GetBinUpEdge(nBin);
+		f1->SetRange(lo, up);
+		while ( k = static_cast<TKey*>(next()) )
+		{
+			if (!k->ReadObj()->InheritsFrom("TH1"))
+				continue;
+
+			double ran = krandom ? mt->Uniform(-1.0, 1.0) : 1.0;
+			TH1D *h1 = static_cast<TH1D*>(k->ReadObj());
+			bool add = hsys[is->first]->Add(h1, ran);
+			add = add && hsys[is->first]->Add(f1, -ran);
+		}
+		hsys[is->first]->SetDirectory(0);
+		sysFile->Close();
+	}
+
+	std::map<std::string, double> numevts, numsyst;
 	Reco* reco;
 	TFile *rout;
 	for (int ih = 0; ih < 2; ++ih)
 	{
-		double totE = 0, totM = 0;
 		rout = new TFile(root[ih].c_str(), "RECREATE");
 		for (int im = 0; im < 6; ++im)
 		{
@@ -101,12 +138,17 @@ int main(int argc, char** argv)
 				if (py)
 				{
 					std::string hname = mode[im] + "_" + chan[ic];
-					numevts[hname] = py->Integral("");
 
+					std::string nn;
 					if (hname.find("_E_") != std::string::npos)
-						totE += py->Integral();
+						nn = "E_" + horn[ih];
 					else if (hname.find("_M_") != std::string::npos)
-						totM += py->Integral();
+						nn = "M_" + horn[ih];
+					
+					if (hsys.count(nn))
+						py->Multiply(hsys[nn]);
+
+					numevts[hname] = py->Integral();
 
 					rout->cd();
 					py->SetName(hname.c_str());
@@ -120,10 +162,9 @@ int main(int argc, char** argv)
 
 		std::ofstream tout(name[ih].c_str());
 		tout << "\%" << horn[ih] << " mode\n\n";
+		output(tout, M12, M23, S12, S13, S23, dCP);
 		output(tout, numevts);
-
-		std::cout << "total events 1Rmu " << totM << "\n";
-		std::cout << "total events 1Re  " << totE << "\n";
+		//output(tout, numsyst);
 
 		tout.close();
 		rout->Close();
@@ -134,6 +175,33 @@ int main(int argc, char** argv)
 	delete f1;
 
 	return 0;
+}
+
+void output(std::ofstream &out, double &m12, double &m23, double &s12, double &s13, double &s23, double &dCP)
+{
+	out << std::setfill(' ') << std::setprecision(5) << std::fixed;
+	out << "\\textbf{Oscillation parameters}\n\n";
+	//1 Ring nu_mu like
+	out << "\\begin{tabular}{cccccc}" << "\n";
+	out << "\t\\toprule" << "\n";
+	out << "\t& $\\Delta m^2{12} / {e-5}\\text{eV}^2$"
+	    << "\t& $\\Delta m^2{23} / {e-3}\\text{eV}^2$"
+	    << "\t& $\\sin^2 2\\theta_{12}$"
+	    << "\t& $\\sin^2 2\\theta_{13}$"
+	    << "\t& $\\sin^2  \\theta_{23}$"
+	    << "\t& $\\delta_\\text{CP}$"
+	     << "\t\\\\" << "\n";
+	out << "\t\\midrule" << "\n";
+	//CCQE numbers
+	out << std::setw(4) << m12 / 1e-5 << "\t&"
+	    << std::setw(4) << m23 / 1e-4 << "\t&"
+	    << std::setw(4) << 0.5*(1-sqrt(s12)) << "\t&"
+	    << std::setw(4) << 0.5*(1-sqrt(s13)) << "\t&"
+	    << std::setw(4) << s23 << "\t&"
+	    << std::setw(4) << dCP
+	    << "\t\\\\" << "\n";
+	out << "\t\\bottomrule" << "\n";
+	out << "\\end{tabular}" << "\n\n\n";
 }
 
 void output(std::ofstream &out, std::map<std::string, double> &mInt)
@@ -151,7 +219,7 @@ void output(std::ofstream &out, std::map<std::string, double> &mInt)
 	     << "\t& $\\cj{\\nu}_\\mu \\to \\cj{\\nu}_e$"
 	     << "\t& Total"
 	     << "\t\\\\" << "\n";
-	out << "\t\t\\midrule" << "\n";
+	out << "\t\\midrule" << "\n";
 	//CCQE numbers
 	out << "\tCCQE\t& "
 	     << std::setw(8) << mInt["nuM0_nuM0_M_CCQE"] << "\t&"
@@ -275,5 +343,5 @@ void output(std::ofstream &out, std::map<std::string, double> &mInt)
 	     			mInt["nuMB_nuEB_E_CCQE"] + mInt["nuMB_nuEB_E_CCnQE"] + mInt["nuMB_nuEB_E_NC"] 
 	     << "\t\\\\" << "\n";
 	out << "\t\\bottomrule" << "\n";	
-	out << "\\end{tabular}" << "\n";
+	out << "\\end{tabular}" << "\n\n\n";
 }
