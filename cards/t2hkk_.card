@@ -23,3 +23,6 @@ reco_nuMB_nuMB_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuMB_nuMB_RHC.card"
 reco_nuMB_nuEB_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuMB_nuEB_RHC.card"
 
 hierarchy	"normal"
+
+first	0
+last	10

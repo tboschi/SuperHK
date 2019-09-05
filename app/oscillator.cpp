@@ -22,9 +22,12 @@ int main(int argc, char** argv)
 	CardDealer *cd = new CardDealer(cardFile);
 
 	std::string treeName, files, outname;
+	double firstFile, lastFile;
 	cd->Get("tree", treeName);
-	cd->Get("files", files);
+	cd->Get("input", files);
 	cd->Get("output", outname);
+	cd->Get("first", firstFile);
+	cd->Get("last", lastFile);
 
 	std::string mode[6] = {"nuE0_nuE0", "nuM0_nuM0", "nuM0_nuE0", "nuEB_nuEB", "nuMB_nuMB", "nuMB_nuEB"};
 	std::string chan[6] = {"E_CCQE", "M_CCQE", "E_CCnQE", "M_CCnQE", "E_NC", "M_NC"};
@@ -55,6 +58,7 @@ int main(int argc, char** argv)
 
 	TChain *ch = new TChain(treeName.c_str());
 	ch->Add(files.c_str());
+	std::cout << "adding " << files << std::endl;
 
 	int nBinAtm = 2224;
 	int nBinTot = nBinAtm + nBinBeam * 8;
@@ -100,14 +104,24 @@ int main(int argc, char** argv)
 	TIter next(fileElements);
 	TChainElement *current = 0;
 	int nentry = 0;
+	int file = -1;
 	ch->GetEntry(nentry);	//load first entry to compute nentries
 	while ( current = static_cast<TChainElement*>(next()) )
 	{
+		++file;
+		if (file < firstFile || file > lastFile)
+		{
+			nentry += current->GetEntries();
+			ch->GetEntry(nentry);	//load first entry to compute nentries
+			continue;
+		}
+
 		std::string name(current->GetTitle());
 		std::cout << "Reading " << name << "\t";
 		std::string base = name.substr(name.find_last_of('/')+1);
 		base = outname + "/" + base;
 		std::cout << "into " << base << "\n";
+
 		TFile * outf = new TFile(base.c_str(), "RECREATE");
 		outf->cd();
 

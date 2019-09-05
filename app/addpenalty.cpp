@@ -69,12 +69,13 @@ int main(int argc, char** argv)
 			std::cout << "file doesn't exist\n";
 			continue;
 		}
+		std::cout << "Penalising " << name << std::endl;
 
 		TTree* axis    = static_cast<TTree*>(inf->Get("axisTree"));
 		TTree* error   = static_cast<TTree*>(inf->Get("errorTree"));
 		TTree* sX2_old = static_cast<TTree*>(inf->Get("stepX2Tree"));
 
-		name = name.insert(name.find(".0"), "_corrected");
+		name = name.insert(name.find(".0"), "_penalised");
 		TFile *out = new TFile(name.c_str(), "RECREATE");
 
 		TTree *sX2_new = sX2_old->CloneTree(0);
@@ -153,8 +154,8 @@ int main(int argc, char** argv)
 		}
 
 		out->cd();
-		axis->Write();
-		error->Write();
+		axis->CloneTree()->Write();
+		error->CloneTree()->Write();
 		sX2_new->Write();
 
 

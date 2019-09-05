@@ -14,10 +14,13 @@ CXXFLAGS := $(CXXFLAGS) -fPIC -std=c++11 -O3 -march=native -mavx $(ROOTCXX) -I$(
 
 
 #apps and exctuables
-CPP =	pmns	\
+CPP =	purifysystematic	\
+	addmatrix	\
+	addpenalty	\
+	oscillator	\
+	#pmns	\
 	penalty	\
 	simple	\
-	oscillator	\
 	#exclusion
 	#PredictEvents	\
 	ValorEvents	\
