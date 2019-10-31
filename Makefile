@@ -14,14 +14,18 @@ CXXFLAGS := $(CXXFLAGS) -fPIC -std=c++11 -O3 -march=native -mavx $(ROOTCXX) -I$(
 
 
 #apps and exctuables
-CPP =	purifysystematic	\
+CPP =	simple	\
+	validation	\
 	addmatrix	\
 	addpenalty	\
+	exclusion
+	#dropchi2	\
+	purifysystematic	\
 	oscillator	\
+	dropchi2
 	#pmns	\
 	penalty	\
 	simple	\
-	#exclusion
 	#PredictEvents	\
 	ValorEvents	\
 	GetNevents	\
@@ -63,7 +67,8 @@ all: $(TGT)
 	@cp $(DEP) $(LIBDIR)
 	@echo "Done!"
 
-$(TGT): $(DEP) $(INccc)
+$(TGT): $(DEP)
+#$(INccc)
 
 clean:
 	find $(INCDIR) -mindepth 1 -name "*.o" -delete

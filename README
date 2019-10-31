@@ -1,0 +1,46 @@
+# Easy Osc3++
+
+The space is defined by combinations of oscillation parameters defined inside **Cards**.
+For each point of the oscillation parameter space, a set of histograms is created and oscillated with those oscilliation parameters.
+Two sets are available: *HKDR* and *Asimov A*, labelled repectively `hkdr` and `asim`.
+
+Two main executables from *Osc3++* are used: ```GlobalOsc``` and ```GlobalSpaghettiSensitivity```.
+The first one prepares the fitting space and oscillates the distributions,
+the second one makes a fit for each of the points of the space vs a *true* point.
+
+In exectuing the following scripts, the structure of the folder is important.
+I will refer as ```global``` paths where the files to be fitted are created, i.e. the outputs of ```GlobalOsc```, and as ```root``` to where the outputs of the fit is, i.e. the outputs of ```GlobalSpaghettiSensitivity```
+
+
+## Creating the fitting space
+
+The first step is to create the fitting space, by running ```GlobalOsc```.
+This can be done with the follwing script:
+```
+./global.sh [-i | -n] -f nFiles -g /path/to/global
+```
+where ```-i``` or ```-n``` select inverted or normal hiereachy for the oscillation.
+
+
+## Prepare the systematics
+
+```
+./prepare_systematics.sh /path/to/root matrix1.root matrix2.root
+```
+
+# Run the fit
+
+```
+./sensitivity.sh -g /path/to/global -r /path/to/root -1 mh1 -2 mh2
+```
+
+Once it is done, contours can be created, after adding penalty terms
+```
+./contour.sh -g /path/to/global -r /path/to/root -1 mh1 -2 mh2
+```
+
+# Create usefule plots
+
+```
+./contour.sh -g /path/to/global -r /path/to/root -1 mh1 -2 mh2
+```

@@ -6,17 +6,18 @@ S13	0.0219
 S23	0.528
 
 dCP	-1.5708
+#Asimov A
 #dCP	0
 #dCP	1.5708
 
-out_0		"output/errorstudy_mpi_11b_ran_FHC.root"
-out_B		"output/errorstudy_mpi_11b_ran_RHC.root"
-random	1
+out_0		"output/errorstudy_0_all_FHC.root"
+out_B		"output/errorstudy_0_all_RHC.root"
+random	0
 
-systematic_E_FHC	"../errorstudy/11b/systematics/FHC1Re.fij.t2k_p1.root"
-systematic_M_FHC	"../errorstudy/11b/systematics/RHC1Rmu.fij.t2k_p1.root"
-systematic_E_RHC	"../errorstudy/11b/systematics/FHC1Re.fij.t2k_p1.root"
-systematic_M_RHC	"../errorstudy/11b/systematics/RHC1Rmu.fij.t2k_p1.root"
+systematic_E_FHC	"/home/tboschi/data/errorstudy/0/systematics/FHC1Re.fij.t2k_p1.root"
+systematic_M_FHC	"/home/tboschi/data/errorstudy/0/systematics/RHC1Rmu.fij.t2k_p1.root"
+systematic_E_RHC	"/home/tboschi/data/errorstudy/0/systematics/FHC1Re.fij.t2k_p1.root"
+systematic_M_RHC	"/home/tboschi/data/errorstudy/0/systematics/RHC1Rmu.fij.t2k_p1.root"
 
 #earth density profile between JPARK and SK
 density_profile	"data/DensityProfileTochibora.dat"
@@ -38,16 +39,17 @@ oscillation	"osctest.root"
 #flux_0		"cards/nu_flux_m0.card"
 #flux_B		"cards/nu_flux_mB.card"
 
-reco_nuE0_nuE0_FHC	"cards/valor_nuE0_nuE0_FHC.card"
-reco_nuM0_nuM0_FHC	"cards/valor_nuM0_nuM0_FHC.card"
-reco_nuM0_nuE0_FHC	"cards/valor_nuM0_nuE0_FHC.card"
-reco_nuEB_nuEB_FHC	"cards/valor_nuEB_nuEB_FHC.card"
-reco_nuMB_nuMB_FHC	"cards/valor_nuMB_nuMB_FHC.card"
-reco_nuMB_nuEB_FHC	"cards/valor_nuMB_nuEB_FHC.card"
+reco_nuE0_nuE0_FHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuE0_nuE0_FHC.card"
+reco_nuM0_nuM0_FHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuM0_nuM0_FHC.card"
+reco_nuM0_nuE0_FHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuM0_nuE0_FHC.card"
+reco_nuEB_nuEB_FHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuEB_nuEB_FHC.card"
+reco_nuMB_nuMB_FHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuMB_nuMB_FHC.card"
+reco_nuMB_nuEB_FHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuMB_nuEB_FHC.card"
 
-reco_nuE0_nuE0_RHC	"cards/valor_nuE0_nuE0_RHC.card"
-reco_nuM0_nuM0_RHC	"cards/valor_nuM0_nuM0_RHC.card"
-reco_nuM0_nuE0_RHC	"cards/valor_nuM0_nuE0_RHC.card"
-reco_nuEB_nuEB_RHC	"cards/valor_nuEB_nuEB_RHC.card"
-reco_nuMB_nuMB_RHC	"cards/valor_nuMB_nuMB_RHC.card"
-reco_nuMB_nuEB_RHC	"cards/valor_nuMB_nuEB_RHC.card"
+#reconstruction file cards - antineutrino mode
+reco_nuE0_nuE0_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuE0_nuE0_RHC.card"
+reco_nuM0_nuM0_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuM0_nuM0_RHC.card"
+reco_nuM0_nuE0_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuM0_nuE0_RHC.card"
+reco_nuEB_nuEB_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuEB_nuEB_RHC.card"
+reco_nuMB_nuMB_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuMB_nuMB_RHC.card"
+reco_nuMB_nuEB_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuMB_nuEB_RHC.card"

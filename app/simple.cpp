@@ -50,9 +50,9 @@ int main(int argc, char** argv)
 	osc->SetPMNS<Oscillator::sin2>(S12, S13, S23, dCP);// * Const::fPi);
 	std::cout << osc->PMNS().cwiseAbs2() << std::endl;
 
-	std::string oscfile;
-	cd->Get("oscillation", oscfile);
-	TFile *oscr = new TFile(oscfile.c_str());
+	//std::string oscfile;
+	//cd->Get("oscillation", oscfile);
+	//TFile *oscr = new TFile(oscfile.c_str());
 
 	//reco files	
 	//neutrino modes
@@ -75,15 +75,19 @@ int main(int argc, char** argv)
 	std::map<std::string, std::string>::iterator is;
 	cd->Get("systematic_", syserre);
 	std::map<std::string, TH1D*> hsys;
-	std::cout << "syserre " << syserre.size() << std::endl;
+	std::cout << "applying syserre " << syserre.size() << std::endl;
 	for (is = syserre.begin(); is != syserre.end(); ++is)
 	{
 		TFile *sysFile = new TFile(is->second.c_str());
 		TIter next(sysFile->GetListOfKeys());
-		TKey *k = (TKey*) next();
+		TKey *k = static_cast<TKey*>(next());
 
+		//each hsys is 1+y, and so summing the first one and then removing 1 from each
+		//to have 1 + sum(y)
+		std::cout << k->GetName() << std::endl;
 		hsys[is->first] = static_cast<TH1D*>(k->ReadObj()->Clone());
-		int nBin = hsys[is->first]->GetNbinsX();
+		std::cout << hsys[is->first] << std::endl;
+		int nBin  = hsys[is->first]->GetNbinsX();
 		double lo = hsys[is->first]->GetXaxis()->GetBinLowEdge(1);
 		double up = hsys[is->first]->GetXaxis()->GetBinUpEdge(nBin);
 		f1->SetRange(lo, up);
@@ -94,8 +98,8 @@ int main(int argc, char** argv)
 
 			double ran = krandom ? mt->Uniform(-1.0, 1.0) : 1.0;
 			TH1D *h1 = static_cast<TH1D*>(k->ReadObj());
-			bool add = hsys[is->first]->Add(h1, ran);
-			add = add && hsys[is->first]->Add(f1, -ran);
+			hsys[is->first]->Add(h1,  ran);		//add syst*ran histogram
+			hsys[is->first]->Add(f1, -ran);		//remove 1*ran
 		}
 		hsys[is->first]->SetDirectory(0);
 		sysFile->Close();

@@ -46,20 +46,43 @@ int main(int argc, char** argv)
 	for (int m = 0; m < matrices.size(); ++m)
 		cols += matrices[m]->GetNcols();
 
-	TMatrixD *mm = new TMatrixD(cols, cols);
+	TMatrixD *cov = new TMatrixD(cols, cols);
+	TMatrixD *cor = new TMatrixD(cols, cols);
 
-	
-	int totCols = 0;
+	cols = 0;
 	for (int m = 0; m < matrices.size(); ++m)
 	{
 		int lCols = matrices[m]->GetNcols();
+		std::cout << "loading " << lCols << " columns" << std::endl;
 		for (int c = 0; c < lCols; ++c)
 			for (int r = 0; r < lCols; ++r)
-				mm->operator()(totCols+r, totCols+r) = matrices[m]->operator()(r, c);
+			{
+				cov->operator()(cols + r, cols + c) = matrices[m]->operator()(r, c);
+				//std::cout << "Out(" << cols + r << ", " << cols + c << ") "
+				//	  << mm->operator()(cols + r, cols + c)
+				//	  << " = m[" << m << "] at (" << r << ", " << c << ") "
+				//	  << matrices[m]->operator()(r, c) << std::endl;
+			}
+
+		cols += lCols;
 	}
 
+	cols = cov->GetNcols();
+	for (int r = 0; r < cols; ++r)
+		for (int c = r; c < cols; ++c)
+		{
+			cor->operator()(r, c) = cov->operator()(r, c) /
+				std::sqrt(cov->operator()(r, r) * cov->operator()(c, c) );
+
+			if (r != c && std::abs(cor->operator()(r, c)) - 1 < 1e-6)
+				cor->operator()(r, c) *= (1-1e-5);	//to make it non singular
+
+			cor->operator()(c, r) = cor->operator()(r, c);	//it is symmetric
+		}
+
 	TFile out("combinedmatrix.root", "RECREATE");
-	mm->Write("all");
+	cov->Write("covariance");
+	cor->Write("correlation");
 	out.Close();
 
 	return 0;

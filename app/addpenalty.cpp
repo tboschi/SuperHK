@@ -16,8 +16,8 @@ int main(int argc, char** argv)
 
 	CardDealer *cd = new CardDealer(cardFile);
 
-	std::string files;
-	cd->Get("files", files);
+	//std::string files;
+	//cd->Get("files", files);
 
 	std::vector<double> vValue, vSigma;
 	std::vector<std::string> vParm;
@@ -34,11 +34,17 @@ int main(int argc, char** argv)
 		}
 	}
 
-	std::string cmd = "ls " + files + " > .tmp_list";
-	system(cmd.c_str());
+	if (argc < 3)
+	{
+		std::cerr << "No files to analyse!\n";
+		return 1;
+	}
 
-	std::ifstream in(".tmp_list");
-	std::string name;
+	//std::string cmd = "ls " + files + " > .tmp_list";
+	//system(cmd.c_str());
+
+	//std::ifstream in(".tmp_list");
+	//std::string name;
 
 	double Epsilons[1000];
 	double X2;
@@ -61,21 +67,29 @@ int main(int argc, char** argv)
 	double S23;
 	double TS23;
 
-	while (std::getline(in, name))
+	for (int f = 2; f < argc; ++f)
 	{
-		TFile *inf = new TFile(name.c_str(), "OPEN");
+	//while (std::getline(in, name))
+		TFile *inf = new TFile(argv[f], "READ");
 		if (inf->IsZombie())
 		{
 			std::cout << "file doesn't exist\n";
 			continue;
 		}
-		std::cout << "Penalising " << name << std::endl;
 
 		TTree* axis    = static_cast<TTree*>(inf->Get("axisTree"));
 		TTree* error   = static_cast<TTree*>(inf->Get("errorTree"));
 		TTree* sX2_old = static_cast<TTree*>(inf->Get("stepX2Tree"));
 
-		name = name.insert(name.find(".0"), "_penalised");
+		std::string name = argv[f];
+
+		std::cout << "Penalising " << name;
+		int pos = name.find("SpaghettiSens.");
+		if (pos != std::string::npos)
+			name.insert(name.find_first_of('.', pos+13), "_penalised"); 
+		std::cout << " into " << name << std::endl;
+
+		//name = name.insert(name.find(".0"), "_penalised");
 		TFile *out = new TFile(name.c_str(), "RECREATE");
 
 		TTree *sX2_new = sX2_old->CloneTree(0);
@@ -163,9 +177,6 @@ int main(int argc, char** argv)
 		out->Close();
 		delete inf;
 	}
-
-	in.close();
-
 
 	return 0;
 }

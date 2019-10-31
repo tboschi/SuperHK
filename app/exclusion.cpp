@@ -10,79 +10,117 @@
 class sorter
 {
 	public:
-		sorter(std::vector<double> &v) : vorder(v);
+		sorter(std::vector<double> &v) : vorder(v) {};
+		bool operator()(int a, int b)
+		{
+			return vorder.at(a) < vorder.at(b);
+		}
 	private:
 		std::vector<double> vorder;
-		bool operator()(int a, int b) return v.at(a) < v.at(b);
 };
 
 int main(int argc, char** argv)
 {
-	std::ifstream inf(argv[1]);
-	std::string line;
-	std::vector<double> testCP, vcomCP, vcomX2, vminCP, vminX2, exclusion;
-	std::vector<int> vI;
-	if (false)
-	while (std::getline(inf, line))
+	//std::map<double, double> compCP, compX2, minCP, minX2;
+	std::map<double, double> trueX2, compX2, systX2;
+
+	std::string pen;
+	if (argc > 2)
+		pen = "_" + std::string(argv[2]);
+	std::string cmd = "find " + std::string(argv[1]) +
+			  //" -name SpaghettiSens.T2HK_penalised.*.root > .tmp_exclusion";
+			  " -name \"SpaghettiSens" + pen + ".T2HK.*.root\" > .tmp_exclusion";
+	std::cout << cmd << std::endl;
+	system(cmd.c_str());
+
+	std::string file;
+	std::ifstream listExclusion(".tmp_exclusion");
+	while (std::getline(listExclusion, file))
+	//for (int f = 1; f < argc; ++f) 
 	{
-		TFile f(line.c_str(), "READ");
-		std::cout << "opening " << f.GetName() << std::endl;
-		TTree *t = static_cast<TTree*>(f.Get("stepX2Tree"));
-		double X2, dCP, tdCP;
+		std::cout << "opening " << file << std::endl;
+		TFile inf(file.c_str(), "READ");
+		TTree *t = static_cast<TTree*>(inf.Get("stepX2Tree"));
+		double X2, sysX2, dCP, tdCP;
 		t->SetBranchAddress("X2",  &X2);
+		t->SetBranchAddress("SysX2", &sysX2);
 		t->SetBranchAddress("CP",  &dCP);
 		t->SetBranchAddress("TCP", &tdCP);
 
 		t->GetEntry(0);
-		testCP.push_back(tdCP);
 
-		double minX2 = X2;
-		double minCP = dCP;
+		double min_X2 = X2;
+		double min_CP = dCP;
 
-		double comX2 = X2;
-		double comCP = dCP;
+		double comp_X2 = -1;
+		double comp_CP = -1;
 
 		std::cout << "looping on " << t->GetEntries() << std::endl;
-		for (int i = 1; i < t->GetEntries(); ++i)
+		for (int i = 0; i < t->GetEntries(); ++i)
 		{
 			t->GetEntry(i);
-			if (X2 < minX2)
+
+			if (std::abs(dCP - tdCP) < 1e-5)
 			{
-				minCP = dCP;
-				minX2 = X2;
+				if (!trueX2.count(tdCP))
+					trueX2[tdCP] = X2;
+				else if (trueX2[tdCP] > X2)
+					trueX2[tdCP] = X2;
 			}
 
-			if (1 - std::abs(std::cos(dCP)) < 1e-5) // it is 0 or ±pi
+			if (1 - std::abs(std::cos(dCP)) < 1e-5)
 			{
-				if (X2 < comX2)
+				if (!compX2.count(tdCP))
 				{
-					comX2 = X2;
-					comCP = dCP;
+					compX2[tdCP] = X2;
+					systX2[tdCP] = sysX2;
+				}
+				else if (compX2[tdCP] > X2)
+				{
+					compX2[tdCP] = X2;
+					systX2[tdCP] = sysX2;
 				}
 			}
 		}
 
-		exclusion.push_back(std::sqrt(std::abs(minX2 - comX2)));
-		vcomCP.push_back(comCP);
-		vcomX2.push_back(comX2);
-		vminCP.push_back(minCP);
-		vminX2.push_back(minX2);
-		vI.at(i);
+		/*
+		if (!compCP.count(tdCP) && comp_CP > 0) 
+		{
+		       compCP[tdCP] = comp_CP;
+		       compX2[tdCP] = comp_X2;
+		}
+		else if (compX2[tdCP] > comp_X2 && comp_CP > 0)
+		{
+		       compCP[tdCP] = comp_CP;
+		       compX2[tdCP] = comp_X2;
+		}
 
-		f.Close();
+		if (!minCP.count(tdCP)) 
+		{
+		       minCP[tdCP] = min_CP;
+		       minX2[tdCP] = min_X2;
+		}
+		else if (minX2[tdCP] > min_X2)
+		{
+		       minCP[tdCP] = min_CP;
+		       minX2[tdCP] = min_X2;
+		}
+		*/
+
+		inf.Close();
 	}
+	listExclusion.close();
 
-	inf.close();
-
-	std::sort(vI.begin(), vI.end(), sorter(testCP));
-
-	std::ofstream out(argv[2]);
-	for (int i = 0; i < testCP.size(); ++i)
+	std::ofstream out("Exclusion.dat");
+	std::map<double, double>::iterator im;
+	for (im = trueX2.begin(); im != trueX2.end(); ++im)
 	{
-		int j = vI.at(i);
-		out << testCP.at(j) << "\t" << exclusion.at(j) << "\t"
-		    << vcomCP.at(j) << "\t" << vcomX2.at(j) << "\t"
-		    << vminCP.at(j) << "\t" << vminX2.at(j) << std::endl;
+		out << im->first << "\t"
+		    << std::sqrt(std::abs(im->second - compX2[im->first])) << "\t"
+		    << im->second << "\t" << systX2[im->first] << "\t"
+		    << compX2[im->first] << std::endl;
+		   // << "\t" << im->second << "\t" << compX2[im->first] << "\t"
+		   // << minCP[im->first] << "\t" << minX2[im->first] << std::endl;
 	}
 
 	return 0;

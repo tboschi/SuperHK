@@ -19,10 +19,10 @@ fhc1Rm_i=$root/1Rmu.*.t2k.root
 rhc1Re_i=$root/RHC1Re.*.t2k.root
 rhc1Rm_i=$root/RHC1Rmu.*.t2k.root
 
-fhc1Re_o=$root/FHC1Re.fij.t2k_p1.root
-fhc1Rm_o=$root/FHC1Rmu.fij.t2k_p1.root
-rhc1Re_o=$root/RHC1Re.fij.t2k_p1.root
-rhc1Rm_o=$root/RHC1Rmu.fij.t2k_p1.root
+fhc1Re_o=$root/FHC1Re.fij.t2k_spline.root
+fhc1Rm_o=$root/FHC1Rmu.fij.t2k_spline.root
+rhc1Re_o=$root/RHC1Re.fij.t2k_spline.root
+rhc1Rm_o=$root/RHC1Rmu.fij.t2k_spline.root
 
 #banff=("banff" "Postfit")
 #for nn in "${banff[@]}" ; do

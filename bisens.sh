@@ -5,16 +5,11 @@
 Sens=/home/tboschi/OscAna/hk.atm+beam/submitSens.sh
 Stat=/home/tboschi/OscAna/hk.atm+beam/submitSensStatOnly.sh
 Fast=/home/tboschi/OscAna/hk.atm+beam/submitSensFast.sh
+Fastat=/home/tboschi/OscAna/hk.atm+beam/submitSensStatFast.sh
 JM=/home/tboschi/jobManager
 Queue=$JM/simpleSubmit.sh
 cardS=/home/tboschi/OscAna/SuperHK/cards
-Exclude=/home/tboschi/OscAna/SuperHK/bin/exclusion
-Penalty=/home/tboschi/OscAna/SuperHK/bin/addpenalty
-Contour=/home/tboschi/OscAna/Osc3++/processing/build.contours/BuildContourPlots
-#samples=(SK T2HK SKT2HK)
-#samples=(T2HK SKT2HK)
 samples=(T2HK)
-MAX_JOBS=100
 
 root=/home/tboschi/data/
 global=""
@@ -22,8 +17,9 @@ MH_1=""
 MH_2=""
 ss=false	#false if systematic fit, true if only stat fit
 ff=false	#false if systematic fit, true if fast fit for dCP scan
+mtype="covariance"
 
-while getopts '1:2:r:g:sf' flag; do
+while getopts '1:2:r:g:m:sf' flag; do
 	case "${flag}" in
 		1) MH_1="${OPTARG}" ;;
 		2) MH_2="${OPTARG}" ;;
@@ -31,20 +27,29 @@ while getopts '1:2:r:g:sf' flag; do
 		g) global="${OPTARG}" ;;
 		s) ss=true ;;
 		f) ff=true ;;
+		m) mtype="${OPTARG}" ;;
 		*) exit 1 ;;
 	esac
 done
 
-if [ "$ss" = true ]
-then
-	pinfo="point.info"
-	Exec=$Stat
-elif [ "$ff" = true ]
+if [ "$ss" = true ] && [ "$ff" = true ]
 then
 	pinfo="scan.info"
+	tname="scan_"
+	Exec=$Fastat
+elif [ "$ss" = true ] && [ "$ff" = false ]
+then
+	pinfo="point.info"
+	tname="point_"
+	Exec=$Stat
+elif [ "$ss" = false ] && [ "$ff" = true ]
+then
+	pinfo="scan.info"
+	tname="scan_"
 	Exec=$Fast
 else
 	pinfo="point.info"
+	tname="point_"
 	Exec=$Sens
 fi
 	
@@ -75,12 +80,14 @@ T2KnueFile=$root/../systematics/FHC1Re.fij.t2k_spline.root
 T2KnumubarFile=$root/../systematics/RHC1Rmu.fij.t2k_spline.root
 T2KnuebarFile=$root/../systematics/RHC1Re.fij.t2k_spline.root
 matrix=$root/../systematics/combinedmatrix.root
+#mtype="correlation"
 
 sed -i "s:T2KnumuFijTable.*:T2KnumuFijTable \"$T2KnumuFile\":" $card
 sed -i "s:T2KnueFijTable.*:T2KnueFijTable \"$T2KnueFile\":" $card
 sed -i "s:T2KnumubarFijTable.*:T2KnumubarFijTable \"$T2KnumubarFile\":" $card
 sed -i "s:T2KnuebarFijTable.*:T2KnuebarFijTable \"$T2KnuebarFile\":" $card
 sed -i "s:AllErrFile.*:AllErrFile \"$matrix\":" $card
+sed -i "s:AllErrCov.*:AllErrCov \"$mtype\":" $card
 
 name=$(grep OutputOscFile $card | cut -d'"' -f2)
 input=${name%.*}
@@ -108,81 +115,61 @@ else
 	sed -i "s:InvertedHierarchy.*:InvertedHierarchy 1:" $card_2
 fi
 
+MAX_JOBS=300
+MAX_QUEUE=100
+queues=(atmpd calib ALL all lowe)
 #load fit
-rm -f /home/tboschi/jobManager/*.list
 for t in "${point[@]}" ; do
-	$Exec $NFILES $card_1 $card_2 $t $root/$mhfit/sensitivity/sens_t$t
-done
+	#create new jobs list
+	rm -f /home/tboschi/jobManager/*.list
+	$Exec $NFILES $card_1 $card_2 $t $root/$mhfit/sensitivity/$tname$t
 
-#smart submit to the queue system
-queues=(atmpd ALL all lowe calib)
-count=0
-list=$JM/${queues[$count]}.list
-echo 'Submitting to the queue system'
-while [ -s $list ] ; do
-	wcleft=$(wc -l $list)
-	jobsinqueue=$(qstat ${queues[$count]} | grep run | awk '{print $1;}')
-	echo "jobs left to sumbit : " ${wcleft%%/*}
-	echo "jobs in " ${queues[$count]} " : " $jobsinqueue
-	$Queue $(expr $MAX_JOBS - $jobsinqueue)
-        count=$(expr $count + 1)
-	echo "count " $count
-
-	count=$(expr $count % ${#queues[@]})
-	#queues finished, put something on queue
-	if [ $count -eq 0 ]
-	then
-		MAX_JOBS=$(expr $MAX_JOBS + 100)
-	fi
-	echo "Max jobs " $MAX_JOBS
-
-	mv $list $JM/${queues[$count]}.list
+	#smart submit to the queue system
+	count=0
 	list=$JM/${queues[$count]}.list
+	echo 'Submitting to the queue system'
+	while [ -s $list ] ; do
+		wcleft=$(wc -l $list)
+		jobsrunning=$(qstat -a ${queues[$count]} | head -n2 | grep run | awk '{print $1;}')
+		jobsinqueue=$(qstat -a ${queues[$count]} | head -n2 | grep run | awk '{print $3;}')
+		jobstot=$(expr $jobsrunning + $jobsinqueue)
+		echo "jobs left to sumbit : " ${wcleft%%/*}
+		echo "jobs in " ${queues[$count]} " : " $jobsrunning " running and " $jobsinqueue " in queue"
+		if [ $MAX_JOBS  -gt $jobsrunning ]
+		then
+			$Queue $(expr $MAX_JOBS  - $jobsrunning)
+		fi
+		if [ $MAX_QUEUE -gt $jobsinqueue ]
+		then
+			$Queue $(expr $MAX_QUEUE - $jobsinqueue)
+		fi
+		#if [ $(expr $MAX_JOBS - $jobsrunning) -gt 0 ]; then
+		#	$Queue $(expr $MAX_JOBS - $jobsrunning)
+		#fi
+		count=$(expr $count + 1)
+		echo "count " $count
+
+		count=$(expr $count % ${#queues[@]})
+		#queues finished, put something on queue
+		#if [ $count -eq 0 ]
+		#then
+		#	MAX_JOBS=$(expr $MAX_JOBS + 100)
+		#fi
+		#echo "Max jobs " $MAX_JOBS
+
+		mv $list $JM/${queues[$count]}.list
+		list=$JM/${queues[$count]}.list
+	done
+
+	#wait until jobs are finished before moving to next point
+
+	while [ $t -ne ${point[${#point[@]}-1]} ] ; do
+		check=$(qstat -u tboschi | grep tboschi | wc -l)
+		if [ $check -ge 300 ]; then
+			echo 'waiting 10min...'
+			sleep 600
+		else
+			break
+		fi
+	done
 done
-
-#wait until jobs are finished
-#while true ; do
-#	check=$(qstat -u tboschi | grep tboschi)
-#	if [ -n "$check" ]; then
-#		echo 'waiting 5min...'
-#		sleep 300
-#	else
-#		break
-#	fi
-#done
-
-
-#penalty section
-
-#base=${root##*/}
-#cp $cardS/penalty_$base.card $root/$mhfit/sensitivity/penalty_sensitivity.card
-#
-#sed -i "s:files.*:files \"$root/$mhfit/sensitivity/sens_t*/SpaghettiSens.*.root\":" $root/$mhfit/sensitivity/penalty_sensitivity.card
-#$Penalty $root/$mhfit/sensitivity/penalty_sensitivity.card
-##rm -f $root/$mhfit/sensitivity/sens_t*/SpaghettiSens.*.??????.??????.root
-#
-#for t in "${point[@]}" ; do
-#	mkdir -p $root/$mhfit/contours/sens_t$t
-#done
-#
-#for ff in "${samples[@]}" ; do
-#	echo Processing $ff set
-#	for t in "${point[@]}" ; do
-#		hadd $root/$mhfit/contours/sens_t$t/all.$ff.root $root/$mhfit/sensitivity/sens_t$t/SpaghettiSens.$ff'_penalised'.*.root
-#		$Contour $root/$mhfit/contours/sens_t$t/all.$ff.root >& /dev/null
-#		mv ChiSquared.root $root/$mhfit/contours/sens_t$t/contour.$ff.root
-#		rm $root/$mhfit/contours/sens_t$t/all.$ff.root
-#	done
-#done
-#
-#if [ ${#point[@]} -gt 1 ]
-#then
-#	mkdir -p $root/$mhfit/exclusion/
-#
-#	for ff in "${samples[@]}" ; do
-#		ls $root/$mhfit/sensitivity/sens_t*/SpaghettiSens.$ff'_penalised'.*.root > listExclusion
-#		$Exclude listExclusion	$root/$mhfit/exclusion/excl_$ff.dat
-#	done
-#fi
-#
-#echo "DONE"
