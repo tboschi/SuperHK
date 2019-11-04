@@ -48,6 +48,7 @@ int main(int argc, char** argv)
 
 	TMatrixD *cov = new TMatrixD(cols, cols);
 	TMatrixD *cor = new TMatrixD(cols, cols);
+	TMatrixD *ide = new TMatrixD(TMatrixD::kUnit, *cor);
 
 	cols = 0;
 	for (int m = 0; m < matrices.size(); ++m)
@@ -75,7 +76,10 @@ int main(int argc, char** argv)
 				std::sqrt(cov->operator()(r, r) * cov->operator()(c, c) );
 
 			if (r != c && std::abs(cor->operator()(r, c)) - 1 < 1e-6)
-				cor->operator()(r, c) *= (1-1e-5);	//to make it non singular
+			{
+				cov->operator()(r, c) *= 0.99999; // = (1-1e-5), to make it non singular
+				cor->operator()(r, c) *= 0.99999; // = (1-1e-5), to make it non singular
+			}
 
 			cor->operator()(c, r) = cor->operator()(r, c);	//it is symmetric
 		}
@@ -83,6 +87,7 @@ int main(int argc, char** argv)
 	TFile out("combinedmatrix.root", "RECREATE");
 	cov->Write("covariance");
 	cor->Write("correlation");
+	ide->Write("identity");
 	out.Close();
 
 	return 0;

@@ -17,7 +17,7 @@ MH_1=""
 MH_2=""
 ss=false	#false if systematic fit, true if only stat fit
 ff=false	#false if systematic fit, true if fast fit for dCP scan
-mtype="covariance"
+mtype="correlation"
 
 while getopts '1:2:r:g:m:sf' flag; do
 	case "${flag}" in
