@@ -115,9 +115,10 @@ else
 	sed -i "s:InvertedHierarchy.*:InvertedHierarchy 1:" $card_2
 fi
 
-MAX_JOBS=300
+MAX_JOBS=202
 MAX_QUEUE=100
-queues=(atmpd calib ALL all lowe)
+#queues=(atmpd calib ALL all lowe)
+queues=(atmpd ALL all)
 #load fit
 for t in "${point[@]}" ; do
 	#create new jobs list

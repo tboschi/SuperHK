@@ -8,9 +8,11 @@ study="/home/tboschi/data/errorstudy"
 point="asim"
 #point="asim"
 
-model=(	"nuenorm1_indy" "nuenorm2_indy" "nuenorm3_indy" "nuenorm4_inty" "nuenorm5_indy"
-	"nuenorm1_corr" "nuenorm2_corr" "nuenorm3_corr" "nuenorm4_corr" "nuenorm5_corr"
-	"nuenorm1_anti" "nuenorm2_anti" "nuenorm3_anti" "nuenorm4_anti" "nuenorm5_anti" )
+#model=(	"nuenorm1_indy" "nuenorm2_indy" "nuenorm3_indy" "nuenorm4_indy" "nuenorm5_indy"
+#	"nuenorm1_corr" "nuenorm2_corr" "nuenorm3_corr" "nuenorm4_corr" "nuenorm5_corr"
+#	"nuenorm1_anti" "nuenorm2_anti" "nuenorm3_anti" "nuenorm4_anti" "nuenorm5_anti" )
+
+model=("nuenorm4_indy")
 
 #model=("8" "11a" "11b")
 
