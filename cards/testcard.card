@@ -1,0 +1,29 @@
+#earth density profile between JPARK and SK
+density_profile	"/data/tboschi/HKsens/OscAna/SuperHK/data/DensityProfileTochibora.dat"
+
+input	"/data/tboschi/HKsens/errorstudy/0/asim/NH_NH/sensitivity/point_49773/SpaghettiSensitivity.*.root"
+output	"/data/tboschi/HKsens/OscAna/SuperHK/chi2comparison.dat"
+
+corr_file	"/data/tboschi/HKsens/errorstudy/0/systematics/combinedmatrix.root"
+corr_name	"correlation"
+
+systematic_E_FHC "/data/tboschi/HKsens/errorstudy/0/systematics/FHC1Re.fij.t2k_spline.root"
+systematic_E_RHC "/data/tboschi/HKsens/errorstudy/1/systematics/RHC1Re.fij.t2k_spline.root"
+systematic_M_FHC "/data/tboschi/HKsens/errorstudy/0/systematics/FHC1Rmu.fij.t2k_spline.root"
+ssdSpaghettiSensitivity.ysdSpaghettiSensitivity.stematic_M_RHC "/data/tboschi/HKsens/errorstudy/0/systematics/RHC1Rmu.fij.t2k_spline.root"
+
+#reconstruction file cards - neutrino mode
+reco_nuE0_nuE0_FHC	"/data/tboschi/HKsens/errorstudy/longglobal/reconstruction/syst_nuE0_nuE0_FHC.card"
+reco_nuM0_nuM0_FHC	"/data/tboschi/HKsens/errorstudy/longglobal/reconstruction/syst_nuM0_nuM0_FHC.card"
+reco_nuM0_nuE0_FHC	"/data/tboschi/HKsens/errorstudy/longglobal/reconstruction/syst_nuM0_nuE0_FHC.card"
+reco_nuEB_nuEB_FHC	"/data/tboschi/HKsens/errorstudy/longglobal/reconstruction/syst_nuEB_nuEB_FHC.card"
+reco_nuMB_nuMB_FHC	"/data/tboschi/HKsens/errorstudy/longglobal/reconstruction/syst_nuMB_nuMB_FHC.card"
+reco_nuMB_nuEB_FHC	"/data/tboschi/HKsens/errorstudy/longglobal/reconstruction/syst_nuMB_nuEB_FHC.card"
+
+#reconstruction file cards - antineutrino mode
+reco_nuE0_nuE0_RHC	"/data/tboschi/HKsens/errorstudy/longglobal/reconstruction/syst_nuE0_nuE0_RHC.card"
+reco_nuM0_nuM0_RHC	"/data/tboschi/HKsens/errorstudy/longglobal/reconstruction/syst_nuM0_nuM0_RHC.card"
+reco_nuM0_nuE0_RHC	"/data/tboschi/HKsens/errorstudy/longglobal/reconstruction/syst_nuM0_nuE0_RHC.card"
+reco_nuEB_nuEB_RHC	"/data/tboschi/HKsens/errorstudy/longglobal/reconstruction/syst_nuEB_nuEB_RHC.card"
+reco_nuMB_nuMB_RHC	"/data/tboschi/HKsens/errorstudy/longglobal/reconstruction/syst_nuMB_nuMB_RHC.card"
+reco_nuMB_nuEB_RHC	"/data/tboschi/HKsens/errorstudy/longglobal/reconstruction/syst_nuMB_nuEB_RHC.card"
