@@ -39,6 +39,7 @@ int main(int argc, char** argv)
 	double M12, M23;
 	double S12, S13, S23;
 	double dCP;
+	std::string baseName;
 
 	cd->Get("M12", M12);
 	cd->Get("M23", M23);
@@ -46,6 +47,7 @@ int main(int argc, char** argv)
 	cd->Get("S13", S13);
 	cd->Get("S23", S23);
 	cd->Get("dCP", dCP);
+	cd->Get("name", baseName);
 
 	Oscillator *osc = new Oscillator(densityFile);
 	osc->SetMasses<Oscillator::normal>(M12, M23);
@@ -162,15 +164,6 @@ int main(int argc, char** argv)
 	std::string baseOut, corrMatrix;
 	cd->Get("base", baseOut);
 
-	std::vector<double> mii;
-	if (cd->Get("correlation", corrMatrix) && !corrMatrix.empty())
-	{
-		TFile corrFile(corrMatrix.c_str());
-		TMatrixD &covmat = *((TMatrixD*) corrFile.Get("all"));
-		for (int i = 45; i < covmat.GetNcols(); ++i)
-			mii.push_back(covmat[i][i]);
-	}
-
 	//load systematics in map
 	std::map<std::string, TFile*> sysFile;
 	std::map<std::string, TH1D*>::iterator it;
@@ -183,7 +176,7 @@ int main(int argc, char** argv)
 		sysFile[it->first] = new TFile(fileName.c_str());
 	}
 
-	std::string texName = baseOut + "sys_variation.tex";
+	std::string texName = baseOut + baseName + "_sys_variation.tex";
 	std::ofstream tout(texName.c_str());
 	beginDocument(tout);
 
@@ -240,12 +233,11 @@ int main(int argc, char** argv)
 				for (is = spline.begin(); is != spline.end(); ++is)
 					hsys[is->first] = static_cast<TH1D*>(sysFile[it->first]->Get(is->second.c_str()));
 
-				std::string name = it->first + "_" + sysname;
+				std::string name = baseName + "_" + it->first + "_" + sysname;
 				std::ofstream fout(name.c_str());
 				fout << "# " << sysname << ", " << k->GetTitle() << std::endl;
 				std::cout << "look:  " << name << ", " << k->GetTitle() << std::endl;
 
-				double norm = (mii.size() && mii[sN] > 0) ? std::sqrt(mii[sN]) : 1.0;
 				//-3, -1, 1, 3, sigmas
 				for (int b = 1; b < it->second->GetNbinsX()+1; ++b)
 				{
@@ -254,9 +246,9 @@ int main(int argc, char** argv)
 					{
 						double yn;
 						if (isSpline)
-							yn = 1 + (hsys[sigma]->GetBinContent(b) - 1) / norm;
+							yn = 1 + (hsys[sigma]->GetBinContent(b) - 1);
 						else
-							yn = 1 + sigma * (hsys[1]->GetBinContent(b) - 1) / norm;
+							yn = 1 + sigma * (hsys[1]->GetBinContent(b) - 1);
 
 						//double yn = 1 + sigma * (hsys->GetBinContent(b) - 1);
 						fout << "\t" << yn * it->second->GetBinContent(b);
@@ -266,9 +258,9 @@ int main(int argc, char** argv)
 					{	// remove 1!
 						double yn;
 						if (isSpline)
-							yn = 1 + (hsys[sigma]->GetBinContent(b) - 1) / norm;
+							yn = 1 + (hsys[sigma]->GetBinContent(b) - 1);
 						else
-							yn = 1 + sigma * (hsys[1]->GetBinContent(b) - 1) / norm;
+							yn = 1 + sigma * (hsys[1]->GetBinContent(b) - 1);
 
 						//double yn = 1 + sigma * (hsys->GetBinContent(b) - 1);
 						fout << "\t" << yn;
@@ -285,7 +277,7 @@ int main(int argc, char** argv)
 					up << 10.0;
 
 				std::string cmd = "gnuplot -e \'dataset=\"" + name +
-						  "\"\' -e \'up=" + up.str() + "\' both.glp";
+						  "\"\' -e \'up=" + up.str() + "\' ereco.glp";
 				std::cout << "Call " << cmd << std::endl;
 				system(cmd.c_str());
 				std::string move = "mv " + name + "* " + baseOut + "/";
@@ -305,7 +297,8 @@ int main(int argc, char** argv)
 	tout.close();
 
 	chdir(baseOut.c_str());
-	system("pdflatex sys_variation.tex");
+	std::string cmd = "pdflatex " + baseName + "_sys_variation.tex";
+	system(cmd.c_str());
 
 	delete f1;
 

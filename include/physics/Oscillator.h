@@ -13,6 +13,7 @@
 #include <complex>
 
 #include "tools/Const.h"
+#include "tools/CardDealer.h"
 #include "physics/Flavours.h"
 
 #include "Eigen/Dense"
@@ -42,6 +43,10 @@ class Oscillator
 			   int numDimension = 3);
 		Oscillator(const std::string &densityFile,
 			   int numDimension = 3);
+		Oscillator(CardDealer *cd,
+			   int numDimension = 3);
+
+		void GetDensity(const std::string &densityFile);
 
 		void DefineMatter(const std::vector<double> &lengths,
 				  const std::vector<double> &densities);

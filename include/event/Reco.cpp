@@ -90,7 +90,7 @@ void Reco::Scale(std::string name, TH1D* h, char axis)
 		for (int iy = 1; iy < ax1->GetNbins()+1; ++iy)
 		{
 			Get(name)->SetBinContent(ix, iy, Get(name)->GetBinContent(ix, iy) * cn);
-			cc += Get(name)->GetBinContent(ix, iy);
+			//cc += Get(name)->GetBinContent(ix, iy);
 		}
 	}
 }

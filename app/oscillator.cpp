@@ -17,17 +17,19 @@
 void output(std::ofstream &out, std::map<std::string, double> &mInt);
 int main(int argc, char** argv)
 {
-	std::string cardFile = argv[1];
+	int firstFile = atoi(argv[1]);
+	int lastFile  = atoi(argv[2]);
+
+	std::string cardFile = argv[3];
 
 	CardDealer *cd = new CardDealer(cardFile);
 
 	std::string treeName, files, outname;
-	double firstFile, lastFile;
 	cd->Get("tree", treeName);
 	cd->Get("input", files);
 	cd->Get("output", outname);
-	cd->Get("first", firstFile);
-	cd->Get("last", lastFile);
+	//cd->Get("first", firstFile);
+	//cd->Get("last", lastFile);
 
 	std::string mode[6] = {"nuE0_nuE0", "nuM0_nuM0", "nuM0_nuE0", "nuEB_nuEB", "nuMB_nuMB", "nuMB_nuEB"};
 	std::string chan[6] = {"E_CCQE", "M_CCQE", "E_CCnQE", "M_CCnQE", "E_NC", "M_NC"};
@@ -145,9 +147,14 @@ int main(int argc, char** argv)
 
 			if (dCP != _dCP)
 			{
-				std::cout << "dCP --- " << dCP << std::endl;
+				//std::cout << "dCP --- " << dCP << std::endl;
 				_dCP = dCP;
 			}
+
+			//std::cout << "dCP : " << dCP << "   ,   ";
+			//std::cout << "M23 : " << M23 << "   ,   ";
+			//std::cout << "S13 : " << S13 << "   ,   ";
+			//std::cout << "S23 : " << S23 << std::endl;
 
 			//copy atmospheric
 			memcpy(newmc, mcBins,      sizeof(double) * nBinAtm);
@@ -193,7 +200,9 @@ int main(int argc, char** argv)
 					fluxHK->Add(f1);	//filled with ones
 					fluxKD->Add(f1);	//filled with ones
 
+					//std::cout << fnameHK << std::endl;
 					oscHK->Oscillate(fin[im], fout[im], fluxHK);
+					//std::cout << fnameKD << std::endl;
 					oscKD->Oscillate(fin[im], fout[im], fluxKD);
 
 					Reco *recoHK = new Reco(*vReco.at(jj));

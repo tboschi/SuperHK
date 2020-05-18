@@ -11,7 +11,6 @@ shift $((OPTIND-1))
 
 root=${root%/}
 root=$root/systematics
-name=$@
 echo $root
 
 fhc1Re_i=$root/1Re.*.t2k.root
@@ -58,5 +57,9 @@ do
 	echo ${matrix[@]}
 done
 
-./bin/addmatrix ${matrix[@]}
-mv combinedmatrix.root $root
+if [ ${#matrix[@]} -eq 0 ]; then
+	echo "Nothing else to do"
+else
+	./bin/addmatrix ${matrix[@]}
+	mv combinedmatrix.root $root
+fi

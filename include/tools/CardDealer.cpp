@@ -1,40 +1,44 @@
 #include "CardDealer.h"
 
-CardDealer::CardDealer(std::string cardFile) :
-	kVerbosity(Utils::verbosity)
+CardDealer::CardDealer(std::string cardFile, bool verb) :
+	kVerbosity(verb)
 {
 	ReadCard(cardFile);
 }
 
-bool CardDealer::Status()
+CardDealer::CardDealer(char *filename, bool verb) :
+	kVerbosity(verb)
 {
-	return kStatus;
+	std::string cardFile(filename);
+	ReadCard(cardFile);
 }
 
 bool CardDealer::ReadCard(const std::string cardFile)
 {
-	mKeyDouble.clear();
-	mKeyString.clear();
+	key_doubles.clear();
+	key_strings.clear();
 
 	std::ifstream inFile(cardFile.c_str());
 	
 	if(!inFile.is_open())
 	{
 		std::cerr << "CardDealer::ReadCard " << cardFile << " does not exist." << std::endl; 
-		kStatus = false;
+		return false;
 	}
-	else
+	else if (kVerbosity)
 		std::cout << "CardDealer::ReadCard reading input from " << cardFile << std::endl;
 
    	unsigned int nLine = 0;
 	std::string line;
 	while (std::getline(inFile, line))
 	{
+		++nLine;
 		if (kVerbosity)
 			std::cout << "CardDealer::ReadCard reading line " << nLine << ": " << line << std::endl;
+
 		std::string key, token;
-		std::vector<double> vArray;
-		++nLine;
+		std::vector<double> numbers;
+		std::vector<std::string> words;
 
 		//removes all comments (anything after #)
 		if (line.find_first_of('#') != std::string::npos)
@@ -44,24 +48,51 @@ bool CardDealer::ReadCard(const std::string cardFile)
 			continue;
 
 		std::stringstream ssl(line);
-		
-		if (std::isalpha(ssl.peek()))	//first character of key must be a letter
-			ssl >> key;
-		else
+		ssl >> key;	//key is first word
+
+		if (!ssl && kVerbosity)	//end of line
 		{
-			std::cout << char(ssl.peek()) << "\t" << ssl.str() << std::endl;
-			std::cerr << "CardDealer::ReadCard line " << nLine << ": irregular first character. Skipping." << std::endl;
-			kStatus = false;
+			std::cout << "CardDealer::ReadCard key " << key << " has empty argument" << std::endl;
 			continue;
 		}
 
+		std::getline(ssl, token);
+		trim(token);	//trim white spaces
 
-		while (std::isspace(ssl.peek()))	//or isblank? move to first non-blank character
-			ssl.ignore();
+		ssl.clear();
+		ssl.str("");
+		ssl << token;
 
-		if (ssl.peek() == '{' || ssl.peek() == '\"')	//accepted characters for strings and arrays
-			ssl.ignore();
+		while (ssl)	//while not end of line
+		{
+			//check if start of string, delimited by "..." or '...'
+			if (ssl.peek() == '\'' || ssl.peek() == '\"')
+			{
+				char end = ssl.peek();
+				ssl.ignore();
 
+				std::string word;
+				std::getline(ssl, word, end);
+				if (ssl.fail())
+					break;
+				words.push_back(word);
+			}
+			//check if digit
+			else if (std::isdigit(ssl.peek()) || ssl.peek() == '-'
+				     || ssl.peek() == '+' || ssl.peek() == '.')
+			{
+				double value;
+				ssl >> value;
+				if (ssl.fail())
+					break;
+				numbers.push_back(value);
+			}
+			else
+				ssl.ignore();
+		}
+
+
+		/*
 		bool isString = true;
 		if (ssl.peek() == '.')		//line starting with . can be (e.g. ./)  or a double (e.g. .0321 )
 		{
@@ -91,55 +122,64 @@ bool CardDealer::ReadCard(const std::string cardFile)
 					vArray.push_back(value);
 			}
 		}
+		*/
 
-		if (kVerbosity)
-			std::cout << "CardDealer::ReadCard obtained key \"" << key << "\"" << std::endl;
 
 		if (!key.empty())
 		{
-			if (!token.empty())
-				mKeyString[key] = token;
-			else if (vArray.size())
-				mKeyDouble[key] = vArray;
+			if (kVerbosity)
+				std::cout << "CardDealer::ReadCard obtained key " << key << " and ";
+
+			if (words.size())
+			{
+				if (kVerbosity)
+					std::cout << "strings" << std::endl;
+				key_strings[key] = words;
+			}
+			else if (numbers.size())
+			{
+				if (kVerbosity)
+					std::cout << "doubles" << std::endl;
+				key_doubles[key] = numbers;
+			}
 		}
 	}
-
-	kStatus = true;
 }
 
 bool CardDealer::Find(const std::string key)
 {
-	return (mKeyString.count(key) + mKeyDouble.count(key)) > 0;
+	return (key_strings.count(key) + key_doubles.count(key)) > 0;
 }
 
-bool CardDealer::Get(const std::string key, std::vector<double>& vv)
-{
-	imd = mKeyDouble.find(key);
 
-	if (imd != mKeyDouble.end())
+////////////// get first value
+
+//get first int
+bool CardDealer::Get(const std::string key, int &ii)
+{
+	double dd;
+	if (Get(key, dd))
 	{
-		vv = imd->second;
+		ii = int(dd);
 		return true;
 	}
 	else
-	{
-		if( kVerbosity )
-			std::cerr << "CardDealer::Get \"" << key << "\" not found" << std::endl;
 		return false;
-	}
 }
 
+
+//get first double
 bool CardDealer::Get(const std::string key, double &dd)
 {
-	imd = mKeyDouble.find(key);
+	imd = key_doubles.find(key);
 
-	if (imd != mKeyDouble.end())
+	if (imd != key_doubles.end())
 	{
-		std::vector<double> vArray = imd->second;
-		if (vArray.size() > 1 && kVerbosity)
+		std::vector<double> values = imd->second;
+		if (values.size() > 1 && kVerbosity)
 			std::cerr << "CardDealer::Get \"" << key << "\" not a single value!" << std::endl;
 
-		dd = vArray.front();
+		dd = values.front();
 		return true;
 	}
 	else
@@ -150,13 +190,17 @@ bool CardDealer::Get(const std::string key, double &dd)
 	}
 }
 
+//get first string
 bool CardDealer::Get(const std::string key, std::string & ss)
 {
-	ims = mKeyString.find(key);
+	ims = key_strings.find(key);
 
-	if (ims != mKeyString.end())
+	if (ims != key_strings.end())
 	{
-		ss = ims->second;
+		std::vector<std::string> values = ims->second;
+		if (values.size() > 1 && kVerbosity)
+			std::cerr << "CardDealer::Get \"" << key << "\" not a single value!" << std::endl;
+		ss = values.front();
 		return true;
 	}
 	else
@@ -167,20 +211,115 @@ bool CardDealer::Get(const std::string key, std::string & ss)
 	}
 }
 
-//build list of string
-bool CardDealer::Get(const std::string subKey, std::map<std::string, std::vector<double> >& mv)
+////////////// get vectors
+
+//get vector of int
+bool CardDealer::Get(const std::string key, std::vector<int>& vi)
+{
+	std::vector<double> vd;
+	std::vector<double>::iterator id;
+
+	if (Get(key, vd))
+	{
+		vi.clear();
+		for (id = vd.begin(); id != vd.end(); ++id)
+			vi.push_back(int(*id));
+		return true;
+	}
+	else
+		return false;
+}
+
+//get vector of double
+bool CardDealer::Get(const std::string key, std::vector<double>& vd)
+{
+	imd = key_doubles.find(key);
+
+	if (imd != key_doubles.end())
+	{
+		vd.insert(vd.end(), imd->second.begin(), imd->second.end());
+		return true;
+	}
+	else
+	{
+		if( kVerbosity )
+			std::cerr << "CardDealer::Get \"" << key << "\" not found" << std::endl;
+		return false;
+	}
+}
+
+//get vector of strings
+bool CardDealer::Get(const std::string key, std::vector<std::string>& vs)
+{
+	ims = key_strings.find(key);
+
+	if (ims != key_strings.end())
+	{
+		vs.insert(vs.end(), ims->second.begin(), ims->second.end());
+		return true;
+	}
+	else
+	{
+		if( kVerbosity )
+			std::cerr << "CardDealer::Get \"" << key << "\" not found" << std::endl;
+		return false;
+	}
+}
+
+
+////////////// get map of vectors
+
+//build map of vectors of int
+bool CardDealer::Get(const std::string key, std::map<std::string, std::vector<int> >& mi)
+{
+	mi.clear();
+
+	if(kVerbosity)
+		std::cout << "CardDealer::Get looking for substring \"" << key << "\"" << std::endl;
+
+	for (imd = key_doubles.begin(); imd != key_doubles.end(); ++imd)
+	{
+		if (imd->first.find(key) != std::string::npos)	//found subkey
+		{
+			std::vector<int> vi;
+			Get(imd->first, vi);
+
+			std::string newKey = imd->first;
+			newKey.erase(0, key.length());
+			mi[newKey] = vi;
+
+			if(kVerbosity)
+			{
+				std::cout << "CardDealer::Get found \"" << imd->first << "\"" << std::endl;
+				std::cout << "            created new key \"" << newKey << "\"" << std::endl;
+			}
+		}
+	}
+
+	if (mi.size())
+		return true;
+	else
+	{
+		if(kVerbosity)
+			std::cerr << "CardDealer::Get \"" << key << "\" not found" << std::endl;
+		return false;
+	}
+}
+
+//build map of vectors of double
+bool CardDealer::Get(const std::string key, std::map<std::string, std::vector<double> >& mv)
 {
 	mv.clear();
 
 	if(kVerbosity)
-		std::cout << "CardDealer::Get looking for substring \"" << subKey << "\"" << std::endl;
+		std::cout << "CardDealer::Get looking for substring \"" << key << "\"" << std::endl;
 
-	for (imd = mKeyDouble.begin(); imd != mKeyDouble.end(); ++imd)
+	for (imd = key_doubles.begin(); imd != key_doubles.end(); ++imd)
 	{
-		if (imd->first.find(subKey) != std::string::npos)	//found subkey
+		if (imd->first.find(key) != std::string::npos)	//found subkey
 		{
 			std::string newKey = imd->first;
-			newKey.erase(0, subKey.length());
+			newKey.erase(0, key.length());
 			mv[newKey] = imd->second;
 
 			if(kVerbosity)
@@ -196,24 +335,99 @@ bool CardDealer::Get(const std::string subKey, std::map<std::string, std::vector
 	else
 	{
 		if(kVerbosity)
-			std::cerr << "CardDealer::Get \"" << subKey << "\" not found" << std::endl;
+			std::cerr << "CardDealer::Get \"" << key << "\" not found" << std::endl;
 		return false;
 	}
 }
 
-bool CardDealer::Get(const std::string subKey, std::map<std::string, double>& mv)
+//build map of vectors of strings
+bool CardDealer::Get(const std::string key, std::map<std::string, std::vector<std::string> >& ms)
+{
+	ms.clear();
+
+	if(kVerbosity)
+		std::cout << "CardDealer::Get looking for substring \"" << key << "\"" << std::endl;
+
+	for (ims = key_strings.begin(); ims != key_strings.end(); ++ims)
+	{
+		if (ims->first.find(key) != std::string::npos)	//found subkey
+		{
+			std::string newKey = ims->first;
+			newKey.erase(0, key.length());
+			ms[newKey] = ims->second;
+
+			if(kVerbosity)
+			{
+				std::cout << "CardDealer::Get found \"" << ims->first << "\"" << std::endl;
+				std::cout << "            created new key \"" << newKey << "\"" << std::endl;
+			}
+		}
+	}
+
+	if (ms.size())
+		return true;
+	else
+	{
+		if(kVerbosity)
+			std::cerr << "CardDealer::Get \"" << key << "\" not found" << std::endl;
+		return false;
+	}
+}
+
+
+//////////// get map of first objects
+
+//build map of first doubles
+bool CardDealer::Get(const std::string key, std::map<std::string, int>& mi)
+{
+	mi.clear();
+
+	if(kVerbosity)
+		std::cout << "CardDealer::Get looking for substring \"" << key << "\"" << std::endl;
+
+	for (imd = key_doubles.begin(); imd != key_doubles.end(); ++imd)
+	{
+		if (imd->first.find(key) != std::string::npos)	//found subkey
+		{
+			std::string newKey = imd->first;
+			newKey.erase(0, key.length());
+
+			int ii;
+			Get(imd->first, ii);
+			mi[newKey] = ii;
+
+			if(kVerbosity)
+			{
+				std::cout << "CardDealer::Get found \"" << imd->first << "\"" << std::endl;
+				std::cout << "            created new key \"" << newKey << "\"" << std::endl;
+			}
+		}
+	}
+
+	if (mi.size())
+		return true;
+	else
+	{
+		if(kVerbosity)
+			std::cerr << "CardDealer::Get \"" << key << "\" not found" << std::endl;
+		return false;
+	}
+}
+
+//build map of first doubles
+bool CardDealer::Get(const std::string key, std::map<std::string, double>& mv)
 {
 	mv.clear();
 
 	if(kVerbosity)
-		std::cout << "CardDealer::Get looking for substring \"" << subKey << "\"" << std::endl;
+		std::cout << "CardDealer::Get looking for substring \"" << key << "\"" << std::endl;
 
-	for (imd = mKeyDouble.begin(); imd != mKeyDouble.end(); ++imd)
+	for (imd = key_doubles.begin(); imd != key_doubles.end(); ++imd)
 	{
-		if (imd->first.find(subKey) != std::string::npos)	//found subkey
+		if (imd->first.find(key) != std::string::npos)	//found subkey
 		{
 			std::string newKey = imd->first;
-			newKey.erase(0, subKey.length());
+			newKey.erase(0, key.length());
 			mv[newKey] = imd->second.front();
 
 			if(kVerbosity)
@@ -229,25 +443,26 @@ bool CardDealer::Get(const std::string subKey, std::map<std::string, double>& mv
 	else
 	{
 		if(kVerbosity)
-			std::cerr << "CardDealer::Get \"" << subKey << "\" not found" << std::endl;
+			std::cerr << "CardDealer::Get \"" << key << "\" not found" << std::endl;
 		return false;
 	}
 }
 
-bool CardDealer::Get(const std::string subKey, std::map<std::string, std::string>& ms)
+//build map of first strings
+bool CardDealer::Get(const std::string key, std::map<std::string, std::string>& ms)
 {
 	ms.clear();
 
 	if(kVerbosity)
-		std::cout << "CardDealer::Get looking for substring \"" << subKey << "\"" << std::endl;
+		std::cout << "CardDealer::Get looking for substring \"" << key << "\"" << std::endl;
 
-	for (ims = mKeyString.begin(); ims != mKeyString.end(); ++ims)
+	for (ims = key_strings.begin(); ims != key_strings.end(); ++ims)
 	{
-		if (ims->first.find(subKey) != std::string::npos)	//found subkey
+		if (ims->first.find(key) != std::string::npos)	//found subkey
 		{
 			std::string newKey = ims->first;
-			newKey.erase(0, subKey.length());
-			ms[newKey] = ims->second;
+			newKey.erase(0, key.length());
+			ms[newKey] = ims->second.front();
 
 			if(kVerbosity)
 			{
@@ -262,231 +477,40 @@ bool CardDealer::Get(const std::string subKey, std::map<std::string, std::string
 	else
 	{
 		if(kVerbosity)
-			std::cerr << "CardDealer::Get \"" << subKey << "\" not found" << std::endl;
+			std::cerr << "CardDealer::Get \"" << key << "\" not found" << std::endl;
 		return false;
 	}
 }
 
-std::vector<std::string> CardDealer::ListKeys()
+
+
+std::vector<std::string> CardDealer::ListStringKeys()
 {
 	std::vector<std::string> vKeys;
 
-	for (ims = mKeyString.begin(); ims != mKeyString.end(); ++ims)
+	for (ims = key_strings.begin(); ims != key_strings.end(); ++ims)
 		vKeys.push_back(ims->first);
-
-	for (imd = mKeyDouble.begin(); imd != mKeyDouble.end(); ++imd)
-		vKeys.push_back(imd->first);
 
 	return vKeys;
 }
 
 
-/*
-
-void CardReader::BuildBinMap()
+std::vector<std::string> CardDealer::ListDoubleKeys()
 {
+	std::vector<std::string> vKeys;
 
-   std::string key;
-   std::string binname;
-   std::string::size_type loc=0;  
+	for (imd = key_doubles.begin(); imd != key_doubles.end(); ++imd)
+		vKeys.push_back(imd->first);
 
-   double * edges;
-   int nbins;
-
-   int counter = 0;
-   for( iSMap  = StringKeys.begin() ; iSMap != StringKeys.end() ; iSMap++ )
-   {
-       key = iSMap->first;
-       loc = key.find("bin_", 0 , 4);       
-
-       if( loc == std::string::npos ) continue;
-
-       // expect the prefix to be at the beginning(duh)
-       binname = key.substr( loc + 4 );
-
-       //std::cout << "Key: " << key << " " << binname << std::endl;
-       nbins = ParseArray( iSMap->second , "," , &edges ); 
-       //std::cout <<  binname << " " << nbins<< " " << " " << edges[0] << " " << edges[1] << " " << edges[nbins] << std::endl;
-
-       bins   [ binname       ] = &edges[0];        
-       bintype[ int(edges[1]) ] = binname;        
-
-       counter++;
-   }
-
-
+	return vKeys;
 }
 
-
-void CardReader::BuildDimensionMap()
+std::vector<std::string> CardDealer::ListKeys()
 {
+	std::vector<std::string> sKeys = ListStringKeys();
+	std::vector<std::string> dKeys = ListDoubleKeys();
 
+	sKeys.insert(sKeys.end(), dKeys.begin(), dKeys.end());
 
-   std::string key;
-   std::string binname;
-   std::string::size_type loc;  
-
-   std::vector < std::string > tokens;
-   std::vector < std::string > sub_tokens;
-   int ntokens;
-   int nsubtokens;
-
-   double * edges;
-   int nbins;
-
-   int counter = 0;
-   for( iSMap  = StringKeys.begin() ; iSMap != StringKeys.end() ; iSMap++ )
-   {
-       key = iSMap->first;
-       loc = key.find("dimension_");       
-
-       if( loc == std::string::npos ) continue;
-
-       // expect the prefix to be at the beginning(duh)
-       binname = key.substr( loc + 10 );
-
-       // split into bin_type_1 (cut_type_1): bin_type_2 (cut_type_2)
-       ntokens = Tokenize( iSMap->second , ":" , tokens );
-
-       //simple tokenize
-       for( int i = 0 ; i < ntokens ; i++ )
-       {
-          nsubtokens = Tokenize( tokens[i],"()", sub_tokens );    
-          
-
-       }
-
-       counter++;
-   }
-
-
+	return sKeys;
 }
-
-void CardReader::Erase( std::string & source, const std::string& kill, std::string::size_type l0 )
-{
-
-   std::string::size_type loc0 = source.find( kill, l0 );
-  
-   while( loc0 != std::string::npos )
-   {
-      source.erase( loc0, 1);
-      loc0 = source.find(kill, loc0);
-   }
-
-
-}
-
-
-
-unsigned int CardReader::Tokenize(const std::string& source,
-                                        const std::string& delimiters,
-                                        std::vector<std::string>& tokens)
-{
-    std::string::size_type prev_loc0 = 0;
-    std::string::size_type loc0 = 0;
-    std::string::size_type loc1 = 0;
-    std::string sub;
-    unsigned int ntokens = 0;
-
-    tokens.clear();
-
-    loc0 = source.find_first_of(delimiters, loc0);
-    while (loc0 != std::string::npos)
-    {
-
-        sub = source.substr(prev_loc0, loc0 - prev_loc0);
-
-        tokens.push_back( sub ) ;
-        ntokens++;
-
-
-        loc0++;
-        prev_loc0 = loc0;
-        loc0 = source.find_first_of(delimiters, loc0);
-    }
-
-
-    if (prev_loc0 < source.length())
-    {
-        tokens.push_back(source.substr(prev_loc0));
-        ntokens++;
-    }
-
-    return ntokens;
-}
-
-
-
-
-double * CardReader::GetBinsForType( int a )
-{
-
-   return bins[ bintype[a] ];
-
-
-}
-
-
-void CardReader::MakeStringTokens( TString * line, const char * D , std::vector< TString *> & data )
-{
-    unsigned i;
-    for( i = 0 ; i < data.size() ; i++ )
-       if( data[i] )
-         delete data[i]; 
-    data.clear();
-
-
-    TObjArray * tokens = line->Tokenize(D);
-    unsigned size = tokens->GetEntries();
-
-    TObjString * s;
-    for( i = 0 ; i < size ; i++ )
-    {
-       s = (TObjString*) tokens->At(i);
-       if( s->GetString().Length() > 0 )
-          data.push_back( new TString( s->GetString().ReplaceAll(" ",1) ) );
-    }
-
-}
-
-
-void CardReader::Replace( std::string & source, const std::string & kill , 
-                                                const std::string & rep  , std::string::size_type l0 )
-{
-
-   std::string::size_type loc0 = source.find( kill, l0 );
-  
-   while( loc0 != std::string::npos )
-   {
-      source.replace( loc0, kill.length(), rep );
-      loc0 = source.find(kill, loc0);
-   }
-
-}
-
-
-TokenMap * CardReader::BuildTokenMap( const char * skey, const char * delim  )
-{
-   
-   std::map< std::string, std::string > aMap;
-   std::map< std::string, std::string >::iterator _i;
-   std::vector < std::string > tokens;      
-   int ntokens;
-
-   TokenMap * tokenMap = new TokenMap( skey );
-
-   BuildListOfStrings( skey, aMap ); 
-  
-   for( _i = aMap.begin() ; _i != aMap.end() ; _i++ )
-   {
-      tokens.clear();
-      ntokens = Tokenize( _i->second , delim , tokens );   
-     
-      tokenMap->AddTokenList( _i->first.c_str() , ntokens, tokens ); 
-   } 
-
-
-  return tokenMap;
-}
-
-*/

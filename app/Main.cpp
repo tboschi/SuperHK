@@ -2,7 +2,6 @@
 
 #include "CardDealer.h"
 #include "FileRecord.h"
-#include "DataManager.h"
 #include "EventParser.h"
 #include "Oscillator.h"
 

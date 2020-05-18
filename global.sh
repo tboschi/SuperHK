@@ -2,10 +2,7 @@
 
 #run GlobalOsc efficiently
 
-Osc=/home/tboschi/OscAna/hk.atm+beam/submitOsc.sh
-JM=/home/tboschi/jobManager
-Queue=$JM/submitToQueue.sh
-MAX_JOBS=500
+Exec=/data/tboschi/HKsens/OscAna/hk.atm+beam/bin/GlobalOsc
 
 global=""
 
@@ -25,7 +22,8 @@ global=${global%/}
 mkdir -p $global/$MH/global
 
 cp $global/*.card $global/$MH/global/global.card
-card=$global/$MH/global/global.card
+global=$global/$MH/global
+card=$global/global.card
 
 #name=$(grep OutputOscFile $card | cut -d'"' -f2)
 #output=${name%.*}
@@ -38,25 +36,41 @@ else
 	sed -i "s:InvertedHierarchy.*:InvertedHierarchy 1:" $card
 fi
 
-rm $JM/*.list
+nameExec=${Exec##*Global}
+rm -f $global/L$nameExec*log
+scriptname=$global/'R'$nameExec'.sh'
+MAX_JOBS=300
 
-$Osc $card $global/$MH/global $NFILES
+cat > $scriptname << EOF
+#$ -S /bin/bash
+#$ -N L$nameExec
+#$ -t 1-$NFILES
+#$ -tc $MAX_JOBS
+#$ -o $global/\$JOB_NAME.\$TASK_ID.log
+#$ -j y
 
-queues=(atmpd ALL all lowe calib)
-count=0
-list=$JM/${queues[$count]}.list
-echo 'Submitting to the queue system'
-while [ -s $list ] ; do
-	wcleft=$(wc -l $list)
-	jobsinqueue=$(qstat ${queues[$count]} | grep run | awk '{print $1;}')
-	echo "   jobs left to sumbit : " ${wcleft%%/*}
-	echo "   jobs in " ${queues[$count]} " : " $jobsinqueue
-	$Queue $(expr $MAX_JOBS - $jobsinqueue)
-        count=$(expr $count + 1)
-	count=$(expr $count % ${#queues[@]})
-	echo "count " $count
-	mv $list $JM/${queues[$count]}.list
-	list=$JM/${queues[$count]}.list
-done
+$Exec \$(expr \$SGE_TASK_ID - 1) \$(expr \$SGE_TASK_LAST - \$SGE_TASK_FIRST) $global $card
+EOF
+
+echo qsub -cwd $scriptname
+
+#$Osc $card $global/global $NFILES
+
+#queues=(atmpd ALL all lowe calib)
+#count=0
+#list=$JM/${queues[$count]}.list
+#echo 'Submitting to the queue system'
+#while [ -s $list ] ; do
+#	wcleft=$(wc -l $list)
+#	jobsinqueue=$(qstat ${queues[$count]} | grep run | awk '{print $1;}')
+#	echo "   jobs left to sumbit : " ${wcleft%%/*}
+#	echo "   jobs in " ${queues[$count]} " : " $jobsinqueue
+#	$Queue $(expr $MAX_JOBS - $jobsinqueue)
+#        count=$(expr $count + 1)
+#	count=$(expr $count % ${#queues[@]})
+#	echo "count " $count
+#	mv $list $JM/${queues[$count]}.list
+#	list=$JM/${queues[$count]}.list
+#done
 
 echo "global finished"

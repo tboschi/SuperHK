@@ -9,12 +9,30 @@ Oscillator::Oscillator(const std::vector<double> &lengths, const std::vector<dou
 	transM = Eigen::MatrixXcd::Identity(nDim, nDim);
 }
 
+Oscillator::Oscillator(CardDealer *cd, int numDimension) :
+	nDim(numDimension)
+{
+	std::string densityFile;
+	cd->Get("density_profile", densityFile);
+	GetDensity(densityFile);
+
+	transM = Eigen::MatrixXcd::Identity(nDim, nDim);
+}
+
 Oscillator::Oscillator(const std::string &densityFile, int numDimension) :
 	nDim(numDimension)
+{
+	GetDensity(densityFile);
+
+	transM = Eigen::MatrixXcd::Identity(nDim, nDim);
+}
+
+void Oscillator::GetDensity(const std::string &densityFile)
 {
 	std::ifstream inf(densityFile);
 	std::string line;
 	double ll, dd;
+	//std::cout << "Reading " << densityFile << std::endl;
 	while(std::getline(inf, line))
 	{
 		if (line.find_first_of('#') != std::string::npos)
@@ -28,10 +46,9 @@ Oscillator::Oscillator(const std::string &densityFile, int numDimension) :
 		{
 			vLength.push_back(ll);
 			vDensity.push_back(dd);
+			//std::cout << ll << ", " << dd << std::endl;
 		}
 	}
-
-	transM = Eigen::MatrixXcd::Identity(nDim, nDim);
 }
 
 void Oscillator::DefineMatter(const std::vector<double> &lengths, const std::vector<double> &densities)
@@ -62,6 +79,7 @@ double Oscillator::Probability(Nu in, Nu out, double energy)
 	Eigen::MatrixXd tM = TransitionMatrix(energy).cwiseAbs2();
 	//std::vector<double> tV(tM.data(), tM.data() + tM.size());
 	//std::cout << "Matrix " << tM(oFlav, iFlav) << "\tvector " << tV.at(nEntr) << std::endl;
+	//std::cout << "Matrix\n" << tM << std::endl << std::endl;
 	//return tV.at(nEntr);
 	return tM(oFlav, iFlav);
 
@@ -94,6 +112,7 @@ void Oscillator::Oscillate(Nu in, Nu out, TH1D* h)
 		//	continue;
 
 		h->SetBinContent(i, cn * Probability(in, out, en));
+		//std::cout << "bin " << en << " : " << cn << " -> " << h->GetBinContent(i) << std::endl;
 	}
 }
 
@@ -192,7 +211,6 @@ void Oscillator::MatterMatrices(Eigen::MatrixXd &dmMatVac,	//output - mass diff 
 				Eigen::MatrixXd &dmMatMat,	//output - mass diff matter
 				const double &ff)		//density factor
 {
-	//std::cout << "OSC" << std::endl;
 	Eigen::VectorXd vVac = MatterStates(0.0);	//vacuum solutions
 	Eigen::VectorXd vMat = MatterStates(ff);	//matter solutions
   

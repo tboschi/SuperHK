@@ -47,6 +47,7 @@ int main(int argc, char** argv)
 	//std::string name;
 
 	double Epsilons[1000];
+	double Errors[1000];
 	double X2;
 	double OriX2;
 	double Time;
@@ -67,10 +68,18 @@ int main(int argc, char** argv)
 	double S23;
 	double TS23;
 
-	for (int f = 2; f < argc; ++f)
+	std::string output = std::string(argv[2]) + "/.tmp_penalise";
+	std::string cmd = "find " + std::string(argv[2]) +
+			  " -name \"SpaghettiSens.T2HK.*.root\" > " + output;
+	std::cout << cmd << std::endl;
+	system(cmd.c_str());
+
+	std::string file;
+	std::ifstream listExclusion(output.c_str());
+	while (std::getline(listExclusion, file))
+	//for (int f = 2; f < argc; ++f)
 	{
-	//while (std::getline(in, name))
-		TFile *inf = new TFile(argv[f], "READ");
+		TFile *inf = new TFile(file.c_str(), "READ");
 		if (inf->IsZombie())
 		{
 			std::cout << "file doesn't exist\n";
@@ -81,63 +90,126 @@ int main(int argc, char** argv)
 		TTree* error   = static_cast<TTree*>(inf->Get("errorTree"));
 		TTree* sX2_old = static_cast<TTree*>(inf->Get("stepX2Tree"));
 
-		std::string name = argv[f];
-
-		std::cout << "Penalising " << name;
-		int pos = name.find("SpaghettiSens.");
+		std::cout << "Penalising " << file;
+		int pos = file.find("SpaghettiSens.");
 		if (pos != std::string::npos)
-			name.insert(name.find_first_of('.', pos+13), "_penalised"); 
-		std::cout << " into " << name << std::endl;
+			file.insert(file.find_first_of('.', pos+13), "_penalised"); 
+		std::cout << " into " << file << std::endl;
 
-		//name = name.insert(name.find(".0"), "_penalised");
-		TFile *out = new TFile(name.c_str(), "RECREATE");
+		//file = file.insert(file.find(".0"), "_penalised");
+		TFile *out = new TFile(file.c_str(), "RECREATE");
 
 		TTree *sX2_new = sX2_old->CloneTree(0);
 
 		//stepX2Tree *sX2_old = new stepX2Tree(stepX2);
 		//stepX2Tree *sX2_new = new stepX2Tree();
 
-		sX2_old->SetBranchAddress("Epsilons", Epsilons);
-		sX2_old->SetBranchAddress("X2", &X2);
-		sX2_old->SetBranchAddress("OriX2", &OriX2);
-		sX2_old->SetBranchAddress("Time", &Time);
-		sX2_old->SetBranchAddress("SysX2", &SysX2);
-		sX2_old->SetBranchAddress("OriSysX2", &OriSysX2);
-		sX2_old->SetBranchAddress("Point", &Point);
-		sX2_old->SetBranchAddress("TPoint", &TPoint);
-		sX2_old->SetBranchAddress("CP",   &CP);
-		sX2_old->SetBranchAddress("TCP",  &TCP);
-		sX2_old->SetBranchAddress("M12",  &M12);
-		sX2_old->SetBranchAddress("TM12", &TM12);
-		sX2_old->SetBranchAddress("M23",  &M23);
-		sX2_old->SetBranchAddress("TM23", &TM23);
-		sX2_old->SetBranchAddress("S12",  &S12);
-		sX2_old->SetBranchAddress("TS12", &TS12);
-		sX2_old->SetBranchAddress("S13",  &S13);
-		sX2_old->SetBranchAddress("TS13", &TS13);
-		sX2_old->SetBranchAddress("S23",  &S23);
-		sX2_old->SetBranchAddress("TS23", &TS23);
+		if (sX2_old->GetBranch("Epsilons"))
+		{
+			sX2_old->SetBranchAddress("Epsilons", Epsilons);
+			sX2_new->SetBranchAddress("Epsilons", Epsilons);
+		}
+		if (sX2_old->GetBranch("Errors"))
+		{
+			sX2_old->SetBranchAddress("Errors", Errors);
+			sX2_new->SetBranchAddress("Errors", Errors);
+		}
+		if (sX2_old->GetBranch("X2"))
+		{
+			sX2_old->SetBranchAddress("X2", &X2);
+			sX2_new->SetBranchAddress("X2", &X2);
+		}
+		if (sX2_old->GetBranch("OriX2"))
+		{
+			sX2_old->SetBranchAddress("OriX2", &OriX2);
+			sX2_new->SetBranchAddress("OriX2", &OriX2);
+		}
+		if (sX2_old->GetBranch("Time"))
+		{
+			sX2_old->SetBranchAddress("Time", &Time);
+			sX2_new->SetBranchAddress("Time", &Time);
+		}
+		if (sX2_old->GetBranch("SysX2"))
+		{
+			sX2_old->SetBranchAddress("SysX2", &SysX2);
+			sX2_new->SetBranchAddress("SysX2", &SysX2);
+		}
+		if (sX2_old->GetBranch("OriSysX2"))
+		{
+			sX2_old->SetBranchAddress("OriSysX2", &OriSysX2);
+			sX2_new->SetBranchAddress("OriSysX2", &OriSysX2);
+		}
+		if (sX2_old->GetBranch("Point"))
+		{
+			sX2_old->SetBranchAddress("Point", &Point);
+			sX2_new->SetBranchAddress("Point", &Point);
+		}
+		if (sX2_old->GetBranch("TPoint"))
+		{
+			sX2_old->SetBranchAddress("TPoint", &TPoint);
+			sX2_new->SetBranchAddress("TPoint", &TPoint);
+		}
+		if (sX2_old->GetBranch("CP"))
+		{
+			sX2_old->SetBranchAddress("CP",   &CP);
+			sX2_new->SetBranchAddress("CP",   &CP);
+		}
+		if (sX2_old->GetBranch("TCP"))
+		{
+			sX2_old->SetBranchAddress("TCP",  &TCP);
+			sX2_new->SetBranchAddress("TCP",  &TCP);
+		}
+		if (sX2_old->GetBranch("M12"))
+		{
+			sX2_old->SetBranchAddress("M12",  &M12);
+			sX2_new->SetBranchAddress("M12",  &M12);
+		}
+		if (sX2_old->GetBranch("TM12"))
+		{
+			sX2_old->SetBranchAddress("TM12", &TM12);
+			sX2_new->SetBranchAddress("TM12", &TM12);
+		}
+		if (sX2_old->GetBranch("M23"))
+		{
+			sX2_old->SetBranchAddress("M23",  &M23);
+			sX2_new->SetBranchAddress("M23",  &M23);
+		}
+		if (sX2_old->GetBranch("TM23"))
+		{
+			sX2_old->SetBranchAddress("TM23", &TM23);
+			sX2_new->SetBranchAddress("TM23", &TM23);
+		}
+		if (sX2_old->GetBranch("S12"))
+		{
+			sX2_old->SetBranchAddress("S12",  &S12);
+			sX2_new->SetBranchAddress("S12",  &S12);
+		}
+		if (sX2_old->GetBranch("TS12"))
+		{
+			sX2_old->SetBranchAddress("TS12", &TS12);
+			sX2_new->SetBranchAddress("TS12", &TS12);
+		}
+		if (sX2_old->GetBranch("S13"))
+		{
+			sX2_old->SetBranchAddress("S13",  &S13);
+			sX2_new->SetBranchAddress("S13",  &S13);
+		}
+		if (sX2_old->GetBranch("TS13"))
+		{
+			sX2_old->SetBranchAddress("TS13", &TS13);
+			sX2_new->SetBranchAddress("TS13", &TS13);
+		}
+		if (sX2_old->GetBranch("S23"))
+		{
+			sX2_old->SetBranchAddress("S23",  &S23);
+			sX2_new->SetBranchAddress("S23",  &S23);
+		}
+		if (sX2_old->GetBranch("TS23"))
+		{
+			sX2_old->SetBranchAddress("TS23", &TS23);
+			sX2_new->SetBranchAddress("TS23", &TS23);
+		}
 
-		sX2_new->SetBranchAddress("Epsilons", Epsilons);
-		sX2_new->SetBranchAddress("X2", &X2);
-		sX2_new->SetBranchAddress("OriX2", &OriX2);
-		sX2_new->SetBranchAddress("Time", &Time);
-		sX2_new->SetBranchAddress("SysX2", &SysX2);
-		sX2_new->SetBranchAddress("OriSysX2", &OriSysX2);
-		sX2_new->SetBranchAddress("Point", &Point);
-		sX2_new->SetBranchAddress("TPoint", &TPoint);
-		sX2_new->SetBranchAddress("CP",   &CP);
-		sX2_new->SetBranchAddress("TCP",  &TCP);
-		sX2_new->SetBranchAddress("M12",  &M12);
-		sX2_new->SetBranchAddress("TM12", &TM12);
-		sX2_new->SetBranchAddress("M23",  &M23);
-		sX2_new->SetBranchAddress("TM23", &TM23);
-		sX2_new->SetBranchAddress("S12",  &S12);
-		sX2_new->SetBranchAddress("TS12", &TS12);
-		sX2_new->SetBranchAddress("S13",  &S13);
-		sX2_new->SetBranchAddress("TS13", &TS13);
-		sX2_new->SetBranchAddress("S23",  &S23);
-		sX2_new->SetBranchAddress("TS23", &TS23);
 
 		for (int i = 0; i < sX2_old->GetEntries(); ++i)
 		{
@@ -168,8 +240,10 @@ int main(int argc, char** argv)
 		}
 
 		out->cd();
-		axis->CloneTree()->Write();
-		error->CloneTree()->Write();
+		if (axis)
+			axis->CloneTree()->Write();
+		if (error)
+			error->CloneTree()->Write();
 		sX2_new->Write();
 
 

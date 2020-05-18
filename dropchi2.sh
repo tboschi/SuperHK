@@ -1,11 +1,15 @@
 #! /bin/bash
 
-Drop=/home/tboschi/OscAna/SuperHK/bin/dropchi2
-samples=(T2HK)
-root=/home/tboschi/data/
+Chi2=/data/tboschi/HKsens/OscAna/SuperHK/bin/dropchi2
+Sens=/data/tboschi/HKsens/OscAna/SuperHK/bin/dropsens
+root=/data/tboschi/HKsenHK
 
-while getopts 'r:p:n:' flag; do
+#samples=(T2HK)
+
+ff=false
+while getopts 'fr:p:n:' flag; do
 	case "${flag}" in
+		f) ff=true ;;
 		r) root="${OPTARG}" ;;
 		p) point="${OPTARG}" ;;
 		n) name="${OPTARG}" ;;
@@ -17,24 +21,51 @@ shift $((OPTIND-1))
 
 root=${root%/}
 
+if [ "$ff" = true ]; then
+	tgt='gaussian_filter'
+else
+	tgt='gaussian'
+fi
+
 for ss in "$@"
 do
-	sets=("${sets[@]}" "$root/$ss/contours/$point/gaussian.T2HK.root")
+	setchi2=("${setchi2[@]}" "$root/$ss/contours/$point/$tgt.root")
+	setsens=("${setsens[@]}" "$root/$ss/exclusion/$tgt.T2HK.dat")
 done
 
-echo "${sets[@]}"
-$Drop ${sets[@]}
+if [ -s ${setchi2[0]} ] ; then
+	echo "chi2"
+	echo ${setchi2[@]}
+	echo $Chi2 ${setchi2[@]}
+	$Chi2 ${setchi2[@]}
+fi
+
+echo ""
+
+if [ -s ${setsens[0]} ] ; then
+	echo "sens"
+	echo ${setsens[@]}
+	echo $Sens ${setsens[@]}
+	$Sens ${setsens[@]}
+fi
+
+mkdir -p $name
 
 if [ $name ]
 then
-	mv X2minCP_all.dat $name'_X2minCP_all.dat'
-	mv X2minM23_all.dat $name'_X2minM23_all.dat'
-	mv X2minS13_all.dat $name'_X2minS13_all.dat'
-	mv X2minS23_all.dat $name'_X2minS23_all.dat'
-	mv X2minCP_diff.dat $name'_X2minCP_diff.dat'
-	mv X2minM23_diff.dat $name'_X2minM23_diff.dat'
-	mv X2minS13_diff.dat $name'_X2minS13_diff.dat'
-	mv X2minS23_diff.dat $name'_X2minS23_diff.dat'
+	x2file=($(ls X2*.dat))
+
+	for f in ${x2file[@]}; do
+		echo $f
+		mv $f $name/$name'_'$f
+	done
+
+	ssfile=($(ls exclusion_*.dat))
+
+	for f in ${ssfile[@]}; do
+		echo $f
+		mv $f $name/$name'_'$f
+	done
 fi
 
 echo "DONE"
