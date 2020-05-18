@@ -1,6 +1,6 @@
-#include "NewChiSquared.h"
+#include "ChiSquared.h"
 
-NewChiSquared::NewChiSquared(CardDealer *card, int nbins) :
+ChiSquared::ChiSquared(CardDealer *card, int nbins) :
 	cd(card),
 	_nBin(nbins)
 {
@@ -73,13 +73,13 @@ NewChiSquared::NewChiSquared(CardDealer *card, int nbins) :
 	input = "input";
 }
 
-void NewChiSquared::Init()
+void ChiSquared::Init()
 {
 	LoadCorrelation();
 	LoadSystematics();
 }
 
-void NewChiSquared::LoadCorrelation()
+void ChiSquared::LoadCorrelation()
 {
 	std::string matFile, matName;
 	cd->Get("corr_file", matFile);
@@ -123,7 +123,7 @@ void NewChiSquared::LoadCorrelation()
  * If no systematic file is specified in the card, then the matrices are all empty 
  * and it should be like fitting for the stats only, i.e. no fit at all.
  */
-void NewChiSquared::LoadSystematics()
+void ChiSquared::LoadSystematics()
 {
 	sysMatrix.clear();
 	sysMatrix[0] = Eigen::MatrixXd::Zero(kType * NumBin(), NumSys());
@@ -212,7 +212,7 @@ void NewChiSquared::LoadSystematics()
 /*
  * This routine builds the observables as a long vector of NumBin length
  */
-Eigen::VectorXd NewChiSquared::ConstructSpectrum(Oscillator *osc)
+Eigen::VectorXd ChiSquared::ConstructSpectrum(Oscillator *osc)
 {
 	std::string reco_file;
 
@@ -283,7 +283,7 @@ Eigen::VectorXd NewChiSquared::ConstructSpectrum(Oscillator *osc)
 }
 
 
-Eigen::VectorXd NewChiSquared::LoadSpectrum(int pt, std::string from)
+Eigen::VectorXd ChiSquared::LoadSpectrum(int pt, std::string from)
 {
 	if (kVerbosity)
 		std::cout << "passing " << from << std::endl;
@@ -357,7 +357,7 @@ Eigen::VectorXd NewChiSquared::LoadSpectrum(int pt, std::string from)
 	return vect;
 }
 
-bool NewChiSquared::PointInFile(TFile *f, int pt)
+bool ChiSquared::PointInFile(TFile *f, int pt)
 {
 	int Point;
 	double *mcBins;
@@ -378,12 +378,12 @@ bool NewChiSquared::PointInFile(TFile *f, int pt)
 		return false;
 }
 
-int NewChiSquared::NumSys()
+int ChiSquared::NumSys()
 {
 	return corr.cols();
 }
 
-int NewChiSquared::NumBin()
+int ChiSquared::NumBin()
 {
 	if (_nBin > 0)
 		return _nBin;
@@ -403,14 +403,14 @@ int NewChiSquared::NumBin()
 	return _nBin;
 }
 
-int NewChiSquared::DOF()
+int ChiSquared::DOF()
 {
 	return std::abs(kType * NumBin() - NumSys());
 }
 
 //On is the true spectrum, En is the observed spectrum
 //return time taken for computation
-Eigen::VectorXd NewChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::VectorXd &En)
+Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::VectorXd &En)
 {
 	//initialize epsil with zeroes
 
@@ -457,7 +457,7 @@ Eigen::VectorXd NewChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vec
 //uses Levenberg-Marquardt algorithm
 //quites when x2 variation falls below sens and if lambda < 1
 //which means it iconvergin
-bool NewChiSquared::FindMinimum(const Eigen::VectorXd &On, const Eigen::VectorXd &En, 
+bool ChiSquared::FindMinimum(const Eigen::VectorXd &On, const Eigen::VectorXd &En, 
 			     Eigen::VectorXd &epsil)
 			     //double alpha)
 {
@@ -527,7 +527,7 @@ bool NewChiSquared::FindMinimum(const Eigen::VectorXd &On, const Eigen::VectorXd
 }
 
 
-Eigen::VectorXd NewChiSquared::Jacobian(const Eigen::VectorXd &On,
+Eigen::VectorXd ChiSquared::Jacobian(const Eigen::VectorXd &On,
 				      const Eigen::VectorXd &En, 
 				      const Eigen::VectorXd &epsil)
 {
@@ -539,7 +539,7 @@ Eigen::VectorXd NewChiSquared::Jacobian(const Eigen::VectorXd &On,
 }
 
 
-Eigen::MatrixXd NewChiSquared::Hessian(const Eigen::VectorXd &On,
+Eigen::MatrixXd ChiSquared::Hessian(const Eigen::VectorXd &On,
 				     const Eigen::VectorXd &En, 
 				     const Eigen::VectorXd &epsil)
 {
@@ -551,7 +551,7 @@ Eigen::MatrixXd NewChiSquared::Hessian(const Eigen::VectorXd &On,
 	return hes+corr;
 }
 
-void NewChiSquared::JacobianHessian2(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
+void ChiSquared::JacobianHessian2(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 				    const Eigen::VectorXd &On,
 				    const Eigen::VectorXd &En, 
 				    const Eigen::VectorXd &epsil)
@@ -626,7 +626,7 @@ void NewChiSquared::JacobianHessian2(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 
 
 /*
-void NewChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
+void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 				    const Eigen::VectorXd &On,
 				    const Eigen::VectorXd &En, 
 				    const Eigen::VectorXd &epsil)
@@ -715,7 +715,7 @@ void NewChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 
 
 // Inverted hessian
-Eigen::MatrixXd NewChiSquared::Covariance(const Eigen::VectorXd &On,
+Eigen::MatrixXd ChiSquared::Covariance(const Eigen::VectorXd &On,
 					  const Eigen::VectorXd &En,
 					  const Eigen::VectorXd &epsil)
 {
@@ -727,7 +727,7 @@ Eigen::MatrixXd NewChiSquared::Covariance(const Eigen::VectorXd &On,
 }
 
 
-double NewChiSquared::X2(const Eigen::VectorXd &On, const Eigen::VectorXd &En,
+double ChiSquared::X2(const Eigen::VectorXd &On, const Eigen::VectorXd &En,
 		      const Eigen::VectorXd &epsil)
 {
 	return ObsX2(On, En, epsil) + SysX2(epsil);
@@ -736,7 +736,7 @@ double NewChiSquared::X2(const Eigen::VectorXd &On, const Eigen::VectorXd &En,
 
 // epsil is an array with all sigmas including SK energy scale
 // SK energy scale is the first one
-double NewChiSquared::ObsX2(const Eigen::VectorXd &On, const Eigen::VectorXd &En,
+double ChiSquared::ObsX2(const Eigen::VectorXd &On, const Eigen::VectorXd &En,
 			    const Eigen::VectorXd &epsil)
 {
 	// modified expected events with systematics
@@ -753,7 +753,7 @@ double NewChiSquared::ObsX2(const Eigen::VectorXd &On, const Eigen::VectorXd &En
 }
 
 
-std::vector<double> NewChiSquared::ObsX2n(const Eigen::VectorXd &On,
+std::vector<double> ChiSquared::ObsX2n(const Eigen::VectorXd &On,
 				     const Eigen::VectorXd &En,
 				     const Eigen::VectorXd &epsil)
 {
@@ -778,14 +778,14 @@ std::vector<double> NewChiSquared::ObsX2n(const Eigen::VectorXd &On,
 
 
 
-double NewChiSquared::SysX2(const Eigen::VectorXd &epsil)
+double ChiSquared::SysX2(const Eigen::VectorXd &epsil)
 {
 	return epsil.transpose() * corr * epsil;
 }
 
 
 // this return the spectrum modified with the systematics
-Eigen::VectorXd NewChiSquared::Gamma(const Eigen::VectorXd &En,
+Eigen::VectorXd ChiSquared::Gamma(const Eigen::VectorXd &En,
 				     const Eigen::VectorXd &epsil)
 {
 	Eigen::VectorXd gam = En;
@@ -798,7 +798,7 @@ Eigen::VectorXd NewChiSquared::Gamma(const Eigen::VectorXd &En,
 
 
 // this is the derivative of modified spectrum by gamma at given k
-Eigen::MatrixXd NewChiSquared::GammaJac(const Eigen::VectorXd &En,
+Eigen::MatrixXd ChiSquared::GammaJac(const Eigen::VectorXd &En,
 				        const Eigen::VectorXd &epsil)
 {
 	Eigen::MatrixXd gam(En.size(), NumSys());
@@ -812,7 +812,7 @@ Eigen::MatrixXd NewChiSquared::GammaJac(const Eigen::VectorXd &En,
 
 // derive by k-th systematic
 // En is already derived once, so this can be done recursively
-Eigen::VectorXd NewChiSquared::GammaJac(const Eigen::VectorXd &En,
+Eigen::VectorXd ChiSquared::GammaJac(const Eigen::VectorXd &En,
 				        const Eigen::VectorXd &epsil, int k)
 {
 	Eigen::VectorXd gam = En;
@@ -824,7 +824,7 @@ Eigen::VectorXd NewChiSquared::GammaJac(const Eigen::VectorXd &En,
 
 
 //F has the epsilon in it
-double NewChiSquared::F(int k, int n, double eij)
+double ChiSquared::F(int k, int n, double eij)
 {
 	double dl, du;
 
@@ -845,7 +845,7 @@ double NewChiSquared::F(int k, int n, double eij)
 }
 
 //Fp does not have the epsilon in it
-double NewChiSquared::Fp(int k, int n, double eij)
+double ChiSquared::Fp(int k, int n, double eij)
 {
 	double dl, du;
 
@@ -865,7 +865,7 @@ double NewChiSquared::Fp(int k, int n, double eij)
 	return Fp(k, n, dl, du);
 }
 
-double NewChiSquared::Fp(int k, int n, double dl, double du)
+double ChiSquared::Fp(int k, int n, double dl, double du)
 {
 	return (sysMatrix[du](n, k) - sysMatrix[dl](n, k)) / (du - dl);
 }
@@ -874,7 +874,7 @@ double NewChiSquared::Fp(int k, int n, double dl, double du)
 
 // binary search for starting bin
 // makes the computation slightly faster
-int NewChiSquared::StartingBin(int n, double scale)
+int ChiSquared::StartingBin(int n, double scale)
 {
 	double b0_n = _bins[n];
 	double b1_n = _bins[n + 1];
@@ -901,9 +901,9 @@ int NewChiSquared::StartingBin(int n, double scale)
 // Apply energy scale dilation
 // The dilation does not depend on En, therefore 
 // En can be anything
-//double NewChiSquared::Scale(FactorFn factor, const Eigen::VectorXd &En,
+//double ChiSquared::Scale(FactorFn factor, const Eigen::VectorXd &En,
 //			const Eigen::VectorXd &sigma, int t)
-double NewChiSquared::Scale(FactorFn factor, const Eigen::VectorXd &En,
+double ChiSquared::Scale(FactorFn factor, const Eigen::VectorXd &En,
 			double sigma, int t)
 {
 	if (t < 0 || t > kType * NumBin())
@@ -975,7 +975,7 @@ double NewChiSquared::Scale(FactorFn factor, const Eigen::VectorXd &En,
 		//return pow(SKerror / scale, 2) / db * (f / scale - fd)
 	}
 
-	if (factor == &NewChiSquared::ScaleNor
+	if (factor == &ChiSquared::ScaleNor
 	 && n == NumBin() - 1 &&  scale > 1) { //to keep same integral
 		double b0_n = _bins[n];
 		double b1_n = _bins[n + 1];
@@ -992,37 +992,37 @@ double NewChiSquared::Scale(FactorFn factor, const Eigen::VectorXd &En,
 }
 
 
-double NewChiSquared::Scale(const Eigen::VectorXd &En, double sigma, int t)
+double ChiSquared::Scale(const Eigen::VectorXd &En, double sigma, int t)
 {
-	return Scale(&NewChiSquared::ScaleNor, En, sigma, t);
+	return Scale(&ChiSquared::ScaleNor, En, sigma, t);
 }
 
 
-double NewChiSquared::ScaleJac(const Eigen::VectorXd &En, double sigma, int t)
+double ChiSquared::ScaleJac(const Eigen::VectorXd &En, double sigma, int t)
 {
-	return Scale(&NewChiSquared::ScaleJac, En, sigma, t);
+	return Scale(&ChiSquared::ScaleJac, En, sigma, t);
 }
 
 
-double NewChiSquared::ScaleHes(const Eigen::VectorXd &En, double sigma, int t)
+double ChiSquared::ScaleHes(const Eigen::VectorXd &En, double sigma, int t)
 {
-	return Scale(&NewChiSquared::ScaleHes, En, sigma, t);
+	return Scale(&ChiSquared::ScaleHes, En, sigma, t);
 }
 
 
-double NewChiSquared::ScaleNor(const std::vector<double> &term)
+double ChiSquared::ScaleNor(const std::vector<double> &term)
 {
 	//return f / scale / db;
 	return term[2] / term[1] / term[4];
 }
 
-double NewChiSquared::ScaleJac(const std::vector<double> &term)
+double ChiSquared::ScaleJac(const std::vector<double> &term)
 {
 	//return SKerror / scale / db * (fd - f / scale)
 	return term[0] / term[1] / term[4] * (term[3] - term[2] / term[1]);
 }
 
-double NewChiSquared::ScaleHes(const std::vector<double> &term)
+double ChiSquared::ScaleHes(const std::vector<double> &term)
 {
 	//return pow(SKerror / scale, 2) / db * (f / scale - fd)
 	return 2 * pow(term[0] / term[1], 2) / term[4]
@@ -1035,7 +1035,7 @@ double NewChiSquared::ScaleHes(const std::vector<double> &term)
 // returns the derivative with respect to sigma
 // can be used with non diagonal hessian terms involving sigma
 // just replacing En with the right vector
-double NewChiSquared::ScaleJac(const Eigen::VectorXd &En,
+double ChiSquared::ScaleJac(const Eigen::VectorXd &En,
 			       const Eigen::VectorXd &sigma, int t)
 {
 	if (t < 0 || t > kType * NumBin())
@@ -1089,7 +1089,7 @@ double NewChiSquared::ScaleJac(const Eigen::VectorXd &En,
 }
 
 // return double derivative on SK error
-double NewChiSquared::ScaleHes(const Eigen::VectorXd &En,
+double ChiSquared::ScaleHes(const Eigen::VectorXd &En,
 			       const Eigen::VectorXd &sigma, int t)
 {
 	if (t < 0 || t > kType * NumBin())
