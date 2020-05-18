@@ -1,0 +1,140 @@
+#set term qt size 1000,700
+reset
+unset multiplot
+
+type = "M_RHC"
+up = 5.
+root = "/data/tboschi/HKsens/errorstudy/"
+file = "/validation/".type."_syserre_118"
+outp = "escale_".type.".tex"
+
+#set term qt size 800, 400
+set term cairolatex pdf color size 5in, 2.5in lw 2 dashed
+set output outp
+
+
+dat0 = root."0".file
+data = root."11a".file
+datb = root."11b".file
+
+color = "'red' 'blue' 'web-green' 'orange' 'dark-magenta'"
+
+pi = 4.*atan(1.)
+MT = 0.10
+MP = (1-2*MT)/2.0
+set rmargin 0.5
+
+
+set multiplot
+
+set tmargin 0.0 #at screen 1-MT
+set rmargin 0.5 #at screen 1-MT
+set lmargin at screen MT
+set bmargin at screen 1.5*MT
+set origin 0, 0
+set size 1, (MT+MP)
+
+
+
+set xr [0:up]
+set xlabel "Energy (GeV)"
+set xtics 0, up / 10, up
+set mxtics 5
+set format x "%g"
+
+set yr [*:*]
+
+stats dat0 u 1:7 name 'obs' nooutput
+ymin = obs_min_y 
+ymax = obs_max_y 
+
+stats data u 1:7 name 'obs' nooutput
+ymin = (obs_min_y < ymin) ? obs_min_y : ymin
+ymax = (obs_max_y > ymax) ? obs_max_y : ymax
+
+stats datb u 1:7 name 'obs' nooutput
+ymin = (obs_min_y < ymin) ? obs_min_y : ymin
+ymax = (obs_max_y > ymax) ? obs_max_y : ymax
+
+
+q = 0.1
+y_d = floor((ymax-ymin) / 3. / q)
+y_q = q * (y_d + (y_d < 1))
+ytop = ceil(ymax / q) * q
+ybot = floor(ymin / q) * q
+
+set yr [ybot:ytop]
+set ytics -ybot, y_q, ytop*0.99
+set mytics 4
+
+set ylabel "\$1\\sigma\$ histogram"
+set format y "%g"
+
+#set key top right samplen 1 Left invert at screen 1.5, screen 1.5
+
+plot dat0 u 1:7 w step lw 2 lc rgb word(color, 1) not, \
+     data u 1:7 w step lw 2 lc rgb word(color, 2) not, \
+     datb u 1:7 w step lw 2 lc rgb word(color, 3) not, \
+     1 w step lw 1 dt 2 lc rgb "black" not
+
+
+#plot  full hist
+
+set tmargin 0.5 #at screen 1-MT
+set rmargin 0.5 #at screen 1-MT
+set lmargin at screen MT
+set bmargin 0
+set origin 0, (MT+MP)
+set size 1, (MT+MP)
+
+set xlabel ""
+set format x ""
+
+set yr [*:*]
+
+stats dat0 u 1:2 name 'obs' nooutput
+ymin = obs_min_y 
+ymax = obs_max_y 
+print ymin, ymax
+
+stats dat0 u 1:4 name 'obs' nooutput
+ymin = (obs_min_y < ymin) ? obs_min_y : ymin
+ymax = (obs_max_y > ymax) ? obs_max_y : ymax
+print ymin, ymax
+
+stats data u 1:4 name 'obs' nooutput
+ymin = (obs_min_y < ymin) ? obs_min_y : ymin
+ymax = (obs_max_y > ymax) ? obs_max_y : ymax
+print ymin, ymax
+
+stats datb u 1:4 name 'obs' nooutput
+ymin = (obs_min_y < ymin) ? obs_min_y : ymin
+ymax = (obs_max_y > ymax) ? obs_max_y : ymax
+
+q = 50
+y_d = floor((ymax-ymin) / 3. / q)
+y_q = q * (y_d + (y_d < 1))
+ytop = ceil(ymax / q) * q
+ybot = floor(ymin / q) * q
+
+print ymin, ymax
+print ybot, ytop
+print y_d, y_q
+
+set yr [ybot:ytop]
+set ytics ybot, y_q, ytop
+set mytics 4
+
+set ylabel "Events"
+set format y "%g"
+
+set key default
+set key top right samplen 1.5 Left invert
+plot dat0 u 1:2 w step lw 1.5 lc rgb "black" not , \
+     dat0 u 1:4 w step lw 2 lc rgb word(color, 1) t "Nominal", \
+     data u 1:4 w step lw 2 lc rgb word(color, 2) t "\$E 2.9\\%\$", \
+     datb u 1:4 w step lw 2 lc rgb word(color, 3) t "\$E 1.9\\%\$", \
+
+
+unset multiplot
+unset output

@@ -1,0 +1,28 @@
+#earth density profile between JPARK and SK
+densityHK	"/home/tboschi/OscAna/SuperHK/data/DensityProfileTochibora.dat"
+densityKD	"/home/tboschi/OscAna/SuperHK/data/DensityProfileMtBisul.dat"
+
+input "$input/*.root"
+output "$output"
+tree	"mcTree"
+
+#reconstruction file cards - neutrino mode
+reco_nuE0_nuE0_FHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuE0_nuE0_FHC.card"
+reco_nuM0_nuM0_FHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuM0_nuM0_FHC.card"
+reco_nuM0_nuE0_FHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuM0_nuE0_FHC.card"
+reco_nuEB_nuEB_FHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuEB_nuEB_FHC.card"
+reco_nuMB_nuMB_FHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuMB_nuMB_FHC.card"
+reco_nuMB_nuEB_FHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuMB_nuEB_FHC.card"
+
+#reconstruction file cards - antineutrino mode
+reco_nuE0_nuE0_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuE0_nuE0_RHC.card"
+reco_nuM0_nuM0_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuM0_nuM0_RHC.card"
+reco_nuM0_nuE0_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuM0_nuE0_RHC.card"
+reco_nuEB_nuEB_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuEB_nuEB_RHC.card"
+reco_nuMB_nuMB_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuMB_nuMB_RHC.card"
+reco_nuMB_nuEB_RHC	"/home/tboschi/OscAna/SuperHK/cards/syst_nuMB_nuEB_RHC.card"
+
+hierarchy "inverted"
+
+first	0
+last	10
