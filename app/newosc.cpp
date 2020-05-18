@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 	{
 		//std::stringstream ssn;
 		//ssn << "_" << std::setfill('0') << std::setw(ww) << f;
-		//std::string name = outname;
+		std::string name = outname;
 		name.insert(name.find(".000"), "_oscillated");
 		std::cout << "creating file " << name << std::endl;
 		TFile *outf = new TFile(name.c_str(), "RECREATE");
