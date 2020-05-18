@@ -1,0 +1,26 @@
+#
+reset
+pi = 4.*atan(1.)
+
+file = dataset."/".dataset."_X2M23S13.dat"
+cont = dataset."/line_X2M23S13"
+outp = dataset."_cont_M23_S13.tex"
+
+getx(x) = 1000.*x
+gety(y) = 4*y*(1-y)
+
+xr_0 = 2.464
+xr_1 = 2.554
+yr_0 = 0.070
+yr_1 = 0.100
+
+set xl "\$\\Delta m_\{32\}^2 / 10\^\{-3\}\$"
+set yl "\$\\sin^2 2 \\theta_\{13\}\$"
+
+xform = "%g"
+yform = "%g"
+
+nx = 13
+ny = 13
+
+load 'cont_common.glp'

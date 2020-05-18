@@ -1,0 +1,153 @@
+#
+unset multiplot
+
+MT = 0.10
+MP = (1-2*MT)/2.0
+
+color = "'black' 'red' 'blue' 'web-green' 'orange' 'dark-magenta'"
+names  = system("head -n1 ".f_all)
+
+##
+#bottom plot
+
+stats f_dif u 1:2 name 'bot' nooutput
+ymin_bot = bot_min_y
+ymax_bot = bot_max_y
+do for [c=3:bot_columns] { 
+     stats f_dif using 1:c name 'bot' nooutput
+     ymin_bot = (ymin_bot > bot_min_y) ? bot_min_y : ymin_bot
+     ymax_bot = (ymax_bot < bot_max_y) ? bot_max_y : ymax_bot
+}
+col_bot = bot_columns
+
+##
+#top plot
+
+stats f_all u 1:2 name 'top' nooutput
+ymin_top = top_min_y
+ymax_top = top_max_y
+do for [c=3:top_columns] { 
+     stats f_all using 1:c name 'top' nooutput
+     ymin_top = (ymin_top > top_min_y) ? top_min_y : ymin_top
+     ymax_top = (ymax_top < top_max_y) ? top_max_y : ymax_top
+}
+col_top = top_columns
+
+fitp = top_pos_min_y
+
+#set term qt size 750,525
+set term cairolatex pdf color size 5in, 4in lw 2 #standalone header \
+       #"\\usepackage\{amsmath\}"
+set output outp
+
+set xr [xr_0:xr_1]
+
+set multiplot
+#
+## BOT plot
+
+set tmargin 0.0 #at screen 1-MT
+set rmargin 0.5 #at screen 1-MT
+set lmargin at screen MT
+set bmargin at screen 1.5*MT
+set origin 0, 0
+set size 1, (MT+MP)
+
+set xl x_lab
+set xtics xr_0, xr_t, xr_1
+set format x x_form
+set mxtics 5
+
+
+tt = 10.
+#extend range by tt% above and below
+#ymin_bot = ymin_bot + tt * dy_bot
+#ymax_bot = ymax_bot + tt * dy_bot
+
+print ymax_bot, ymin_bot
+if (ymax_bot == ymin_bot) {
+	set yr [-0.1:0.1]
+	set ytics -0.1, 8, 0.1
+	set mytics 4
+} else {
+	ey_bot = floor(log(ymax_bot - ymin_bot) / log(tt))
+
+	#round up the closest common number
+	ymin_bot = floor(ymin_bot / tt**ey_bot) * tt**ey_bot
+	ymax_bot = ceil (ymax_bot / tt**ey_bot) * tt**ey_bot
+	dy_bot = ymax_bot - ymin_bot
+
+	ntics = dy_bot / tt**ey_bot
+	set yr [ymin_bot:ymax_bot]
+	set ytics ymin_bot, ntics > 6 ? 2*tt**ey_bot : tt**ey_bot, ymax_bot * 0.9
+	set mytics 4
+}
+
+set format y "%g"
+set ylabel "\$\\Delta \\chi^2_0 - \\Delta \\chi^2\$"
+
+set arrow 1 nohead from getx(fitp), ymin_bot to getx(fitp), ymax_bot dt 2
+#set key title "Difference" at fitp+0.02*(xr_1-xr_0), ymin_bot + 0.85 * dy_bot top left samplen 1.5
+# word(names, i+1)
+plot for [i=2:col_bot] f_dif u (getx($1)):i w histe lw 2 dt 1 lc rgb word(color, i) not, \
+	0 w l dt 2 lc rgb 'black' not
+
+#
+## TOP plot
+
+set tmargin 0.5 #at screen 1-MT
+set rmargin 0.5 #at screen 1-MT
+set lmargin at screen MT
+set bmargin 0
+set origin 0, (MT+MP)
+set size 1, (MT+MP)
+
+
+set xl ""
+set format x ""
+
+
+ntics = (ymax_top - ymin_top) / 10. 
+if (ntics < 5.) {
+	dd = 5.
+} else {
+	if (ntics < 10) {
+	dd = 10.
+} else {
+	if (ntics < 20) {
+	dd = 20.
+} else {
+	if (ntics < 50) {
+	dd = 50.
+} else {
+	dd = 100.
+}
+}}}
+
+
+ey_top = floor(log(ymax_top - ymin_top) / log(tt))
+
+#round up the closest common number
+ymin_top = floor(ymin_top / dd) * dd
+ymax_top = ceil (ymax_top / dd) * dd
+dy_top = ymax_top - ymin_top
+
+
+ntics = dy_top / dd
+
+set yr [ymin_top:ymax_top]
+set ytics ymin_top, ntics > 6 ? 2*dd : dd, ymax_top
+set mytics 4
+
+set format y "%g"
+set ylabel "\$\\Delta \\chi^2\$"
+
+set arrow 2 nohead from getx(fitp), ymin_top to getx(fitp), ymax_top dt 2
+set key title "" at getx(fitp)+0.02*(xr_1-xr_0), ymin_top + 0.75 * (ymax_top - ymin_top) top left samplen 1.5
+plot for [i=2:col_top] f_all u (getx($1)):i w histe lw 2 dt 1 lc rgb word(color, i-1) t word(names, i)
+
+
+unset multiplot
+unset output
+
+#system("mv -f ".dataset."*.* ".dataset."/")

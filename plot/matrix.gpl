@@ -1,0 +1,571 @@
+#
+unset multiplot
+reset
+
+color = "'black' 'red' 'blue' 'web-green' 'orange' 'dark-magenta'"
+
+MT = 0.04
+MP = (1 - 2*MT)/4.0
+
+
+#create contours files before
+
+
+## dCP vs M23
+print "contouring dCP vs M23"
+
+file = dataset."/".dataset."_X2CPM23.dat"
+cont = dataset."/line_X2CPM23"
+
+getx(x) = x
+gety(y) = 1000.*y
+
+xr_0 = -pi
+xr_1 = pi
+yr_0 = 2.464
+yr_1 = 2.554
+
+nx = 61
+ny = 13
+
+load 'matrix_line.glp'
+
+
+
+## S23 vs M23
+print "contouring S23 vs M23"
+
+file = dataset."/".dataset."_X2S23M23.dat"
+cont = dataset."/line_X2S23M23"
+
+getx(x) = x
+gety(y) = 1000.*y
+
+xr_0 = 0.426
+xr_1 = 0.579
+yr_0 = 2.464
+yr_1 = 2.554
+
+nx = 19
+ny = 13
+
+load 'matrix_line.glp'
+
+
+
+## S13 vs M23
+print "contouring S13 vs M23"
+
+file = dataset."/".dataset."_X2S13M23.dat"
+cont = dataset."/line_X2S13M23"
+
+getx(x) = 4*x*(1-x)
+gety(y) = 1000.*y
+
+xr_0 = 0.070
+xr_1 = 0.10001
+yr_0 = 2.464
+yr_1 = 2.554
+
+nx = 13
+ny = 13
+
+load 'matrix_line.glp'
+
+
+
+## S23 vs dCP
+print "contouring S23 vs dCP"
+
+file = dataset."/".dataset."_X2S23CP.dat"
+cont = dataset."/line_X2S23CP"
+
+getx(x) = x
+gety(y) = y
+
+xr_0 = 0.426
+xr_1 = 0.579
+yr_0 = -pi
+yr_1 = pi
+
+nx = 19
+ny = 61
+
+
+load 'matrix_line.glp'
+
+
+
+## S13 vs dCP
+print "contouring S13 vs dCP"
+
+file = dataset."/".dataset."_X2S13CP.dat"
+cont = dataset."/line_X2S13CP"
+
+getx(x) = 4*x*(1-x)
+gety(y) = y
+
+xr_0 = 0.070
+xr_1 = 0.10001
+yr_0 = -pi
+yr_1 = pi
+
+nx = 19
+ny = 61
+
+
+load 'matrix_line.glp'
+
+
+## S13 vs S23
+print "contouring S13 vs S23"
+
+file = dataset."/".dataset."_X2S13S23.dat"
+cont = dataset."/line_X2S13S23"
+
+getx(x) = 4*x*(1-x)
+gety(y) = y
+
+xr_0 = 0.070
+xr_1 = 0.1001
+yr_0 = 0.426
+yr_1 = 0.579
+
+nx = 13
+ny = 19
+
+
+load 'matrix_line.glp'
+
+
+
+set term qt size 800,800
+#set term cairolatex pdf color size 7.5in, 5.25in lw 2 #standalone header \
+       #"\\usepackage\{amsmath\}"
+#set output outp
+
+
+
+
+
+
+
+
+
+unset key
+set xlabel ""
+set format x ""
+unset xtics
+
+dd = 10
+
+
+
+
+#start plotting
+#
+set multiplot
+
+## M23 vs chi2
+print "plotting M23 vs chi2"
+
+set origin 0, 3*MP + MT
+set size MT+MP, MT+MP
+
+set lmargin at screen MT
+set rmargin 0
+set tmargin at screen 1-MT
+set bmargin at screen 1 - MT - MP
+
+file = dataset."/".dataset."_X2minM23_all.dat"
+
+getx(x) = x * 1000.
+
+xr_0 = 2.464
+xr_1 = 2.554
+xr_t = (xr_1-xr_0) / 6.
+
+x1lab = "\$\\Delta m_\{32\}^2 / 10\^\{-3\}\$"
+y1lab = "\\Delta \\chi^2\$"
+x2lab = "\$\\Delta m_\{32\}^2 / 10\^\{-3\}\$"
+y2lab = ""
+
+x1form = "%g"
+y1form = "%g"
+x2form = "%g"
+y2form = ""
+
+load "matrix_chi2.glp"
+
+## dCP vs chi2
+print "plotting dCP vs chi2"
+
+set origin MT+MP, 3*MP + MT
+set size MP, MT+MP
+
+set lmargin 0
+set rmargin 0
+set tmargin at screen 1-MT
+set bmargin 0
+
+#file
+file = dataset."/".dataset."_X2minCP_all.dat"
+
+getx(x) = x
+
+xr_0 = -pi
+xr_1 =  pi
+xr_t =  pi/4.0
+
+x1lab = ""
+y1lab = ""
+x2lab = "\$\\delta_\\text\{CP\}\$"
+y2lab = ""
+
+x1form = ""
+y1form = ""
+#x2form = "%.2P\$\\pi\$"
+x2form = "%g$"
+y1form = ""
+
+
+load "matrix_chi2.glp"
+
+
+## S23 vs chi2
+print "plotting S23 vs chi2"
+
+set origin MT+2*MP, 3*MP + MT
+set size MP, MT+MP
+
+set lmargin 0
+set rmargin 0
+set tmargin at screen 1-MT
+set bmargin 0
+
+#file
+file = dataset."/".dataset."_X2minS23_all.dat"
+
+getx(x) = x
+
+xr_0 = 0.426
+xr_1 = 0.579
+xr_t = (xr_1-xr_0) / 6.
+
+
+x1lab = ""
+y1lab = ""
+x2lab = "\$\\sin^2 \\theta_\{23\}\$"
+y2lab = ""
+
+x1form = ""
+y1form = ""
+x2form = "%g"
+y2form = ""
+
+
+load "matrix_chi2.glp"
+
+
+## S13 vs chi2
+print "plotting S13 vs chi2"
+
+set origin MT+3*MP, 3*MP + MT
+set size MP, MT+MP
+
+set lmargin 0
+set rmargin at screen 1-MT
+set tmargin at screen 1-MT
+set bmargin 0
+
+#file
+file = dataset."/".dataset."_X2minS13_all.dat"
+
+getx(x) = 4*x*(1-x)
+
+
+xr_0 = 0.07
+xr_1 = 0.1
+xr_t = (xr_1-xr_0) / 6.
+
+x1lab = ""
+y1lab = ""
+x2lab = "\$\\sin^2 2 \\theta_\{13\}\$"
+y2lab = "\\Delta \\chi^2\$"
+
+x1form = ""
+y1form = ""
+x2form = "%g"
+y2form = "%g"
+
+
+load "matrix_chi2.glp"
+
+
+####contours
+
+
+
+## dCP vs M23
+print "plotting dCP vs M23"
+
+set origin MT+MP, 2*MP + MT
+set size MP, MP
+
+set lmargin at screen MT + MP
+set rmargin 0
+set tmargin 0
+set bmargin at screen 1 - MT - 2*MP
+
+#file
+file = dataset."/".dataset."_X2CPM23.dat"
+cont = dataset."/line_X2CPM23"
+
+getx(x) = x
+gety(y) = 1000.*y
+
+xr_0 = -pi
+xr_1 = pi
+xr_t =  pi/4.0
+yr_0 = 2.464
+yr_1 = 2.554
+yr_t = (yr_1-yr_0) / 6.
+
+
+x1lab = "\$\\delta_\\text\{CP\}\$"
+y1lab = "\$\\Delta m_\{32\}^2 / 10\^\{-3\}\$"
+x2lab = ""
+y2lab = ""
+
+#x1form = "%.1P\$\\pi\$"
+x1form = "%g"
+y1form = "%g"
+x2form = ""
+y2form = ""
+
+nx = 61
+ny = 13
+
+load 'matrix_cont.glp'
+
+
+
+## S23 vs M23
+print "plotting S23 vs M23"
+
+set origin MT+2*MP, 2*MP + MT
+set size MP, MP
+
+set lmargin 0
+set rmargin 0
+set tmargin 0
+set bmargin 0
+
+#file
+file = dataset."/".dataset."_X2S23M23.dat"
+cont = dataset."/line_X2S23M23"
+
+getx(x) = x
+gety(y) = 1000.*y
+
+xr_0 = 0.426
+xr_1 = 0.579
+xr_t = (xr_1-xr_0) / 6.
+yr_0 = 2.464
+yr_1 = 2.554
+yr_t = (yr_1-yr_0) / 6.
+
+nx = 19
+ny = 13
+
+x1lab = ""
+y1lab = ""
+x2lab = ""
+y2lab = ""
+
+x1form = ""
+y1form = ""
+x2form = ""
+y2form = ""
+
+load 'matrix_cont.glp'
+
+
+
+
+## S13 vs M23
+print "plotting S13 vs M23"
+
+set origin MT+3*MP, 2*MP + MT
+set size MP, MP
+
+set lmargin 0
+set rmargin at screen 1 - MT
+set tmargin 0
+set bmargin 0
+
+#file
+file = dataset."/".dataset."_X2S13M23.dat"
+cont = dataset."/line_X2S13M23"
+
+getx(x) = 4*x*(1-x)
+gety(y) = 1000.*y
+
+xr_0 = 0.070
+xr_1 = 0.10001
+xr_t = (xr_1-xr_0) / 6.
+yr_0 = 2.464
+yr_1 = 2.554
+yr_t = (yr_1-yr_0) / 6.
+
+nx = 13
+ny = 13
+
+x1lab = ""
+y1lab = ""
+x2lab = ""
+y2lab = "\$\\Delta m_\{32\}^2 / 10\^\{-3\}\$"
+
+x1form = ""
+y1form = ""
+x2form = ""
+y2form = "%g"
+
+load 'matrix_cont.glp'
+
+
+
+
+
+## S23 vs dCP
+print "plotting S23 vs dCP"
+
+set origin MT+2*MP, MP + MT
+set size MP, MP
+
+set lmargin at screen MT+ 2*MP
+set rmargin 0
+set tmargin 0
+set bmargin at screen 1 - MT - 3*MP
+
+#file
+file = dataset."/".dataset."_X2S23CP.dat"
+cont = dataset."/line_X2S23CP"
+
+getx(x) = x
+gety(y) = y
+
+xr_0 = 0.426
+xr_1 = 0.579
+xr_t = (xr_1-xr_0) / 6.
+yr_0 = -pi
+yr_1 = pi
+yr_t = (yr_1-yr_0) / 6.
+
+nx = 19
+ny = 61
+
+x1lab = "\$\\sin^2 \\theta_\{23\}\$"
+y1lab = "\$\\delta_\\text\{CP\}\$"
+x2lab = ""
+y2lab = ""
+
+x1form = "%g"
+#y1form = "%.1P\$\\pi\$"
+y1form = "%g"
+x2form = ""
+y2form = ""
+
+load 'matrix_cont.glp'
+
+
+
+
+## S13 vs dCP
+print "plotting S13 vs dCP"
+
+set origin MT+3*MP, MP + MT
+set size MP, MP
+
+set lmargin 0
+set rmargin at screen 1 - MT
+set tmargin 0
+set bmargin 0
+
+#file
+file = dataset."/".dataset."_X2S13CP.dat"
+cont = dataset."/line_X2S13CP"
+
+getx(x) = 4*x*(1-x)
+gety(y) = y
+
+xr_0 = 0.070
+xr_1 = 0.10001
+xr_t = (xr_1-xr_0) / 6.
+yr_0 = -pi
+yr_1 = pi
+yr_t = (yr_1-yr_0) / 6.
+
+nx = 19
+ny = 61
+
+x1lab = ""
+y1lab = ""
+x2lab = ""
+y2lab = "\$\\delta_\\text\{CP\}\$"
+
+x1form = ""
+y1form = ""
+x2form = ""
+#y2form = "%.1P\$\\pi\$"
+y2form = "%g"
+
+load 'matrix_cont.glp'
+
+
+## S13 vs S23
+print "plotting S13 vs S23"
+
+set origin MT+3*MP, MT
+set size MP, MP
+
+set lmargin at screen MT + 3*MP
+set rmargin at screen 1 - MT
+set tmargin 0
+set bmargin at screen MT
+
+#file
+file = dataset."/".dataset."_X2S13S23.dat"
+cont = dataset."/line_X2S13S23"
+
+getx(x) = 4*x*(1-x)
+gety(y) = y
+
+xr_0 = 0.070
+xr_1 = 0.1001
+xr_t = (xr_1-xr_0) / 6.
+yr_0 = 0.426
+yr_1 = 0.579
+yr_t = (yr_1-yr_0) / 6.
+
+nx = 13
+ny = 19
+
+x1lab = "\$\\sin^2 2 \\theta_\{13\}\$"
+y1lab = "\$\\sin^2 \\theta_\{23\}\$"
+x2lab = ""
+y2lab = "\$\\sin^2 \\theta_\{23\}\$"
+
+x1form = "%g"
+y1form = "%g"
+x2form = ""
+y2form = "%g"
+
+load 'matrix_cont.glp'
+
+
+
+unset multiplot
+unset output
+
+#system("mv -f ".dataset."*.* ".dataset."/")

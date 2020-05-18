@@ -1,0 +1,28 @@
+#
+reset
+pi = 4.*atan(1.)
+
+file = dataset."/".dataset."_X2CPM23.dat"
+cont = dataset."/line_X2CPM23"
+outp = dataset."_cont_dCP_M23.tex"
+
+getx(x) = x
+gety(y) = 1000.*y
+
+xr_0 = -pi
+xr_1 = pi
+yr_0 = 2.464
+yr_1 = 2.554
+
+set xl "\$\\delta_\\text\{CP\}\$"
+set yl "\$\\Delta m_\{32\}^2 / 10\^\{-3\}\$"
+
+xform = "%.1P\$\\pi\$"
+yform = "%g"
+
+set xtics -pi, pi/5.0, pi
+
+nx = 61
+ny = 13
+
+load 'cont_common.glp'

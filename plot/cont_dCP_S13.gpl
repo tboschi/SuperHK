@@ -1,0 +1,28 @@
+#
+reset
+pi = 4.*atan(1.)
+
+file = dataset."/".dataset."_X2CPS13.dat"
+cont = dataset."/line_X2CPS13"
+outp = dataset."_cont_dCP_S13.tex"
+
+getx(x) = x
+gety(y) = 4*y*(1-y)
+
+xr_0 = -pi
+xr_1 = pi
+yr_0 = 0.070
+yr_1 = 0.100
+
+set xl "\$\\delta_\\text\{CP\}\$"
+set yl "\$\\sin^2 2 \\theta_\{13\}\$"
+
+xform = "%.1P\$\\pi\$"
+yform = "%g"
+
+set xtics -pi, pi/5.0, pi
+
+nx = 61
+ny = 13
+
+load 'cont_common.glp'

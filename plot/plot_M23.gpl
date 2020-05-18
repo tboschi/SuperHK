@@ -1,0 +1,20 @@
+#
+reset
+pi = 4.*atan(1.)
+
+f_all = dataset."/".dataset."_X2minM23_all.dat"
+f_dif = dataset."/".dataset."_X2minM23_diff.dat"
+outp = dataset."_chi2_M23.tex"
+
+
+getx(x) = x * 1000.
+
+xr_0 = 2.464
+xr_1 = 2.554
+xr_t = (xr_1-xr_0) / 6.
+x_lab = "\$\\Delta m_\{32\}^2 / 10\^\{-3\}\$"
+x_form = "%g"
+
+load "plot_common.glp"
+
+

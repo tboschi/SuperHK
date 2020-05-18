@@ -1,0 +1,5 @@
+# wget files from http://hep.lancs.ac.uk/~tdealtry/oa/190423/ 
+# where enu_erec root files are
+#
+
+wget -A root -r -l1 -nd -np -e robots=off http://hep.lancs.ac.uk/~tdealtry/oa/190423/

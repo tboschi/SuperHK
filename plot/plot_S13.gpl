@@ -1,0 +1,18 @@
+#
+reset
+pi = 4.*atan(1.)
+
+f_all = dataset."/".dataset."_X2minS13_all.dat"
+f_dif = dataset."/".dataset."_X2minS13_diff.dat"
+outp = dataset."_chi2_S13.tex"
+
+
+getx(x) = 4*x*(1-x)
+
+xr_0 = 0.07
+xr_1 = 0.1
+xr_t = (xr_1-xr_0) / 6.
+x_lab = "\$\\sin^2 2 \\theta_\{13\}\$"
+x_form = "%g"
+
+load "plot_common.glp"

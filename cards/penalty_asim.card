@@ -1,0 +1,5 @@
+#gaussian priors for HKDR
+#	value	sigma
+#p_M23	2.509e-3	0.015e-3
+p_S13	0.0219	0.0013
+#p_S23	0.528	0.017

@@ -1,0 +1,17 @@
+#
+reset
+pi = 4.*atan(1.)
+
+f_all = dataset."/".dataset."_X2minCP_all.dat"
+f_dif = dataset."/".dataset."_X2minCP_diff.dat"
+outp = dataset."_chi2_dCP.tex"
+
+getx(x) = x
+
+xr_0 = -pi
+xr_1 =  pi
+xr_t =  pi/4.0
+x_lab = "\$\\delta_\\text\{CP\}\$"
+x_form = "%.2P\$\\pi\$"
+
+load "plot_common.glp"
