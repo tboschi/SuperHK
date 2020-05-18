@@ -1,9 +1,9 @@
-/* NewChiSquared
+/* ChiSquared
  * compute the likelihood ratio chi-squared using the pull approach to include systematics
  */
 
-#ifndef NewChiSquared_H
-#define NewChiSquared_H
+#ifndef ChiSquared_H
+#define ChiSquared_H
 
 #include <iostream>
 #include <fstream>
@@ -25,10 +25,10 @@
 #include "event/Reco.h"
 #include "physics/Oscillator.h"
 
-class NewChiSquared
+class ChiSquared
 {
 	public:
-		NewChiSquared(CardDealer *card, int nbins = -1);
+		ChiSquared(CardDealer *card, int nbins = -1);
 
 		void Init();
 		void LoadCorrelation();
@@ -92,7 +92,7 @@ class NewChiSquared
 		int StartingBin(int n, double scale);
 
 		//function to compute the factor
-		typedef double (NewChiSquared::*FactorFn)(const std::vector<double> &);
+		typedef double (ChiSquared::*FactorFn)(const std::vector<double> &);
 
 		double Scale(FactorFn factor,
 			     const Eigen::VectorXd &En, double sigma, int t);
