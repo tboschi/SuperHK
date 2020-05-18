@@ -1,0 +1,11 @@
+#root file of flux file
+reco_path	"data/enu_erec_numubar_x_nuebar.root"
+scale		4.16895041895041878e-04
+
+#TH2D objects to use inside the file
+Ring_E_CCQE	"enu_erec_1Re_CCQE"
+Ring_E_CCnQE	"enu_erec_1Re_CCnQE"
+Ring_E_NC	"enu_erec_1Re_NC"
+Ring_M_CCQE	"enu_erec_1Rmu_CCQE"
+Ring_M_CCnQE	"enu_erec_1Rmu_CCnQE"
+Ring_M_NC	"enu_erec_1Rmu_NC"

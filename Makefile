@@ -17,19 +17,22 @@ EIGENINC = include/Eigen
 
 LDFLAGS  := -Wl,--no-as-needed $(LDFLAGS) $(ROOTLIB) -L$(LIBDIR) -L$(OSC3LIB)
 LDLIBS   := -losc3pp
-CXXFLAGS := $(CXXFLAGS) -fPIC -std=c++11 -O3 -march=native $(ROOTCXX) -I$(INCDIR) -I$(ProbINC) -I$(OSC3INC) -I$(EIGENINC)
+CXXFLAGS := $(CXXFLAGS) -fPIC -std=c++11 -O3 -march=native $(ROOTCXX) -I$(INCDIR) -I$(OSC3INC) -I$(EIGENINC)
 
 
 
 
 #apps and exctuables
 CPP := $(shell find $(APPDIR) -maxdepth 1 -name '*.cpp')
-SRC := $(shell find $(INCDIR) -maxdepth 2 -name '*.cpp')
+SRC := $(shell find $(INCDIR) -maxdepth 2 -path $(INCDIR)/ignore -prune -o -name '*.c*' -print)
+
 
 #main target
 TARGET := $(if $(APP), $(APPDIR)/$(APP), $(CPP:.cpp=))
 #TARGET := $(CPP:.cpp=)
 DEPEND := $(SRC:.cpp=.o)
+DEPEND := $(DEPEND:.cc=.o)
+DEPEND := $(DEPEND:.c=.o)
 
 all: welcome $(TARGET)
 	@mkdir -p $(LIBDIR)
@@ -42,6 +45,7 @@ all: welcome $(TARGET)
 welcome:
 	@echo "If you need to build just one file, do make APP=name"
 	@echo "Enjoy your compilation"
+	@echo $(DEPEND)
 
 
 $(TARGET): $(DEPEND)

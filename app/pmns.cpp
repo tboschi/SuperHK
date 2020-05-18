@@ -8,7 +8,7 @@
 #include "tools/CardDealer.h"
 #include "physics/Oscillator.h"
 
-#include "probWrapper.h"
+#include "Prob3++/probWrapper.h"
 
 int main(int argc, char** argv)
 {

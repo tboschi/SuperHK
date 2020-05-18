@@ -1,0 +1,25 @@
+#earth density profile between JPARK and SK
+densityHK	"/data/tboschi/HKsens/OscAna/SuperHK/data/DensityProfileTochibora.dat"
+densityKD	"/data/tboschi/HKsens/OscAna/SuperHK/data/DensityProfileMtBisul.dat"
+
+input	"/data/tboschi/HKsens/errorstudy/global/point/type/global*.root"
+output	"/data/tboschi/HKsens/errorstudy/global/point/type/oscillated"
+tree	"mcTree"
+
+#reconstruction file cards - neutrino mode
+reco_nuE0_nuE0_FHC	"pathtoreconstruction/syst_nuE0_nuE0_FHC.card"
+reco_nuM0_nuM0_FHC	"pathtoreconstruction/syst_nuM0_nuM0_FHC.card"
+reco_nuM0_nuE0_FHC	"pathtoreconstruction/syst_nuM0_nuE0_FHC.card"
+reco_nuEB_nuEB_FHC	"pathtoreconstruction/syst_nuEB_nuEB_FHC.card"
+reco_nuMB_nuMB_FHC	"pathtoreconstruction/syst_nuMB_nuMB_FHC.card"
+reco_nuMB_nuEB_FHC	"pathtoreconstruction/syst_nuMB_nuEB_FHC.card"
+
+#reconstruction file cards - antineutrino mode
+reco_nuE0_nuE0_RHC	"pathtoreconstruction/syst_nuE0_nuE0_RHC.card"
+reco_nuM0_nuM0_RHC	"pathtoreconstruction/syst_nuM0_nuM0_RHC.card"
+reco_nuM0_nuE0_RHC	"pathtoreconstruction/syst_nuM0_nuE0_RHC.card"
+reco_nuEB_nuEB_RHC	"pathtoreconstruction/syst_nuEB_nuEB_RHC.card"
+reco_nuMB_nuMB_RHC	"pathtoreconstruction/syst_nuMB_nuMB_RHC.card"
+reco_nuMB_nuEB_RHC	"pathtoreconstruction/syst_nuMB_nuEB_RHC.card"
+
+hierarchy	"normal"

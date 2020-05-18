@@ -1,0 +1,38 @@
+#earth density profile between JPARK and SK
+densityHK	"data/DensityProfileTochibora.dat"
+densityKD	"data/DensityProfileMtBisul.dat"
+
+files	"data/global/*ih.root"
+tree	"mcTree"
+hierarchy	"inverted"	#"normal"
+
+#output	"data/hkdr_oscillated.root";
+#division 20
+
+#reconstruction file cards - neutrino mode
+#reco_nuE0_nuE0_m0	"cards/osc3_nuE0_nuE0_m0.card"
+#reco_nuM0_nuM0_m0	"cards/osc3_nuM0_nuM0_m0.card"
+#reco_nuM0_nuE0_m0	"cards/osc3_nuM0_nuE0_m0.card"
+#reco_nuEB_nuEB_m0	"cards/osc3_nuEB_nuEB_m0.card"
+#reco_nuMB_nuMB_m0	"cards/osc3_nuMB_nuMB_m0.card"
+#reco_nuMB_nuEB_m0	"cards/osc3_nuMB_nuEB_m0.card"
+reco_nuE0_nuE0_FHC	"cards/valor_nuE0_nuE0_FHC.card"
+reco_nuM0_nuM0_FHC	"cards/valor_nuM0_nuM0_FHC.card"
+reco_nuM0_nuE0_FHC	"cards/valor_nuM0_nuE0_FHC.card"
+reco_nuEB_nuEB_FHC	"cards/valor_nuEB_nuEB_FHC.card"
+reco_nuMB_nuMB_FHC	"cards/valor_nuMB_nuMB_FHC.card"
+reco_nuMB_nuEB_FHC	"cards/valor_nuMB_nuEB_FHC.card"
+
+#reconstruction file cards - antineutrino mode
+#reco_nuE0_nuE0_mB	"cards/osc3_nuE0_nuE0_mB.card"
+#reco_nuM0_nuM0_mB	"cards/osc3_nuM0_nuM0_mB.card"
+#reco_nuM0_nuE0_mB	"cards/osc3_nuM0_nuE0_mB.card"
+#reco_nuEB_nuEB_mB	"cards/osc3_nuEB_nuEB_mB.card"
+#reco_nuMB_nuMB_mB	"cards/osc3_nuMB_nuMB_mB.card"
+#reco_nuMB_nuEB_mB	"cards/osc3_nuMB_nuEB_mB.card"
+reco_nuE0_nuE0_RHC	"cards/valor_nuE0_nuE0_RHC.card"
+reco_nuM0_nuM0_RHC	"cards/valor_nuM0_nuM0_RHC.card"
+reco_nuM0_nuE0_RHC	"cards/valor_nuM0_nuE0_RHC.card"
+reco_nuEB_nuEB_RHC	"cards/valor_nuEB_nuEB_RHC.card"
+reco_nuMB_nuMB_RHC	"cards/valor_nuMB_nuMB_RHC.card"
+reco_nuMB_nuEB_RHC	"cards/valor_nuMB_nuEB_RHC.card"

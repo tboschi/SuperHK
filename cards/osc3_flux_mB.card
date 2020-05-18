@@ -1,0 +1,8 @@
+#root file of flux file
+flux_path	"data/osc3++/flux_weights_2p5_295km.root"
+
+#TH1D objects to use inside the file
+nu_E0	"weight_anumode_nue"
+nu_M0	"weight_anumode_numu"
+nu_EB	"weight_anumode_nueb"
+nu_MB	"weight_anumode_numub"

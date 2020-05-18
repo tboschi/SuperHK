@@ -1,11 +1,11 @@
 #ifndef _BargerPropagator_
 #define _BargerPropagator_
 
-#include "EarthDensity.h"
-#include "NeutrinoPropagator.h"
+#include "Prob3++/EarthDensity.h"
+#include "Prob3++/NeutrinoPropagator.h"
 
-#include "mosc3.h"
-#include "mosc.h"
+#include "Prob3++/mosc3.h"
+#include "Prob3++/mosc.h"
 
 
 #include <iostream>
