@@ -23,8 +23,79 @@ CXXFLAGS := $(CXXFLAGS) -fPIC -std=c++11 -O3 -march=native $(ROOTCXX) -I$(INCDIR
 
 
 #apps and exctuables
+<<<<<<< Updated upstream
 CPP := $(shell find $(APPDIR) -maxdepth 1 -name '*.cpp')
 SRC := $(shell find $(INCDIR) -maxdepth 2 -name '*.cpp')
+=======
+CPP =	get_hessian	\
+	escale 	\
+	escale_other 	\
+	pmns		\
+	escale_deriv
+	#TestCard	\
+	vis		\
+	escale		\
+	#fitter		\
+	testfitter	\
+	newfitter	\
+	addpenalty	\
+	buildcontours	\
+	dropchi2	\
+	dropsens	\
+	exclusion	\
+	getepsilon
+	
+	#atmofitter	\
+	convertSKsyst	\
+	predictions	\
+	addatmo		\
+	getmin
+	#baseball	\
+	plotosc		\
+	#momspaghetti	\
+	testchi2	\
+	convertpoint	\
+	test
+	#nevents	\
+	validation	\
+	addmatrix	\
+	exclusion_filter	\
+	purifysystematic	\
+	oscillator	\
+	BuildContourPlots \
+	runchi2		\
+	compare		\
+	filter 		\
+	viewchi2	\
+	baseball	\
+
+	#pmns	\
+	penalty	\
+	simple	\
+	#PredictEvents	\
+	ValorEvents	\
+	GetNevents	\
+	GetSpectra	\
+	TestOsc
+
+#header folders
+HPP =	tools/Const		\
+	tools/Integration	\
+	tools/CardDealer	\
+	event/Flux	\
+	event/Reco	\
+	event/ChiSquared	\
+	physics/Oscillator	\
+	physics/ParameterSpace	\
+	event/NewChiSquared	\
+	#event/Event		\
+	event/EventStacker	\
+	event/EventParser	
+HH =	EarthDensity		\
+	mosc3		\
+	mosc		\
+	BargerPropagator	\
+>>>>>>> Stashed changes
 
 #main target
 TARGET := $(if $(APP), $(APPDIR)/$(APP), $(CPP:.cpp=))

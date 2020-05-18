@@ -49,7 +49,7 @@ if [ -s ${setsens[0]} ] ; then
 	$Sens ${setsens[@]}
 fi
 
-mkdir -p $name
+mkdir -p plot/$name
 
 if [ $name ]
 then
@@ -57,14 +57,14 @@ then
 
 	for f in ${x2file[@]}; do
 		echo $f
-		mv $f $name/$name'_'$f
+		mv $f plot/$name/$name'_'$f
 	done
 
 	ssfile=($(ls exclusion_*.dat))
 
 	for f in ${ssfile[@]}; do
 		echo $f
-		mv $f $name/$name'_'$f
+		mv $f plot/$name/$name'_'$f
 	done
 fi
 
