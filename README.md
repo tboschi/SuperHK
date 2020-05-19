@@ -17,6 +17,11 @@ We will refer to paths where input files to be fitted are created as ```global``
 
 ## Requirements
 
+ROOT should be installed and properly linked. To test if true, simply run
+```
+root-config --cflags --glibs
+```
+
 You must download and extract the [Eigen 3 library](https://eigen.tuxfamily.org/dox/index.html) and modify the ```EIGENINC``` variable in the ```Makefile``` to point to the Eigen folder.
 
 ## Build
