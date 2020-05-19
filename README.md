@@ -4,7 +4,7 @@ The core of this simplified version of osc3++ is given by the ```event/ChiSquare
 The main code in ```app/fitter.cpp``` uses the class to load systematics, build distributions and minimise the chi-squared.
 It fits only the beam sample.  The ```app/atmofitter.cpp``` processes the atmospheric sample, but it is under development.
 The oscillation space is scanned over and it is defined/managed by the ```physics/ParameterSpace``` class.
-Other important classes are ```physics/Oscillation``` to deal with oscillation physics (it relies on Eigen)
+Other important classes are ```physics/Oscillation``` to deal with oscillation physics (it relies on Eigen), ```event/Reco``` to build reconstructed events from true energy, and ```tools/CardDealer``` to handle cards/configuration files.
 
 The space is specified by combinations of oscillation parameters defined inside ```cards/fit.card```.
 For each point of the oscillation parameter space, a set of histograms is created and oscillated with those oscillation parameters.
