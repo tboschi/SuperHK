@@ -1,9 +1,10 @@
 # Easy Osc3++
 
-The simplified version of osc3++ is described by the ```event/ChiSquared``` class.
+The core of this simplified version of osc3++ is given by the ```event/ChiSquared``` class.
 The main code in ```app/fitter.cpp``` uses the class to load systematics, build distributions and minimise the chi-squared.
 It fits only the beam sample.  The ```app/atmofitter.cpp``` processes the atmospheric sample, but it is under development.
 The oscillation space is scanned over and it is defined/managed by the ```physics/ParameterSpace``` class.
+Other important classes are ```physics/Oscillation``` to deal with oscillation physics (it relies on Eigen)
 
 The space is specified by combinations of oscillation parameters defined inside ```cards/fit.card```.
 For each point of the oscillation parameter space, a set of histograms is created and oscillated with those oscilliation parameters.
@@ -13,6 +14,19 @@ The true point is defiend by the *Point* variable: in the default space, point 4
 A set of script is used to facilitate the execution of the code and extraction of results.
 In exectuing the following scripts, the structure of the folder is important.
 We will refer to paths where input files to be fitted are created as ```global``` (data only for atmospheric sample, but configuration files for beam sample too), and as ```root``` to where the outputs of the fitted file will be.
+
+## Requirements
+
+You must download and extract the [Eigen 3 library](https://eigen.tuxfamily.org/dox/index.html) and modify the ```EIGENINC``` variable in the ```Makefile``` to point to the Eigen folder.
+
+## Build
+
+Running
+```
+make
+```
+will create the executables in the ```bin/``` folder.
+
 
 ## Folder structure
 
