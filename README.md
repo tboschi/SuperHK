@@ -7,12 +7,12 @@ The oscillation space is scanned over and it is defined/managed by the ```physic
 Other important classes are ```physics/Oscillation``` to deal with oscillation physics (it relies on Eigen)
 
 The space is specified by combinations of oscillation parameters defined inside ```cards/fit.card```.
-For each point of the oscillation parameter space, a set of histograms is created and oscillated with those oscilliation parameters.
+For each point of the oscillation parameter space, a set of histograms is created and oscillated with those oscillation parameters.
 The main set available is *Asimov A*, labelled as `asim`.
-The true point is defiend by the *Point* variable: in the default space, point 49773 is Asimov A.
+The true point is defined by the *Point* variable: in the default space, point 49773 is Asimov A.
 
 A set of script is used to facilitate the execution of the code and extraction of results.
-In exectuing the following scripts, the structure of the folder is important.
+In executing the following scripts, the structure of the folder is important.
 We will refer to paths where input files to be fitted are created as ```global``` (data only for atmospheric sample, but configuration files for beam sample too), and as ```root``` to where the outputs of the fitted file will be.
 
 ## Requirements
@@ -57,11 +57,11 @@ The errorstudy folder is templated in this repository.
 **WARNING** *it uses ```GlobalOsc``` part of the original Osc3++ package. Skip if not interested in atmospheric stuff or do not have GlobalOsc installed.*
 
 The first step is to create the fitting space, by running ```GlobalOsc```.
-This can be done with the follwing script:
+This can be done with the following script:
 ```
 ./global.sh [-i | -n] -f nFiles -g /path/to/global
 ```
-where ```-i``` or ```-n``` select inverted or normal hiereachy for the oscillation.
+where ```-i``` or ```-n``` select inverted or normal hierarchy for the oscillation.
 
 If using batch jobs, the following script works with HTCondor.
 ```
@@ -70,7 +70,7 @@ If using batch jobs, the following script works with HTCondor.
 
 
 ## Prepare the systematics
-Creates correlation matrix of systematic parameters by combining matrices found in files of matrixn.root.
+Creates correlation matrix of systematic parameters by combining matrices found in files of matrixN.root.
 The script expects to find the systematics folder under root with the spline files to be processed (renaming of files and histograms).
 It uses ```app/purifysystematics.cpp``` and ```app/addmatrix.cpp```.
 ```
@@ -89,11 +89,11 @@ This maximises the effort from the different CPU running.
 The last parameter is the configuration file which specifies oscillation, samples, fitter, ecc.
 
 The easiest way to run the fit is using the following script, which handles parallel computing, folder structure, and configuration files.
-It work with HTCondor, but can be easily adapated to any other manager.
+It work with HTCondor, but can be easily adapted to any other manager.
 ```
 ./trisens_c.sh -g errorstudy/global -r errorstudy/root/asim -1 [NH | IH] -2 [NH | IH] [-f] [-s]
 ```
-where options 1 and 2 specify the mass hiererachies of respectively the observed and expected event samples.
+where options 1 and 2 specify the mass hierarchies of respectively the observed and expected event samples.
 The script uses the point specified in ```global/asim/point.info``` for the fit.
 The option -s does a stats only fit (no systematics). The option -f performs the scan of multiple true points, using the ones specified in ```global/asim/scan.info```
 
@@ -149,7 +149,7 @@ The exclusion file is saved under
 errorstudy/asim/NH_NH/exclusions/
 ```
 
-These operations could be done more easily and on muliple sets with the scheduler ```launch_contours_c.sh```.
+These operations could be done more easily and on multiple sets with the scheduler ```launch_contours_c.sh```.
 It uses HTCondor and it works similarly to the fitter scheduler.
 
 ## Producing plots
