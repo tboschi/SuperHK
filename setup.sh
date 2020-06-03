@@ -88,10 +88,6 @@ EOF
 
 prepare () {
 #1 is folder name, 2 and 3 are matrices names
-	if [ "$(ls -A $PREFIX/$1)" ] && [ "$force" = false ] ; then
-		return 1
-	fi
-
 	root=$PREFIX/$1
 	shift
 	./prepare_systematics.sh -r $root $@
