@@ -72,6 +72,9 @@ where root is one of the following
 * **10** addition of CC1pi and CC-coh xsec for nu_mu and nubar_mu
 * **11a** increment of SK energy scale uncertainty (to 2.9%)
 * **11b** decrement of SK energy scale uncertainty (to 1.9%)
+* **flux_lukas** flux models additions
+* **nuenorm_5_corr** correlated nu_e nubar_e CC cross-section at 5%
+* **nuenorm_5_anti** anticorrelated nu_e nubar_e CC cross-section at 5%
 
 
 The sub-directory ```systematics``` contains spline root files and the correlation matrix.
