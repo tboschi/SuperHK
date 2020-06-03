@@ -50,7 +50,7 @@ For the Asimov A points ("asim"), the global inputs and parameter will be downlo
 errorstudy/global/asim
 errorstudy/global/reconstruction
 ```
-When dealing with atmospheric samples, ```asim``` will contain subfolders with oscillated files to be fitted, but most importantly ```.info``` files with a list of true points to fit: **point.info** to generate a simple chi-squared profile against one single true point, **scan.info** with all the points for a sensitivity sweep.
+When dealing with atmospheric samples, ```asim``` will contain sub-folders with oscillated files to be fitted, but most importantly ```.info``` files with a list of true points to fit: **point.info** to generate a simple chi-squared profile against one single true point, **scan.info** with all the points for a sensitivity sweep.
 The folder ```reconstruction``` keeps configuration files and root files used to build the beam observables. From VALOR.
 
 
@@ -60,21 +60,34 @@ errorstudy/root/systematics/
 ```
 where root is one of the following
 * **0** the nominal systematics model
-* **1** ...
+* **1a** addition of nu_e CC xsec for 0.1GeV < E_true < 0.6GeV
+* **1b** addition of nu_e CC xsec for 0.6GeV < E_true < 1.0GeV
+* **2a** addition of nubar_e CC xsec for 0.1GeV < E_true < 0.6GeV
+* **2b** addition of nubar_e CC xsec for 0.6GeV < E_true < 1.0GeV
+* **6a** subtraction of nu 2p2h normalisation
+* **7a** subtraction of nubar 2p2h normalisation
+* **67** subtraction of nu and nubar 2p2h normalisation
+* **8**  increment of nu_e flux uncertainty in FHC mode
+* **9**  addition of CC1pi and CC-coh xsec for nu_e and nubar_e
+* **10** addition of CC1pi and CC-coh xsec for nu_mu and nubar_mu
+* **11a** increment of SK energy scale uncertainty (to 2.9%)
+* **11b** decrement of SK energy scale uncertainty (to 1.9%)
+
+
 The sub-directory ```systematics``` contains spline root files and the correlation matrix.
 
 The idea is that there is a single global folder with common parameters and multiple root folders, one for each systematic set.
 
 ### To study another oscillation set
 
-The default oscillation point set (and the only one provided) is Asiov A, asim for short.
+The default oscillation point set (and the only one provided) is Asimov A, asim for short.
 If you want to study a different combination of oscillation points you have to make one yourself.
 Let's call this new set ```space```.
 The following sub-folder must be created
 ```
 mkdir -p errorstudy/global/space
 ```
-in which the files ```point.info``` and ```scan.info``` should also be created accordingly.
+in which the files **point.info** and **scan.info** should also be created accordingly.
 The first one should contain just a single point of the space for chi-squared profiling, the latter a list of points for a sensitivity scan.
 The file ```card/fit.card``` needs to be update too with the details of the new space: the ```parm_``` entries specify the grid of the oscillation parameter space.
 
@@ -98,6 +111,9 @@ If using batch jobs, the following script works with HTCondor.
 
 
 ## Prepare the systematics
+
+If you built and donwloaded the files using ```setup.sh``` then this step in unnecessary.
+
 Creates correlation matrix of systematic parameters by combining matrices found in files of matrixN.root.
 The script expects to find the systematics folder under root with the spline files to be processed (renaming of files and histograms).
 It uses ```app/purifysystematics.cpp``` and ```app/addmatrix.cpp```.
@@ -129,7 +145,7 @@ The option -s does a stats only fit (no systematics). The option -f performs the
 The study multiple sets at the same time, the scheduler ```launch_trisens_c.sh``` working with HTCondor was devised.
 Manually modify the model array and the point variable.
 
-Assuming for example, a fit on the asimov A point 49773 with normal hierarchy for both the observed and expected samples,
+Assuming for example, a fit on the Asimov A point 49773 with normal hierarchy for both the observed and expected samples,
 the fit result will be organised under the following folder
 ```
 errorstudy/asim/NH_NH/sensitivity/point_49773/
