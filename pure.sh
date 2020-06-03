@@ -1,6 +1,6 @@
 #! /bin/bash
 
-#./prepare_systematics.sh -r /data/tboschi/HKsens/errorstudy/test0   DataFit_Postfit_2018_final_v1_180907_sk_eb_valor_order_all_plus_scc.root SKJointErrorMatrix2018_Total_fitqun_v4_16thAug2017_VALOR_order.root
+#./prepare_systematics.sh -r /data/tboschi/HKsens/errorstudy/test0   
 #./prepare_systematics.sh -r /data/tboschi/HKsens/errorstudy/0   DataFit_Postfit_2018_final_v1_180907_sk_eb_valor_order_all_plus_scc.root SKJointErrorMatrix2018_Total_fitqun_v4_16thAug2017_VALOR_order.root
 #./prepare_systematics.sh -r /data/tboschi/HKsens/errorstudy/8   banff_increasednueflux.root SKJointErrorMatrix2018_Total_fitqun_v4_16thAug2017_VALOR_order.root
 #./prepare_systematics.sh -r /data/tboschi/HKsens/errorstudy/11a DataFit_Postfit_2018_final_v1_180907_sk_eb_valor_order_all_plus_scc.root skdetfsi_escale29.root
