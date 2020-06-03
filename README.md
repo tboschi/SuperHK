@@ -35,27 +35,50 @@ will create the executables in the ```bin/``` folder.
 
 ## Folder structure
 
-Let's say the main path for the studies is the ```errorstudy/``` folder.
-Create a folder for the global inputs and parameter set (e.g. asim)
+After building the executables, run
 ```
-mkdir -p errorstudy/global/asim
-mkdir -p errorstudy/global/reconstruction
+./setup.sh
+```
+to build the folder structure required by the framework.
+The script also downloads the input files from http://hep.lancs.ac.uk/~tdealtry/oa/.
+
+You can specify a specific path with the ```-p prefix``` option, as specified in the usage. The default value is the folder ```errorstudy/``` in the current working directory 
+
+Let's say the main path for the studies is the ```errorstudy/``` folder.
+For the Asimov A points ("asim"), the global inputs and parameter will be downloaded in the folders (e.g. asim)
+```
+errorstudy/global/asim
+errorstudy/global/reconstruction
 ```
 When dealing with atmospheric samples, ```asim``` will contain subfolders with oscillated files to be fitted, but most importantly ```.info``` files with a list of true points to fit: **point.info** to generate a simple chi-squared profile against one single true point, **scan.info** with all the points for a sensitivity sweep.
 The folder ```reconstruction``` keeps configuration files and root files used to build the beam observables. From VALOR.
 
 
-Create also folder for each set to be studied
+There is also a folder for each set to be studied, with its own systematic files
 ```
-mkdir errorstudy/root/systematics/
+errorstudy/root/systematics/
 ```
-and the sub-directory ```systematics``` contains spline root files and the correlation matrix.
+where root is one of the following
+* **0** the nominal systematics model
+* **1** ...
+The sub-directory ```systematics``` contains spline root files and the correlation matrix.
 
 The idea is that there is a single global folder with common parameters and multiple root folders, one for each systematic set.
 
+### To study another oscillation set
 
-The errorstudy folder is templated in this repository.
+The default oscillation point set (and the only one provided) is Asiov A, asim for short.
+If you want to study a different combination of oscillation points you have to make one yourself.
+Let's call this new set ```space```.
+The following sub-folder must be created
+```
+mkdir -p errorstudy/global/space
+```
+in which the files ```point.info``` and ```scan.info``` should also be created accordingly.
+The first one should contain just a single point of the space for chi-squared profiling, the latter a list of points for a sensitivity scan.
+The file ```card/fit.card``` needs to be update too with the details of the new space: the ```parm_``` entries specify the grid of the oscillation parameter space.
 
+This process will be made more automatic in the future.
 
 ## Creating the fitting space for atmospheric sample
 
