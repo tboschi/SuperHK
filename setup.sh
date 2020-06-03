@@ -107,6 +107,7 @@ create_card "syst_nuMB_nuEB_RHC.card" "enu_erec_numubar_crs_nuebar_anu.root"
 create_card "syst_nuMB_nuMB_FHC.card" "enu_erec_numubar_x_numubar.root"
 create_card "syst_nuMB_nuMB_RHC.card" "enu_erec_numubar_crs_numubar_anu.root"
 cp "data/binning.card" $PREFIX/global/reconstruction
+cp -r data/asim $PREFIX/global
 
 build 0/systematics; down 190619/0 '*.root' 	#ok
 
