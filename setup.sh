@@ -146,7 +146,7 @@ prepare 0 $banff $skdetfsi
 prepare 1a "banff_00_nonuenumucc_remove.root" $skdetfsi
 prepare 1b "banff_01_nonuenumucc_remove.root" $skdetfsi
 prepare 2a "banff_02_nonuebarnumubarcc_remove.root" $skdetfsi
-prepare 2a "banff_03_nonuebarnumubarcc_remove.root" $skdetfsi
+prepare 2b "banff_03_nonuebarnumubarcc_remove.root" $skdetfsi
 
 prepare 6a "banff_nonu2p2h_remove.root" $skdetfsi
 prepare 7a "banff_nonubar2p2h_remove.root" $skdetfsi
@@ -161,7 +161,7 @@ prepare NC "banff_14.root" $skdetfsi
 prepare 11a $banff "skdetfsi_escale29.root"
 prepare 11b $banff "skdetfsi_escale19.root"
 
-prepare flux_lukas "banff_extraflux" $skdetfsi
+prepare flux_lukas "banff_extraflux.root" $skdetfsi
 
 prepare nuenorm_5_corr "norm_nue5_nuebar5_corr.root"
 prepare nuenorm_5_anti "norm_nue5_nuebar5_anticorr.root"
