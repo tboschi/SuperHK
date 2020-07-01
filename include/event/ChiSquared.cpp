@@ -1,53 +1,82 @@
+/* SK energy scale smart handling
+ *
+ * It was decided that bins with zero events should be not inclded in chi^2 calculation
+ * especially due to the energy scale problem
+ * If events migrate to previously-empty bins, the chi^2 becomes ill-defenied.
+ *
+ * For this reason, it should be safer (and faster too!!) to only store and handle nonzero bins
+ * 1Re-like hists and 1Rmu-like hists have therefore a different binning range
+ */
+
 #include "ChiSquared.h"
 
 ChiSquared::ChiSquared(CardDealer *card, int nbins) :
 	cd(card),
-	_nBin(nbins)
+	_nBin(nbins),
+	_nSys(-1)
 {
-	std::string _mode[] = {"nuE0_nuE0", "nuM0_nuM0", "nuM0_nuE0",
-			       "nuEB_nuEB", "nuMB_nuMB", "nuMB_nuEB"};
-	std::string _chan[] = {"E_CCQE", "M_CCQE", "E_CCnQE",
-			       "M_CCnQE", "E_NC", "M_NC"};
-	std::string _horn[] = {"FHC", "RHC"};
-	std::string _oscf[] = {"oscEE_0", "oscMM_0", "oscME_0",
-			       "oscEE_B", "oscMM_B", "oscME_B"};
-	Nu _fin[]  = {Nu::E_, Nu::M_, Nu::M_, Nu::Eb, Nu::Mb, Nu::Mb};
-	Nu _fout[] = {Nu::E_, Nu::M_, Nu::E_, Nu::Eb, Nu::Mb, Nu::Eb};
+	_mode = std::vector<std::string>
+		({"nuE0_nuE0", "nuM0_nuM0", "nuM0_nuE0", "nuEB_nuEB", "nuMB_nuMB", "nuMB_nuEB"});
+	_chan = std::vector<std::string>
+		({"E_CCQE", "M_CCQE", "E_CCnQE", "M_CCnQE", "E_NC", "M_NC"});
+	_horn = std::vector<std::string>
+		({"FHC", "RHC"});
+	_oscf = std::vector<std::string>
+		({"oscEE_0", "oscMM_0", "oscME_0", "oscEE_B", "oscMM_B", "oscME_B"});
+	 _fin = std::vector<Nu> ({Nu::E_, Nu::M_, Nu::M_, Nu::Eb, Nu::Mb, Nu::Mb});
+	_fout = std::vector<Nu> ({Nu::E_, Nu::M_, Nu::E_, Nu::Eb, Nu::Mb, Nu::Eb});
 
-	kMode = sizeof(_mode) / sizeof(std::string);
-	kChan = sizeof(_chan) / sizeof(std::string);
-	kHorn = sizeof(_horn) / sizeof(std::string);
-	kOscf = sizeof(_oscf) / sizeof(std::string);
-	kFIn  = sizeof(_fin)  / sizeof(Nu);
-	kFOut = sizeof(_fout) / sizeof(Nu);
-
-	mode.insert(mode.end(), &_mode[0], &_mode[kMode]);
-	chan.insert(chan.end(), &_chan[0], &_chan[kChan]);
-	horn.insert(horn.end(), &_horn[0], &_horn[kHorn]);
-	oscf.insert(oscf.end(), &_oscf[0], &_oscf[kOscf]);
-	 fin.insert(fin.end(),  &_fin[0],  &_fin[kFIn]  );
-	fout.insert(fout.end(), &_fout[0], &_fout[kFOut]);
-
-	if (!cd->Get("sample", type)) {
-		std::string _type[] = {"E_FHC", "E_RHC", "M_FHC", "M_RHC"};
+	if (!cd->Get("sample", _type)) {
 		if (nbins < 0)
-			kType = sizeof(_type) / sizeof(std::string);
+			_type = std::vector<std::string> ({"E_FHC", "E_RHC", "M_FHC", "M_RHC"});
 		else
-			kType = 1;
-		type.insert(type.end(), &_type[0], &_type[kType]);
+			_type = std::vector<std::string>(1);
 	}
 	else	//sample is defined
-		kType = type.size();
 
-	if (!cd->Get("scale_", scale)) {
+	// maybe one scale error?	
+	if (!cd->Get("scale_", _scale)) {
 		double err;
-		scale.clear();
+		_scale.clear();
 		if (!cd->Get("scale", err))
-			scale[""] = 0.024;
-		else
-			scale[""] = err;
+			err = 0.024;
+
+		for (const std::string &it : _type) {
+			_scale[it] = err;
+			_type_scale[it] = 0;
+		}
 	}
-	kScale = scale.size();	//of size 1, 2, or 4
+	else {	// two scale_E and scale_M
+		// scale contains "E" and "M"	
+		std::map<std::string, double> err;
+		for (const std::string &it : _type) {
+			if (it.find_first_of('E') != std::string::npos) {
+				if (_scale.count("E"))
+					err[it] = _scale["E"];
+				else {
+					if (kVerbosity)
+						std::cout << "No scale_E in card"
+							  << cd->CardName() << std::endl;
+					err[it] = 0.024;
+				}
+				_type_scale[it] = 0;
+			}
+			else if (it.find_first_of('M') != std::string::npos) {
+				if (_scale.count("M"))
+					err[it] = _scale["M"];
+				else {
+					if (kVerbosity)
+						std::cout << "No scale_M in card"
+							  << cd->CardName() << std::endl;
+					err[it] = 0.024;
+				}
+				_type_scale[it] = 1;
+			}
+		}
+		// reassign new map
+		_scale = err;
+	}
+	_nScale = _scale.size();	//of size 1, 2, or 4
 
 
 	if (!cd->Get("verbose", kVerbosity))
@@ -55,12 +84,12 @@ ChiSquared::ChiSquared(CardDealer *card, int nbins) :
 
 	if (kVerbosity) {
 		std::cout << "types: ";
-		for (int t = 0; t < type.size(); ++t)
-			std::cout << "\t" << type[t];
+		for (int t = 0; t < _type.size(); ++t)
+			std::cout << "\t" << _type[t];
 		std::cout << std::endl;
-		std::cout << "scales: " << kScale << std::endl;
-		for (is = scale.begin(); is != scale.end(); ++is) 
-			std::cout << "\t" << is->first << " -> " << is->second << std::endl;
+		std::cout << "scales: " << _nScale << std::endl;
+		for (const auto &it : _scale)
+			std::cout << "\t" << it.first << " -> " << it.second << std::endl;
 	}
 
 	maxIteration = 10;
@@ -73,8 +102,82 @@ ChiSquared::ChiSquared(CardDealer *card, int nbins) :
 	input = "input";
 }
 
+
+int ChiSquared::NumSys()
+{
+	if (_nSys > 0)
+		return _nSys;
+
+	_nSys = corr.cols();
+	return _nSys;
+}
+
+
+int ChiSquared::NumBin() {
+	// compute the number of nonempty bins
+	// if not defined, the routine will do this check
+	// and creates lower and upper bin pairs in _limits
+	//
+	if (_nBin > 0)	// all number of bins (compressed)
+		return _nBin;
+
+	DefineBinning();
+	return _nBin;
+}
+
+void ChiSquared::DefineBinning() {
+	// extract bining from spectra
+	// binning is compressed, such that nonempty bins are not stored
+
+	// unoscillated spectrum, just for counting nonempty bins
+	std::map<std::string, TH1D*> spectra = BuildSpectrum();
+
+	_nBin = 0;
+	_allBin = 0;
+	_limits.clear();
+	_bins.clear();
+	_global.clear();
+
+	for (const auto &it : spectra) {
+		int b0 = std::max(it.second->FindFirstBinAbove() - 1, 0);
+		int b1 = std::max(it.second->FindLastBinAbove(), it.second->GetNbinsX());
+
+		// store first and last bin
+		// refers to TH1D
+		_limits[it.first] = std::pair<int, int>(b0, b1);
+
+		// store binning as vector in map
+		const double *bins = it.second->GetXaxis()
+					->GetXbins()->GetArray();
+		_bins[it.first].assign(bins, bins + it.second->GetNbinsX()
+						  + 1);
+
+		// refers to Eigen
+		std::vector<int> binmap(b1-b0);
+		std::iota(binmap.begin(), binmap.end(), b0);
+		_global.insert(_global.end(), binmap.begin(), binmap.end());
+
+		// count number of total bins
+		_nBin += b1 - b0;
+		_allBin += it.second->GetNbinsX();
+
+		delete it.second;
+	}
+
+	if (kVerbosity)
+		std::cout << "Number of nonzero bins: "
+			  << _allBin << " / " << _nBin << std::endl;
+}
+
+int ChiSquared::DOF() {
+	return std::abs(_nBin - _nSys);
+}
+
+
 void ChiSquared::Init()
 {
+	DefineBinning();
+
 	LoadCorrelation();
 	LoadSystematics();
 }
@@ -96,14 +199,13 @@ void ChiSquared::LoadCorrelation()
 	if (kVerbosity)
 		std::cout << "Limiting systematics between "
 			  << sysA << " and " << sysB << std::endl;
-	//first kScale entries are for energy scale
-	corr = Eigen::MatrixXd::Zero(kScale + sysB - sysA, kScale + sysB - sysA);
-	corr.topLeftCorner(kScale, kScale) =
-				Eigen::MatrixXd::Identity(kScale, kScale);
+	//last _nScale entries are for energy scale
+	corr = Eigen::MatrixXd::Zero(_nScale + sysB - sysA, _nScale + sysB - sysA);
+	corr.bottomRightCorner(_nScale, _nScale) = Eigen::MatrixXd::Identity(_nScale, _nScale);
 
 	for (int r = sysA; r < sysB; ++r)
 		for (int c = sysA; c < sysB; ++c)
-			corr(r + kScale - sysA, c + kScale - sysA) = (*cmat)(r, c);
+			corr(r + - sysA, c + - sysA) = (*cmat)(r, c);
 	mf->Close();
 
 	corr = corr.inverse();
@@ -126,21 +228,21 @@ void ChiSquared::LoadCorrelation()
 void ChiSquared::LoadSystematics()
 {
 	sysMatrix.clear();
-	sysMatrix[0] = Eigen::MatrixXd::Zero(kType * NumBin(), NumSys());
+	sysMatrix[0] = Eigen::MatrixXd::Zero(_nBin, _nSys);
 	for (int sigma = -3; sigma < 4; sigma += 2)
-		sysMatrix[sigma] = Eigen::MatrixXd::Zero(kType * NumBin(),
-							 NumSys());
+		sysMatrix[sigma] = Eigen::MatrixXd::Zero(_nBin, _nSys);
 
 	int sysA, sysB;
 	if (!cd->Get("syst_first", sysA))
 		sysA = 0;
 	if (!cd->Get("syst_last", sysB))
-		sysB = NumSys();
+		sysB = _nSys;
 
-	for (int it = 0; it < kType; ++it)	//type loop
-	{
+	int off = 0;	// offset for global bin
+	for (const std::string &it : _type) {
+		// it is sample type name
 		std::string fileName;
-		if (!cd->Get("systematic_" + type[it], fileName))
+		if (!cd->Get("systematic_" + it, fileName))
 			continue;
 
 		if (kVerbosity > 1)
@@ -148,11 +250,20 @@ void ChiSquared::LoadSystematics()
 		TFile *sysf = new TFile(fileName.c_str());
 		TIter next(sysf->GetListOfKeys());
 		TKey *k;
+
+		// bin limits
+		auto lims = _limits[it];
 		while (k = static_cast<TKey*>(next()))
 		{
 			std::string sysname = k->GetName();
-			//if (kVerbosity)
-				//std::cout << "accepting " << sysname << std::endl;
+
+			//if (skip_syst.find(sysname) != skip_sys.end()) {
+			//	if (kVerbosity)
+			//		std::cout << "Not accepting " << sysname << std::endl;
+			//	continue;	// to be implemented
+			//}
+			//elif (kVerbosity)
+			//	std::cout << "Accepting " << sysname << std::endl;
 
 			int sigma = 0, k_err = 0;
 			//spline systematic
@@ -176,13 +287,12 @@ void ChiSquared::LoadSystematics()
 				k_err = std::stoi(sysname);
 				if (k_err < sysA || k_err >= sysB)
 					continue;
-				k_err += kScale;
+				//k_err += _nScale;
 
 				//for (int n = 0; n < hsys->GetNbinsX(); ++n)
-				for (int n = 0; n < NumBin(); ++n)
-					sysMatrix[sigma](it * NumBin() + n,
-							 k_err - sysA)
-						= (hsys->GetBinContent(n+1) - 1);
+				for (int n = lims.first, j = 0; n < lims.second; ++n, ++j)
+					sysMatrix[sigma](off + j, k_err - sysA)
+						= hsys->GetBinContent(n+1) - 1;
 			}
 			else
 			{
@@ -194,95 +304,107 @@ void ChiSquared::LoadSystematics()
 				k_err = std::stoi(sysname);
 				if (k_err < sysA || k_err >= sysB)
 					continue;
-				k_err += kScale;
+				//k_err += _nScale;
 
 					//for (int n = 0; n < hsys->GetNbinsX(); ++n)
-				for (sigma = -3; sigma < 4; sigma += 2)
-					for (int n = 0; n < NumBin(); ++n)
-						sysMatrix[sigma](it * NumBin() + n,
-								k_err - sysA)
+				//for (int n = 0; n < NumBin(); ++n)
+				for (int n = lims.first, j = 0; n < lims.second; ++n, ++j)
+					for (sigma = -3; sigma < 4; sigma += 2)
+						sysMatrix[sigma](off + j, k_err - sysA)
 							= sigma * (hsys->GetBinContent(n+1) - 1);
 			}
 		}
+		off += lims.second - lims.first;
 		sysf->Close();
 	}
 }
 
 
-/*
- * This routine builds the observables as a long vector of NumBin length
- */
-Eigen::VectorXd ChiSquared::ConstructSpectrum(Oscillator *osc)
-{
+Eigen::VectorXd ChiSquared::ConstructSpectrum(Oscillator *osc) {
+	// BuildSpectrum and then collates everything on a Eigen::Vector
+
+	std::map<std::string, TH1D*> spectra = BuildSpectrum(osc);
+
+	double stats;	//for scaling
+	if (!cd->Get("stats", stats))
+		stats = 1.0;
+
+	Eigen::VectorXd vect(_nBin);
+
+	int j = 0;	//add offset
+	for (const auto &is : spectra) {
+		auto lims = _limits[is.first];
+		for (int n = lims.first; n < lims.second; ++n, ++j) 
+			vect(j) = is.second->GetBinContent(n+1) * stats;
+
+		delete is.second;
+	}
+
+	return vect;
+}
+
+std::map<std::string, TH1D*> ChiSquared::BuildSpectrum(Oscillator *osc) {
+	// build the observables as TH1D objects
+	// and return map with histograms for each type
+	// if no oscillator is passed (default = 0), spectra are not oscillated
+	//
 	std::string reco_file;
 
 	TF1* f1 = new TF1("const", "[0]", 0, 1);
 	f1->SetParameter(0, 1.0);
 
 	std::map<std::string, TH1D*> spectra;
-	for (int ih = 0; ih < kHorn; ++ih)	//FHC, RHC
-		for (int im = 0; im < kMode; ++im)	//nuE->nuE, nuM->nuE, nuM->nuM
-	{
-		cd->Get("reco_" + mode[im] + "_" + horn[ih], reco_file);
-		Reco *reco = new Reco(reco_file);
 
-		const double *bins;
-		int nBin = reco->BinsX(bins);
-		f1->SetRange(bins[0], bins[nBin-1]);
+	for (const std::string &ih : _horn) {	//FHC, RHC
+		int cm = 0;	// mode counter
+		for (const std::string &im : _mode) {	//nuE->nuE, nuM->nuE, nuM->nuM
+			// Reco object combines reconstruction matrices to for prediction
+			cd->Get("reco_" + im + "_" + ih, reco_file);
+			Reco *reco = new Reco(reco_file);
 
-		std::string fname = horn[ih] + "_" + mode[im];
-		TH1D* flux = new TH1D(fname.c_str(), fname.c_str(), nBin, bins);
-		flux->SetDirectory(0);
-		flux->Add(f1);	//filled with ones
+			const double *bins;
+			int nBin = reco->BinsX(bins);
+			f1->SetRange(bins[0], bins[nBin-1]);
 
-		osc->Oscillate(fin[im], fout[im], flux);
+			// flux contains the weight of spectrum
+			std::string fname = ih + "_" + im;
+			TH1D* flux = new TH1D(fname.c_str(), fname.c_str(), nBin, bins);
+			flux->SetDirectory(0);
+			flux->Add(f1);	//filled with ones
 
-		for (int ic = 0; ic < kChan; ++ic)	//CCQE, CCnQE, NC x E, M
-		{
-			if (chan[ic].find("NC") == std::string::npos)	//it is not a NC
-				reco->Scale(chan[ic], flux);
-			else if (mode[im] == "nuM0_nuE0" || mode[im] == "nuMB_nuEB") //and no events for
-				reco->Scale(chan[ic], 0.0);			     //these two
-			//else no need to scale for NC event
-			//reco->Scale(chan[ic], flux);
+			if (osc)	
+				osc->Oscillate(_fin[cm], _fout[cm], flux);
 
-			TH1D *py = reco->Project(chan[ic], 'y');
-			if (py)
-			{
-				std::string hname = chan[ic].substr(0, chan[ic].find_first_of('_'))
-					+ "_" + horn[ih];
+			for (const std::string &ic : _chan) {	//CCQE, CCnQE, NC x E, M
+				if (ic.find("NC") == std::string::npos)	//it is not a NC
+					reco->Scale(ic, flux);
+				else if (im == "nuM0_nuE0" || im == "nuMB_nuEB") //and no events for
+					reco->Scale(ic, 0.0);			     //these two
+				//else no need to scale for NC event
+				//reco->Scale(chan[ic], flux);
 
-				if (spectra.count(hname) && spectra[hname])
-					spectra[hname]->Add(py);
-				else
-					spectra[hname] = static_cast<TH1D*>(py->Clone());
+				TH1D *py = reco->Project(ic, 'y');
+				if (py) {
+					std::string hname = ic.substr(0, ic.find_first_of('_')) + "_" + ih;
+
+					if (spectra.count(hname) && spectra[hname])
+						spectra[hname]->Add(py);
+					else
+						spectra[hname] = static_cast<TH1D*>(py->Clone());
+				}
 			}
+			delete flux;
+			delete reco;
 		}
-
-		delete flux;
-		delete reco;
+		++cm;
 	}
 
 	delete f1;
 
-	double stats;
-	if (!cd->Get("stats", stats))
-		stats = 1.0;
-
-	Eigen::VectorXd vect(kType * NumBin());
-	int j = 0;	//add offset
-	for (int it = 0; it < kType; ++it)
-	{
-		for (int i = 0; i < spectra[type[it]]->GetNbinsX(); ++i, ++j) 
-			vect(j) = spectra[type[it]]->GetBinContent(i+1) * stats;
-
-		delete spectra[type[it]];
-	}
-
-	return vect;
+	return spectra;
 }
 
-
+// Atmospheric function
 Eigen::VectorXd ChiSquared::LoadSpectrum(int pt, std::string from)
 {
 	if (kVerbosity)
@@ -340,7 +462,7 @@ Eigen::VectorXd ChiSquared::LoadSpectrum(int pt, std::string from)
 		stats = 1.0;
 
 
-	Eigen::VectorXd vect(NumBin());
+	Eigen::VectorXd vect(_nBin);
 
 	for (int i = 0; i < data->GetEntries(); ++ i)
 	{
@@ -378,35 +500,7 @@ bool ChiSquared::PointInFile(TFile *f, int pt)
 		return false;
 }
 
-int ChiSquared::NumSys()
-{
-	return corr.cols();
-}
 
-int ChiSquared::NumBin()
-{
-	if (_nBin > 0)
-		return _nBin;
-
-	std::string reco_file;
-
-	if (!cd->Get("reco_nuE0_nuE0_FHC", reco_file))
-		return 0;
-
-	const double *bins;
-	Reco *reco = new Reco(reco_file);
-	_nBin = reco->BinsY(bins);
-	_bins.insert(_bins.end(), bins, bins + _nBin + 1);
-
-	delete reco;
-
-	return _nBin;
-}
-
-int ChiSquared::DOF()
-{
-	return std::abs(kType * NumBin() - NumSys());
-}
 
 //On is the true spectrum, En is the observed spectrum
 //return time taken for computation
@@ -414,7 +508,7 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 {
 	//initialize epsil with zeroes
 
-	Eigen::VectorXd epsil = Eigen::VectorXd::Zero(NumSys());
+	Eigen::VectorXd epsil = Eigen::VectorXd::Zero(_nSys);
 	Eigen::VectorXd best_eps = epsil;
 	double best_x2 = X2(On, En, best_eps);
 	
@@ -469,7 +563,7 @@ bool ChiSquared::FindMinimum(const Eigen::VectorXd &On, const Eigen::VectorXd &E
 
 	double lambda = lm_0;
 
-	Eigen::VectorXd delta = Eigen::VectorXd::Constant(NumSys(), 1);
+	Eigen::VectorXd delta = Eigen::VectorXd::Constant(_nSys, 1);
 
 	double x2 = X2(On, En, epsil);
 	double diff = 1;
@@ -561,36 +655,37 @@ void ChiSquared::JacobianHessian2(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 	//hes = corr;		//hessian
 	hes.setZero();		//hessian
 
-	const Eigen::VectorXd sk  = epsil.head(kScale);
+	const Eigen::VectorXd sk  = epsil.tail(_nScale);
 
 	const Eigen::VectorXd Ep  = Gamma(En, epsil);
 	const Eigen::MatrixXd gam = GammaJac(Ep, epsil);
 
-	for (int n = 0; n < kType * NumBin(); ++n) {
-		//scale systematic is related to bin number
-		int t = n / (kType * NumBin() / kScale);
-		double en = Scale(Ep, sk(t), n);
+	for (int n = 0; n < _nBin; ++n) {
+		// scale systematic is related to bin number
+		int t = _nSys - _nScale + _type_scale[TypeFromBin(n)];
 
-		if (en < 1e-9)		//bad stuff, avoid it
+		double en = Scale(Ep, sk, n);	// en can be empty!
+		if (en < 1e-9)			//bad stuff, avoid it
 			continue;
 
 		double one_oe = 1 - On(n) / en;
-		double en_jac = ScaleJac(Ep, sk(t), n);
+		double en_jac = ScaleJac(Ep, sk, n);
 
+		// hessian of scale error first
 		hes(t, t) += On(n) * pow(en_jac / en, 2);
-		std::cout << "adding " << n << "\t"
-			  << On(n) * pow(en_jac / en, 2)
-			  << " += " << hes(t, t) << std::endl;;
+		//std::cout << "adding " << n << "\t"
+			  //<< On(n) * pow(en_jac / en, 2)
+			  //<< " += " << hes(t, t) << std::endl;;
 
 		if (std::abs(one_oe) > 1e-9) {
 			jac(t)    += one_oe * en_jac;
-			hes(t, t) += one_oe * ScaleHes(Ep, sk(t), n);
+			hes(t, t) += one_oe * ScaleHes(Ep, sk, n);
 		}
 
-		//do the rest, icluding mixed term with SK syst
-		for (int k = kScale; k < NumSys(); ++k) {
+		//do the rest, including mixed term with SK syst
+		for (int k = 0; k < _nSys - _nScale; ++k) {
 			const Eigen::VectorXd &gk = gam.col(k);
-			double gn_jac = Scale(gk, sk(t), n);
+			double gn_jac = Scale(gk, sk, n);
 
 			//mixed term with SK error
 			hes(k, t) += en_jac * gn_jac * On(n) / en / en;
@@ -600,26 +695,26 @@ void ChiSquared::JacobianHessian2(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 
 			if (std::abs(one_oe) < 1e-9) {
 				jac(k)    += one_oe * gn_jac;
-				hes(k, t) += one_oe * ScaleJac(gk, sk(t), n);
+				hes(k, t) += one_oe * ScaleJac(gk, sk, n);
 			}
 
-			for (int j = k + 1; j < NumSys(); ++j) {
+			for (int j = k + 1; j < _nSys - _nScale; ++j) {
 				const Eigen::VectorXd &gj = gam.col(j);
 
-				hes(k, j) += gn_jac * Scale(gj, sk(t), n)
+				hes(k, j) += gn_jac * Scale(gj, sk, n)
 					   * On(n) / en / en;
 
 				if (std::abs(one_oe) < 1e-9)
 					continue;
 
 				const Eigen::VectorXd gh = GammaJac(gk, epsil, j);
-				hes(k, j) += one_oe * Scale(gh, sk(t), n);
+				hes(k, j) += one_oe * Scale(gh, sk, n);
 			}
 		}
 	}
 
-	for (int k = 0; k < NumSys(); ++k)
-		for (int j = k+1; j < NumSys(); ++j)
+	for (int k = 0; k < _nSys - _nScale; ++k)
+		for (int j = k+1; j < _nSys - _nScale; ++j)
 			hes(j, k) = hes(k, j);
 }
 
@@ -632,7 +727,7 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 				    const Eigen::VectorXd &epsil)
 {
 	//kTpye is also the number of scale errors
-	Eigen::VectorXd sk = epsil.head(kScale);
+	Eigen::VectorXd sk = epsil.head(_nScale);
 
 	//modified expected events with systematics
 	Eigen::VectorXd Ep = Gamma(En, epsil);
@@ -648,7 +743,7 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 		if (en < 1e-9)
 			continue;
 
-		int t = n / (kType * NumBin() / kScale);
+		int t = n / (kType * NumBin() / _nScale);
 		double epskn = ScaleJac(Ep, sk, n);
 
 		hes(t, t) += On(n) * pow(epskn / en, 2);
@@ -661,7 +756,7 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 	}
 
 	//do the rest, icluding mixed term with SK syst
-	for (int k = kScale; k < NumSys(); ++k) {
+	for (int k = _nScale; k < NumSys(); ++k) {
 		//gk is jacobian of modified systematic wrt to k
 		Eigen::VectorXd gk = GammaJac(En, epsil, k);
 
@@ -670,7 +765,7 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 			if (en < 1e-9)
 				continue;
 
-			int t = n / (kType * NumBin() / kScale);
+			int t = n / (kType * NumBin() / _nScale);
 			double gkskn = Scale(gk, sk, n);
 
 			//diagonal term
@@ -699,7 +794,7 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 				if (en < 1e-9)
 					continue;
 
-				int t = n / (kType * NumBin() / kScale);
+				int t = n / (kType * NumBin() / _nScale);
 				hes(k, j) += Scale(gk, sk, n) * Scale(gj, sk, n)
 					   * On(n) / en / en;
 
@@ -735,62 +830,49 @@ double ChiSquared::X2(const Eigen::VectorXd &On, const Eigen::VectorXd &En,
 
 
 // epsil is an array with all sigmas including SK energy scale
-// SK energy scale is the first one
+// sum up all bin contributions to the chi2
 double ChiSquared::ObsX2(const Eigen::VectorXd &On, const Eigen::VectorXd &En,
 			    const Eigen::VectorXd &epsil)
 {
 	// modified expected events with systematics
-	Eigen::VectorXd gam = Gamma(En, epsil);
-	Eigen::VectorXd sk = epsil.head(kScale);
-
-
 	std::vector<double> chi2n = ObsX2n(On, En, epsil);
-	double chi2 = 0;
-	for (int n = 0; n < chi2n.size(); ++n)
-		chi2 += chi2n[n];
-
-	return chi2;
+	return std::accumulate(chi2n.begin(), chi2n.end(), 0);
 }
 
 
+// return statistics X2 as a vector
+// so X2 contribution to each bin
 std::vector<double> ChiSquared::ObsX2n(const Eigen::VectorXd &On,
-				     const Eigen::VectorXd &En,
-				     const Eigen::VectorXd &epsil)
+				       const Eigen::VectorXd &En,
+				       const Eigen::VectorXd &epsil)
 {
 	// modified expected events with systematics
 	Eigen::VectorXd gam = Gamma(En, epsil);
-	Eigen::VectorXd sk = epsil.head(kScale);
+	Eigen::VectorXd sk = epsil.tail(_nScale);
 
-	std::vector<double> chi2(kType * NumBin());
-	for (int n = 0; n < kType * NumBin(); ++n) {
-		int t = n / (kType * NumBin() / kScale);
-		double en = Scale(gam, sk(t), n);
-		if (On(n) > 1e-15) {
-			en = std::max(1e-8, en);
-			chi2[n] = 2 * On(n) * ( en/On(n) + log(On(n)/en) - 1);
-		}
-		else
-			chi2[n] = 2 * (en - On(n));
+	std::vector<double> chi2(En.size());
+	for (int n = 0; n < En.size(); ++n) {
+		double en = std::max(Scale(gam, sk, n), 1e-8);
+		chi2[n] = 2 * On(n) * (en / On(n) - log(en / On(n)) - 1);
 	}
 
 	return chi2;
 }
 
 
-
-double ChiSquared::SysX2(const Eigen::VectorXd &epsil)
-{
+// return systematic X2
+double ChiSquared::SysX2(const Eigen::VectorXd &epsil) {
 	return epsil.transpose() * corr * epsil;
 }
 
 
 // this return the spectrum modified with the systematics
 Eigen::VectorXd ChiSquared::Gamma(const Eigen::VectorXd &En,
-				     const Eigen::VectorXd &epsil)
+				  const Eigen::VectorXd &epsil)
 {
 	Eigen::VectorXd gam = En;
-	for (int k = kScale; k < NumSys(); ++k)
-		for (int n = 0; n < kType * NumBin(); ++n)
+	for (int k = 0; k < _nSys - _nScale; ++k)
+		for (int n = 0; n < En.size(); ++n)
 			gam(n) *= 1 + F(k, n, epsil(k));
 
 	return gam;
@@ -799,11 +881,11 @@ Eigen::VectorXd ChiSquared::Gamma(const Eigen::VectorXd &En,
 
 // this is the derivative of modified spectrum by gamma at given k
 Eigen::MatrixXd ChiSquared::GammaJac(const Eigen::VectorXd &En,
-				        const Eigen::VectorXd &epsil)
+				     const Eigen::VectorXd &epsil)
 {
-	Eigen::MatrixXd gam(En.size(), NumSys());
-	gam.leftCols(kScale).setZero();
-	for (int k = kScale; k < NumSys(); ++k)
+	Eigen::MatrixXd gam(_nBin, _nSys);	// should remove _nScale?
+	gam.rightCols(_nScale).setZero();
+	for (int k = 0; k < _nSys - _nScale; ++k)
 		gam.col(k) = GammaJac(En, epsil, k);
 
 	return gam;
@@ -813,10 +895,10 @@ Eigen::MatrixXd ChiSquared::GammaJac(const Eigen::VectorXd &En,
 // derive by k-th systematic
 // En is already derived once, so this can be done recursively
 Eigen::VectorXd ChiSquared::GammaJac(const Eigen::VectorXd &En,
-				        const Eigen::VectorXd &epsil, int k)
+				     const Eigen::VectorXd &epsil, int k)
 {
 	Eigen::VectorXd gam = En;
-	for (int n = 0; n < gam.size(); ++n)
+	for (int n = 0; n < En.size(); ++n)
 		gam(n) *= Fp(k, n, epsil(k)) / (1 + F(k, n, epsil(k)));
 
 	return gam;
@@ -874,6 +956,7 @@ double ChiSquared::Fp(int k, int n, double dl, double du)
 
 // binary search for starting bin
 // makes the computation slightly faster
+/*
 int ChiSquared::StartingBin(int n, double scale)
 {
 	double b0_n = _bins[n];
@@ -897,16 +980,19 @@ int ChiSquared::StartingBin(int n, double scale)
 	}
 	return mm;
 }
+*/
 
 // Apply energy scale dilation
+// FactorFn is a function which changes if calculating energy scale, jacobian or hessian
 // The dilation does not depend on En, therefore 
 // En can be anything
 //double ChiSquared::Scale(FactorFn factor, const Eigen::VectorXd &En,
 //			const Eigen::VectorXd &sigma, int t)
-double ChiSquared::Scale(FactorFn factor, const Eigen::VectorXd &En,
+/*
+double ChiSquared::Scale2(FactorFn factor, const Eigen::VectorXd &En,
 			double sigma, int t)
 {
-	if (t < 0 || t > kType * NumBin())
+	if (t < 0 || t > NumBin())
 		return 0;
 
 	int n = t % NumBin();
@@ -916,7 +1002,7 @@ double ChiSquared::Scale(FactorFn factor, const Eigen::VectorXd &En,
 		return 0;
 
 	double SKerror = 0;
-	for (is = scale.begin(); is != scale.end(); ++is) 
+	for (is = _scale.begin(); is != _scale.end(); ++is) 
 		if (type[t].find(is->first) != std::string::npos) {
 			SKerror = is->second;
 			break;
@@ -990,45 +1076,124 @@ double ChiSquared::Scale(FactorFn factor, const Eigen::VectorXd &En,
 
 	return ret;
 }
+*/
 
+std::string ChiSquared::TypeFromBin(int n) {
+	// check if is the same type
+	if (n >= _limits[_tlim].first && n < _limits[_tlim].second)
+		return _tlim;
 
-double ChiSquared::Scale(const Eigen::VectorXd &En, double sigma, int t)
+	// return sample type given bin
+	for (const auto &it : _limits)
+		if (it.first != _tlim
+		    && n >= it.second.first
+		    && n < it.second.second) {
+			_tlim = it.first;
+			return _tlim;
+		}
+
+	return "";
+}
+
+double ChiSquared::Scale(FactorFn factor,
+			 const Eigen::VectorXd &En,
+			 const Eigen::VectorXd &sk,
+			 int n)	// relative bin
 {
-	return Scale(&ChiSquared::ScaleNor, En, sigma, t);
+	std::string it = TypeFromBin(n);
+
+	double scale_err = _scale[it];	// this is Error value
+	double shift = 1 + sk(_type_scale[it]) * scale_err;
+
+	auto lims = _limits[it];
+	int off = _global[n] - n;
+	n = _global[n];	// global bin
+
+	// unscaled/original bins
+	double b0_n = _bins[it][n];
+	double b1_n = _bins[it][n + 1];
+
+	//binary search for starting bin
+	//int mm = StartingBin(n, shift);
+
+	double ret = 0;
+	// Loop over unscaled/original edges only nonempty bins
+	for (int m = lims.first; m < lims.second; ++m) {
+
+		// scaled bins
+		double b0_m = _bins[it][m];
+		double b1_m = _bins[it][m + 1];
+
+		//continue/break computation because there is no overlap
+		if (shift * b1_m < b0_n)
+			continue;
+		else if (shift * b0_m > b1_n)
+			break;
+
+		double f = (b1_n - b0_n + shift * (b1_m - b0_m)
+			  - std::abs(b0_n - shift * b0_m)
+			  - std::abs(b1_n - shift * b1_m)) / 2.;
+
+		if (f < 0)
+			continue;
+
+		int s0 = b0_n - shift * b0_m < 0 ? -1 : 1;
+		int s1 = b1_n - shift * b1_m < 0 ? -1 : 1;
+		double fd = (b1_m - b0_m + s0 * b0_m + s1 * b1_m) / 2.;
+		double ss = f > 0 ? 1 : 0.5;	//continuity factor
+
+		std::vector<double> terms = {scale_err, shift, f, fd, b1_m - b0_m};
+		ret += En(m - off) * ss * (this->*factor)(terms);
+	}
+
+	return ret;
 }
 
 
-double ChiSquared::ScaleJac(const Eigen::VectorXd &En, double sigma, int t)
+// call Scale Energy function
+double ChiSquared::Scale(const Eigen::VectorXd &En,
+			 const Eigen::VectorXd &sk,
+			 int n)
 {
-	return Scale(&ChiSquared::ScaleJac, En, sigma, t);
+	return Scale(&ChiSquared::ScaleNor, En, sk, n);
+}
+
+// call jacobian of Scale Energy function
+double ChiSquared::ScaleJac(const Eigen::VectorXd &En,
+			    const Eigen::VectorXd &sk,
+			    int n)
+{
+	return Scale(&ChiSquared::ScaleJac, En, sk, n);
 }
 
 
-double ChiSquared::ScaleHes(const Eigen::VectorXd &En, double sigma, int t)
+// call hessian of Scale Energy function
+double ChiSquared::ScaleHes(const Eigen::VectorXd &En,
+			    const Eigen::VectorXd &sk,
+			    int n)
 {
-	return Scale(&ChiSquared::ScaleHes, En, sigma, t);
+	return Scale(&ChiSquared::ScaleHes, En, sk, n);
 }
 
 
 double ChiSquared::ScaleNor(const std::vector<double> &term)
 {
-	//return f / scale / db;
+	//return f / shift / db;
 	return term[2] / term[1] / term[4];
 }
 
 double ChiSquared::ScaleJac(const std::vector<double> &term)
 {
-	//return SKerror / scale / db * (fd - f / scale)
+	//return scale_err / shift / db * (fd - f / shift)
 	return term[0] / term[1] / term[4] * (term[3] - term[2] / term[1]);
 }
 
 double ChiSquared::ScaleHes(const std::vector<double> &term)
 {
-	//return pow(SKerror / scale, 2) / db * (f / scale - fd)
+	//return pow(scale_err / shift, 2) / db * (f / shift - fd)
 	return 2 * pow(term[0] / term[1], 2) / term[4]
 		 * (term[2] / term[1] - term[3]);
 }
-
 
 
 /*
@@ -1042,19 +1207,19 @@ double ChiSquared::ScaleJac(const Eigen::VectorXd &En,
 		return 0;
 
 	int n = t % NumBin();
-	t /= (kType * NumBin() / kScale);
+	t /= (kType * NumBin() / _nScale);
 
 	if (t >= kType)
 		return 0;
 
-	double SKerror = 0;
+	double scale_err = 0;
 	std::map<std::string, double>::iterator is;
 	for (is = scale.begin(); is != scale.end(); ++is) 
 		if (type[t].find(is->first) != std::string::npos) {
-			SKerror = is->second;
+			scale_err = is->second;
 			break;
 		}
-	double scale = 1 + sigma(t) * SKerror;
+	double scale = 1 + sigma(t) * scale_err;
 
 	// unscaled/original bins
 	double b0_n = _bins[n];
@@ -1079,7 +1244,7 @@ double ChiSquared::ScaleJac(const Eigen::VectorXd &En,
 		int s1 = b1_n - scale * b1_m < 0 ? -1 : 1;
 		double fd = b1_m - b0_m + s0 * b0_m + s1 * b1_m;
 
-		ret += En(m + t * NumBin()) * SKerror / scale / 2.
+		ret += En(m + t * NumBin()) * scale_err / scale / 2.
 			    / (b1_m - b0_m) * (fd - f / scale);
 		if (!std::isfinite(ret))
 			std::cout << "ff " << En(m + t * NumBin()) << "\t" << (b1_m - b0_m) << "\t" << fd << "\t" <<  f << std::endl;
@@ -1096,19 +1261,19 @@ double ChiSquared::ScaleHes(const Eigen::VectorXd &En,
 		return 0;
 
 	int n = t % NumBin();
-	t /= (kType * NumBin() / kScale);
+	t /= (kType * NumBin() / _nScale);
 
 	if (t >= kType)
 		return 0;
 
-	double SKerror = 0;
+	double scale_err = 0;
 	std::map<std::string, double>::iterator is;
 	for (is = scale.begin(); is != scale.end(); ++is) 
 		if (type[t].find(is->first) != std::string::npos) {
-			SKerror = is->second;
+			scale_err = is->second;
 			break;
 		}
-	double scale = 1 + sigma(t) * SKerror;
+	double scale = 1 + sigma(t) * scale_err;
 
 	// unscaled/original bins
 	double b0_n = _bins[n];
@@ -1133,7 +1298,7 @@ double ChiSquared::ScaleHes(const Eigen::VectorXd &En,
 		int s1 = b1_n - scale * b1_m < 0 ? -1 : 1;
 		double fd = b1_m - b0_m + s0 * b0_m + s1 * b1_m;
 
-		ret += En(t) * pow(SKerror / scale, 2)
+		ret += En(t) * pow(scale_err / scale, 2)
 		       / (b1_m - b0_m) * (f / scale - fd);
 	}
 

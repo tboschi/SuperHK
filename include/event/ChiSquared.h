@@ -10,6 +10,8 @@
 #include <vector>
 #include <map>
 #include <cstring>
+#include <utility>
+#include <numeric>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -31,11 +33,13 @@ class ChiSquared
 		ChiSquared(CardDealer *card, int nbins = -1);
 
 		void Init();
+		void DefineBinning();
 		void LoadCorrelation();
 		void LoadSystematics();
 
-		Eigen::VectorXd ConstructSpectrum(Oscillator *osc);
+		Eigen::VectorXd ConstructSpectrum(Oscillator *osc = 0);
 		Eigen::VectorXd LoadSpectrum(int pt, std::string from = "");
+		std::map<std::string, TH1D*> BuildSpectrum(Oscillator *osc = 0);
 
 		bool PointInFile(TFile *f, int pt);
 
@@ -90,15 +94,20 @@ class ChiSquared
 		double Fp(int k, int n, double dl, double du);
 
 		int StartingBin(int n, double scale);
+		std::string TypeFromBin(int n);
 
 		//function to compute the factor
 		typedef double (ChiSquared::*FactorFn)(const std::vector<double> &);
 
 		double Scale(FactorFn factor,
-			     const Eigen::VectorXd &En, double sigma, int t);
-		double Scale(const Eigen::VectorXd &En, double sigma, int t);
-		double ScaleJac(const Eigen::VectorXd &En, double sigma, int t);
-		double ScaleHes(const Eigen::VectorXd &En, double sigma, int t);
+			     const Eigen::VectorXd &En,
+			     const Eigen::VectorXd &sk, int t);
+		double Scale(const Eigen::VectorXd &En, 
+			     const Eigen::VectorXd &sk, int t);
+		double ScaleJac(const Eigen::VectorXd &En, 
+				const Eigen::VectorXd &sk, int t);
+		double ScaleHes(const Eigen::VectorXd &En, 
+				const Eigen::VectorXd &sk, int t);
 
 		double ScaleNor(const std::vector<double> &term);
 		double ScaleJac(const std::vector<double> &term);
@@ -116,26 +125,17 @@ class ChiSquared
 		int maxIteration;
 		double err;
 
-		// for loops
-		unsigned int kMode;
-		unsigned int kChan;
-		unsigned int kType;
-		unsigned int kHorn;
-		unsigned int kOscf;
-		unsigned int kFIn ;
-		unsigned int kFOut;
+		std::vector<std::string> _mode;
+		std::vector<std::string> _chan;
+		std::vector<std::string> _type;
+		std::vector<std::string> _horn;
+		std::vector<std::string> _oscf;
+		std::vector<Nu> _fin;
+		std::vector<Nu> _fout;
 
-		std::vector<std::string> mode;
-		std::vector<std::string> chan;
-		std::vector<std::string> type;
-		std::vector<std::string> horn;
-		std::vector<std::string> oscf;
-		std::vector<Nu> fin;
-		std::vector<Nu> fout;
-
-		std::map<std::string, double> scale;
-		std::map<std::string, double>::iterator is;
-		unsigned int kScale;
+		std::map<std::string, double> _scale;
+		std::map<std::string, int> _type_scale;
+		unsigned int _nScale;
 
 		///pulls
 		//Eigen::VectorXd epsil;
@@ -146,8 +146,11 @@ class ChiSquared
 		std::map<int, Eigen::MatrixXd> sysMatrix;
 
 		//number of bins
-		int _nBin;
-		std::vector<double> _bins;
+		int _nBin, _allBin, _nSys;
+		std::map<std::string, std::vector<double> > _bins;
+		std::map<std::string, std::pair<int, int> > _limits;
+		std::string _tlim;
+		std::vector<int> _global;	// global binning from Eigen binning
 
 		TFile *spectrumFile;
 		std::string input;
