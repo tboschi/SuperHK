@@ -41,6 +41,8 @@ class CardDealer
 		CardDealer(std::string cardFile, bool verb = false);
 		CardDealer(char* filename, bool verb = true);
 
+		std::string CardName();
+
 		bool Status();
 		bool ReadCard(const std::string cardFile);
 
@@ -71,6 +73,7 @@ class CardDealer
 		std::map<std::string, std::vector<double> >::iterator imd;
 
 		bool kVerbosity, kStatus;
+		std::string _cardFile;
 };
 
 #endif

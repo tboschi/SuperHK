@@ -1,16 +1,21 @@
 #include "CardDealer.h"
 
 CardDealer::CardDealer(std::string cardFile, bool verb) :
+	_cardFile(cardFile),
 	kVerbosity(verb)
 {
-	ReadCard(cardFile);
+	ReadCard(_cardFile);
 }
 
 CardDealer::CardDealer(char *filename, bool verb) :
+	_cardFile(filename),
 	kVerbosity(verb)
 {
-	std::string cardFile(filename);
-	ReadCard(cardFile);
+	ReadCard(_cardFile);
+}
+
+std::string CardDealer::CardName() {
+	return _cardFile;
 }
 
 bool CardDealer::ReadCard(const std::string cardFile)
