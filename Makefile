@@ -24,7 +24,7 @@ CXXFLAGS := $(CXXFLAGS) -fPIC -std=c++11 -O3 -march=native $(ROOTCXX) -I$(INCDIR
 
 #apps and exctuables
 CPP := $(shell find $(APPDIR) -maxdepth 1 -name '*.cpp')
-SRC := $(shell find $(INCDIR) -maxdepth 2 -path $(INCDIR)/ignore -prune -o -name '*.c*' -print)
+SRC := $(shell find $(INCDIR) -maxdepth 2 -path $(INCDIR)/ignore -prune -o -name '*.c*' -not -name '.*' -print)
 
 
 #main target
