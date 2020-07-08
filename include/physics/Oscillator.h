@@ -11,6 +11,7 @@
 #include <map>
 #include <cmath>
 #include <complex>
+#include <utility>
 
 #include "tools/Const.h"
 #include "tools/CardDealer.h"
@@ -40,21 +41,18 @@ class Oscillator
 	public:
 		Oscillator(const std::vector<double> &lengths,
 			   const std::vector<double> &densities,
-			   int numDimension = 3);
+			   int numDimension = 3, bool lut = false);
 		Oscillator(const std::string &densityFile,
 			   int numDimension = 3);
 		Oscillator(CardDealer *cd,
 			   int numDimension = 3);
 
-		void GetDensity(const std::string &densityFile);
-
-		void DefineMatter(const std::vector<double> &lengths,
-				  const std::vector<double> &densities);
+		void SetDensity(const std::string &densityFile);
 
 		double Probability(Nu in, Nu out, double energy);
 		void Oscillate(Nu in, Nu out, TH1D* h);
 		void Reset();
-		std::map<double, std::vector<double> >::iterator FindEnergy(double energy);
+		std::map<double, Eigen::MatrixXd>::iterator FindEnergy(double energy);
 
 
 
@@ -111,16 +109,16 @@ class Oscillator
 	private:
 		Eigen::MatrixXcd _pmnsM, pmnsM, transM;
 		Eigen::VectorXd dms;
-		std::vector<double> vLength, vDensity;
+		std::vector<std::pair<double, double> > lens_dens;
 
 		int nDim;	//number of neutrinos
-		bool kAntineutrino;
+		bool kAntineutrino, kLUT;
 
 		//Fermi constant in SI units times Avogadro's constant (eV² cm³)/(mol GeV)
 		double fG = Const::fGF * pow(Const::fhBarC * Const::m/Const::cm, 3) * Const::fNa *
 			    Const::GeV/Const::eV;
 
-		std::map<double, std::vector<double> > mLUT;
+		std::map<double, Eigen::MatrixXd > mLUT;
 		//double fG = 1.52588e-4 / sqrt(8);
 };
 

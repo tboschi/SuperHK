@@ -1,11 +1,14 @@
 #include "physics/Oscillator.h"
 
-Oscillator::Oscillator(const std::vector<double> &lengths, const std::vector<double> &densities,
-		       int numDimension) :
-	vLength(lengths),
-	vDensity(densities),
-	nDim(numDimension)
+Oscillator::Oscillator(const std::vector<double> &lengths,
+		       const std::vector<double> &densities,
+		       int numDimension, bool lut) :
+	nDim(numDimension),
+	kLUT(lut)
 {
+	for (int i = 0; i < lengths.size(); ++i)
+		lens_dens.push_back(std::make_pair(lengths[i], densities[i]));
+
 	transM = Eigen::MatrixXcd::Identity(nDim, nDim);
 }
 
@@ -13,8 +16,18 @@ Oscillator::Oscillator(CardDealer *cd, int numDimension) :
 	nDim(numDimension)
 {
 	std::string densityFile;
-	cd->Get("density_profile", densityFile);
-	GetDensity(densityFile);
+	if (cd->Get("density_profile", densityFile))
+		SetDensity(densityFile);
+	else {	//default  vacuum oscillation
+		lens_dens.clear();
+		lens_dens.push_back(std::make_pair(295., 0));
+	}
+
+	int lut;
+	if (!cd->Get("LUT", lut))	//look up table stores matrices
+		kLUT = false;
+	else
+		kLUT = lut;
 
 	transM = Eigen::MatrixXcd::Identity(nDim, nDim);
 }
@@ -22,13 +35,15 @@ Oscillator::Oscillator(CardDealer *cd, int numDimension) :
 Oscillator::Oscillator(const std::string &densityFile, int numDimension) :
 	nDim(numDimension)
 {
-	GetDensity(densityFile);
+	SetDensity(densityFile);
 
 	transM = Eigen::MatrixXcd::Identity(nDim, nDim);
 }
 
-void Oscillator::GetDensity(const std::string &densityFile)
+void Oscillator::SetDensity(const std::string &densityFile)
 {
+	lens_dens.clear();
+
 	std::ifstream inf(densityFile);
 	std::string line;
 	double ll, dd;
@@ -43,18 +58,8 @@ void Oscillator::GetDensity(const std::string &densityFile)
 
 		std::stringstream ssl(line);
 		if (ssl >> ll >> dd)
-		{
-			vLength.push_back(ll);
-			vDensity.push_back(dd);
-			//std::cout << ll << ", " << dd << std::endl;
-		}
+			lens_dens.push_back(std::make_pair(ll, dd));
 	}
-}
-
-void Oscillator::DefineMatter(const std::vector<double> &lengths, const std::vector<double> &densities)
-{
-	vLength = lengths;
-	vDensity = densities;
 }
 
 //return oscillation probability from falvour in to flavour out at energy given
@@ -75,7 +80,7 @@ double Oscillator::Probability(Nu in, Nu out, double energy)
 	int oFlav = std::abs(out) - 1;
 
 	//transposition done here!! should save some little copmutation time
-	int nEntr = oFlav + iFlav*nDim;
+	//int nEntr = oFlav + iFlav*nDim;
 	Eigen::MatrixXd tM = TransitionMatrix(energy).cwiseAbs2();
 	//std::vector<double> tV(tM.data(), tM.data() + tM.size());
 	//std::cout << "Matrix " << tM(oFlav, iFlav) << "\tvector " << tV.at(nEntr) << std::endl;
@@ -83,21 +88,16 @@ double Oscillator::Probability(Nu in, Nu out, double energy)
 	//return tV.at(nEntr);
 	return tM(oFlav, iFlav);
 
-	/*
-	std::map<double, std::vector<double> >::iterator ilut = FindEnergy(ten);
+	auto ilut = FindEnergy(ten);
 
 	if (ilut != mLUT.end())	//value already computed and save
-		return ilut->second.at(nEntr);
+		return (ilut->second)(oFlav, iFlav);
 	else			//save computation in LUT
 	{
-		Eigen::MatrixXd tM = TransitionMatrix(energy).cwiseAbs2();
-		std::vector<double> tV(tM.data(), tM.data() + tM.size());
+		mLUT[ten] = TransitionMatrix(energy).cwiseAbs2();
 
-		mLUT[ten] = tV;
-
-		return tV.at(nEntr);
+		return mLUT[ten](oFlav, iFlav);
 	}
-	*/
 }
 
 
@@ -121,14 +121,20 @@ void Oscillator::Reset()
 	mLUT.clear();
 }
 
-std::map<double, std::vector<double> >::iterator Oscillator::FindEnergy(double energy)
+std::map<double, Eigen::MatrixXd>::iterator Oscillator::FindEnergy(double energy)
 {
-	std::map<double, std::vector<double> >::iterator ilut;
-	for (ilut = mLUT.begin(); ilut != mLUT.end(); ++ilut)
-		if (std::abs(ilut->first - energy) < 1e-9)
-			break;
+	auto ilut = mLUT.lower_bound(energy);
 
-	return ilut;
+	if (ilut == mLUT.end())
+		return ilut;
+
+	if (std::abs(ilut->first - energy) < 1e-9)
+		return ilut;
+
+	if (ilut != mLUT.begin() && std::abs(std::prev(ilut)->first - energy) < 1e-9)
+		return std::prev(ilut);
+
+	return mLUT.end();
 }
 
 /////////////**********************ENTERING THE WORLD OF PHYSICS AND BLACK MAGIC HERE
@@ -147,12 +153,12 @@ Eigen::MatrixXcd Oscillator::TransitionMatrix(double energy)
 		pmnsM = _pmnsM;
 
 	int sign = 2*kAntineutrino - 1;			//+1 if antineutrino, -1 if neutrino
-	for (int i = 0; i < vLength.size(); ++i)
+	for (const auto &ld : lens_dens)
 	{
 		//std::cout << "Enu " << energy << "\trho " << vDensity.at(i)/2.0 << std::endl;
 		//std::cout << "sqrtFG " << sqrt(8) * fG << "\tsign " << sign << std::endl;
-		double ff  = sign * sqrt(8) * fG * energy * vDensity.at(i)/2.0;
-		double l2e = Const::fL2E * vLength.at(i)/energy;
+		double ff  = sign * sqrt(8) * fG * energy * ld.second/2.0;
+		double l2e = Const::fL2E * ld.first/energy;
 
 		//std::cout << "factor " << ff << std::endl;
 
@@ -173,7 +179,8 @@ Eigen::MatrixXcd Oscillator::TransitionMatrix(double energy)
 Eigen::MatrixXcd Oscillator::TransitionMatrix(double ff, double l2e)
 {
 	Eigen::MatrixXd dmMatVac(nDim, nDim), dmMatMat(nDim, nDim);
-	Eigen::MatrixXcd product(nDim, nDim), result = Eigen::MatrixXcd::Zero(nDim, nDim);
+	Eigen::MatrixXcd product(nDim, nDim),
+			 result = Eigen::MatrixXcd::Zero(nDim, nDim);
 	Eigen::RowVectorXcd Ue = pmnsM.row(0);
 
 	//load matter matrices
