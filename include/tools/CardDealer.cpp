@@ -212,6 +212,7 @@ bool CardDealer::Get(const std::string key, std::string & ss)
 	{
 		if( kVerbosity )
 			std::cerr << "CardDealer::Get \"" << key << "\" not found" << std::endl;
+		ss = "";
 		return false;
 	}
 }
