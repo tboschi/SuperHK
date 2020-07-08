@@ -40,8 +40,10 @@ int main(int argc, char** argv)
 		kFast = false;
 
 	std::string trueOrder, fitOrder;
-	cd->Get("true_hierarchy", trueOrder);
-	cd->Get("fit_hierarchy", fitOrder);
+	if (!cd->Get("true_hierarchy", trueOrder))
+		trueOrder = "normal";
+	if (!cd->Get("fit_hierarchy", fitOrder))
+		trueOrder = "normal";
 
 	//set up oscillation
 	Oscillator *osc = new Oscillator(cd);
@@ -49,7 +51,7 @@ int main(int argc, char** argv)
 
 	//create chi2 fitter
 	ChiSquared *fitter = new ChiSquared(cd);
-	fitter->Init();
+	//fitter->Init();
 	int nsys = fitter->NumSys();
 
 	//open output file
@@ -165,6 +167,7 @@ int main(int argc, char** argv)
 		X2    = fitter->X2(trueSpectra, fitSpectra, eps);
 		SysX2 = fitter->SysX2(eps);
 
+
 		for (int c = 0; c < eps.size(); ++c)	//eps.size == NumSys
 		{
 			Epsilons[c] = eps(c);
@@ -172,7 +175,8 @@ int main(int argc, char** argv)
 		}
 
 		if (kVerbosity)
-			std::cout << "X2 computed " << X2 << "\n" << std::endl;
+			std::cout << "X2 computed " << X2 << " ("
+				  << X2-SysX2 << " + " << SysX2 << ")\n" << std::endl;
 
 
 		auto t_end = std::chrono::high_resolution_clock::now();
