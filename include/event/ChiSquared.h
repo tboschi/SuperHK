@@ -59,59 +59,96 @@ class ChiSquared
 		Eigen::MatrixXd Hessian(const Eigen::VectorXd &On,
 					const Eigen::VectorXd &En,
 					const Eigen::VectorXd &epsil);
+
 		void JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 				     const Eigen::VectorXd &On, const Eigen::VectorXd &En,
 				     const Eigen::VectorXd &epsil);
 
-		void JacobianHessian2(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
-				     const Eigen::VectorXd &On, const Eigen::VectorXd &En,
-				     const Eigen::VectorXd &epsil);
+		//void JacobianHessian2(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
+		//		     const Eigen::VectorXd &On, const Eigen::VectorXd &En,
+		//		     const Eigen::VectorXd &epsil);
+		//void JacobianHessian3(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
+		//		     const Eigen::VectorXd &On, const Eigen::VectorXd &En,
+		//		     const Eigen::VectorXd &epsil);
+		//void JacobianHessian4(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
+		//		     const Eigen::VectorXd &On, const Eigen::VectorXd &En,
+		//		     const Eigen::VectorXd &epsil);
 
 		Eigen::MatrixXd Covariance(const Eigen::VectorXd &On,
 					   const Eigen::VectorXd &En,
 					   const Eigen::VectorXd &epsil);
 		
-		double X2(const Eigen::VectorXd &On, const Eigen::VectorXd &En,
+		double X2(const Eigen::VectorXd &On,
+			  const Eigen::VectorXd &En,
 			  const Eigen::VectorXd &epsil);
-		double ObsX2(const Eigen::VectorXd &On, const Eigen::VectorXd &En,
-			     const Eigen::VectorXd &epsil);
-		std::vector<double> ObsX2n(const Eigen::VectorXd &On, const Eigen::VectorXd &En,
-			     const Eigen::VectorXd &epsil);
 		double SysX2(const Eigen::VectorXd &epsil);
+		double ObsX2(const Eigen::VectorXd &On,
+			     const Eigen::VectorXd &En,
+			     const Eigen::VectorXd &epsil);
+		Eigen::ArrayXd ObsX2n(const Eigen::VectorXd &On,
+				      const Eigen::VectorXd &En,
+			     const Eigen::VectorXd &epsil);
 
-		Eigen::VectorXd Gamma(const Eigen::VectorXd &En,
+		Eigen::ArrayXd Gamma(const Eigen::VectorXd &En,
 				      const Eigen::VectorXd &epsil);
-		Eigen::MatrixXd GammaJac(const Eigen::VectorXd &En,
-				         const Eigen::VectorXd &epsil);
-		Eigen::VectorXd GammaJac(const Eigen::VectorXd &En,
-				         const Eigen::VectorXd &epsil, int j);
-		Eigen::VectorXd GammaHes(const Eigen::VectorXd &En,
-				         const Eigen::VectorXd &epsil, int j, int i);
+//		Eigen::MatrixXd GammaJac(const Eigen::VectorXd &En,
+//				         const Eigen::VectorXd &epsil);
+//		Eigen::VectorXd GammaJac(const Eigen::VectorXd &En,
+//				         const Eigen::VectorXd &epsil, int j);
 
 
-		double F(int k, int n, double eij);
-		double Fp(int k, int n, double eij);
-		double Fp(int k, int n, double dl, double du);
+		Eigen::ArrayXXd one_F(const Eigen::VectorXd &epsil);
+		Eigen::ArrayXd one_Fk(double err, int k);
+		Eigen::ArrayXXd one_Fp(const Eigen::VectorXd &epsil);
+		Eigen::ArrayXd one_Fpk(double err, int k);
+		//double F(int k, int n, double eij);
+		//double Fp(int k, int n, double eij);
+		//double Fp(int k, int n, double dl, double du);
 
-		int StartingBin(int n, double scale);
+		int StartingBin(std::string it, double shift, int n);
+		int EndingBin(std::string it, double shift, int n);
 		std::string TypeFromBin(int n);
 
 		//function to compute the factor
 		typedef double (ChiSquared::*FactorFn)(const std::vector<double> &);
+		typedef double (ChiSquared::*LazyEvent)(int n);
+
+		//double GammaHes(int n, int k = -1, double ek = 0, int j = -1, double ej = 0);
+
+		std::vector<std::pair<int, int> >
+			AllSlices(std::string it, double skerr);
+		std::vector<Eigen::ArrayXd> AllScale(FactorFn factor,
+						 std::string it, double skerr);
+
+		//double QuickScale(FactorFn factor, const Eigen::VectorXd &En,
+		//		//const Eigen::VectorXd &gh,
+		//		const std::vector<double> &global,
+		//		double b0_n, double b1_n,
+		//		double scale_err, double shift,
+		//		int m0, int m1, int off);
+		//		  //int k = -1, double ek = 0, int j = -1, double ej = 0);
 
 		double Scale(FactorFn factor,
-			     const Eigen::VectorXd &En,
-			     const Eigen::VectorXd &sk, int t);
-		double Scale(const Eigen::VectorXd &En, 
-			     const Eigen::VectorXd &sk, int t);
-		double ScaleJac(const Eigen::VectorXd &En, 
-				const Eigen::VectorXd &sk, int t);
-		double ScaleHes(const Eigen::VectorXd &En, 
-				const Eigen::VectorXd &sk, int t);
+			     const Eigen::ArrayXd &En,
+			     double skerr, int n, std::string it = "", int m0 = -1);
 
-		double ScaleNor(const std::vector<double> &term);
-		double ScaleJac(const std::vector<double> &term);
-		double ScaleHes(const std::vector<double> &term);
+		double Scale(const Eigen::ArrayXd &En, 
+			     double skerr, int n, std::string it = "", int m0 = -1);
+		double Scale(const Eigen::VectorXd &En, 
+			     double skerr, int n, std::string it = "", int m0 = -1);
+
+			     //int k = -1, double ek = 0, int j = -1, double = 0);
+		//double ScaleJac(const Eigen::VectorXd &En, 
+		//		double skerr, int n, std::string it = "", int m0 = -1);
+		//		//int k = -1, double ek = 0, int j = -1, double = 0);
+		//double ScaleHes(const Eigen::VectorXd &En, 
+		//		const Eigen::VectorXd &sk,
+		//		int n, std::string it = "", int m0 = -1);
+		//		//int k = -1, double ek = 0, int j = -1, double = 0);
+
+		double Nor(const std::vector<double> &term);
+		double Jac(const std::vector<double> &term);
+		double Hes(const std::vector<double> &term);
 
 
 
@@ -123,7 +160,9 @@ class ChiSquared
 		int kVerbosity;
 		int badFitThreshold;
 		int maxIteration;
-		double err;
+		double fitErr;
+
+		double lm_0, lm_up, lm_down;	//control fit parameters
 
 		std::vector<std::string> _mode;
 		std::vector<std::string> _chan;
@@ -143,14 +182,15 @@ class ChiSquared
 		Eigen::MatrixXd corr;
 
 		//promote all systematics to be spline
-		std::map<int, Eigen::MatrixXd> sysMatrix;
+		std::map<int, Eigen::ArrayXXd> sysMatrix;
 
 		//number of bins
 		int _nBin, _allBin, _nSys;
-		std::map<std::string, std::vector<double> > _bins;
+		std::map<std::string, std::pair<int, int> > _binpos;
 		std::map<std::string, std::pair<int, int> > _limits;
+		std::map<std::string, std::vector<double> > _global;
+		// global binning from Eigen binning
 		std::string _tlim;
-		std::vector<int> _global;	// global binning from Eigen binning
 
 		TFile *spectrumFile;
 		std::string input;
