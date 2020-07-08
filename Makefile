@@ -17,7 +17,7 @@ EIGENINC = include/Eigen
 
 LDFLAGS  := -Wl,--no-as-needed $(LDFLAGS) $(ROOTLIB) -L$(LIBDIR) -L$(OSC3LIB)
 LDLIBS   := -losc3pp
-CXXFLAGS := $(CXXFLAGS) -fPIC -std=c++11 -O3 -march=native $(ROOTCXX) -I$(INCDIR) -I$(OSC3INC) -I$(EIGENINC)
+CXXFLAGS := $(CXXFLAGS) $(DEBUG) -fPIC -std=c++11 -O3 -march=native $(ROOTCXX) -I$(INCDIR) -I$(OSC3INC) -I$(EIGENINC)
 
 
 
@@ -45,14 +45,12 @@ all: welcome $(TARGET)
 welcome:
 	@echo "If you need to build just one file, do make APP=name"
 	@echo "Enjoy your compilation"
-	@echo $(DEPEND)
 
 
 $(TARGET): $(DEPEND)
 
 include:
 	$(eval DEPEND := $(shell find $(LIBDIR) -maxdepth 1 -name '*.o'))
-	echo "dep " $(DEPEND)
 
 
 clean:
