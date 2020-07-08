@@ -40,8 +40,8 @@ output	"/data/tboschi/HKsens/errorstudy/0/asim/NH_NH/sensitivity/moms/SpaghettiS
 sample	"E_FHC"	"E_RHC"	"M_FHC"	"M_RHC"
 #energy scale error for E or M
 #scale	0.024	if just one
-scale_E	 0.024
-scale_M  0.024
+#scale_E	 0.024
+#scale_M  0.024
 
 #sample	"M_FHC"	"M_RHC"
 #sample	"atmo"
@@ -60,8 +60,9 @@ stats	1.00
 #flux  from [0, 50)
 #xsec  from [50, 74)
 #skdet from [74, 119)
-#syst_first	0
-#syst_last	50
+syst_first	0
+syst_last	110
+skip		74
 
 #systematic informations
 corr_file	"/data/tboschi/HKsens/errorstudy/0/systematics/combinedmatrix.root"
