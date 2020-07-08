@@ -105,15 +105,14 @@ else
 fi
 
 
-
-# update systematics
+# need to know correlation matrix to know number of systematics
 sed -i "s:^corr_file.*:corr_file\t\"$matrix\":" $card
 sed -i "s:^corr_name.*:corr_name\t\"$mtype\":"  $card
 
 #just stats, comment systematics
 if [ "$ss" = true ] ; then
 	sed -i "/^systematic_/s:^:#:" $card
-else
+else # update systematics
 	sed -i "/^#systematic_/s:^#::" $card
 	sed -i "s:^systematic_E_FHC.*:systematic_E_FHC \"$sys_E_FHC\":" $card
 	sed -i "s:^systematic_E_RHC.*:systematic_E_RHC \"$sys_E_RHC\":" $card
