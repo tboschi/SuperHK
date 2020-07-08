@@ -25,4 +25,4 @@ set xtics -pi, pi/5.0, pi
 nx = 61
 ny = 13
 
-load 'cont_common.glp'
+load 'cont_common.gpl'

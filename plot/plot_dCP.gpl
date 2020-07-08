@@ -14,4 +14,7 @@ xr_t =  pi/4.0
 x_lab = "\$\\delta_\\text\{CP\}\$"
 x_form = "%.2P\$\\pi\$"
 
-load "plot_common.glp"
+print f_all
+print f_dif
+print outp
+load "plot_common.gpl"

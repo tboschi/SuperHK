@@ -5,7 +5,7 @@ MT = 0.10
 MP = (1-2*MT)/2.0
 
 color = "'black' 'red' 'blue' 'web-green' 'orange' 'dark-magenta'"
-names  = system("head -n1 ".f_all)
+names  = system("head -n1 ".f_all." | sed :s")
 
 ##
 #bottom plot
@@ -36,7 +36,7 @@ col_top = top_columns
 fitp = top_pos_min_y
 
 #set term qt size 750,525
-set term cairolatex pdf color size 5in, 4in lw 2 #standalone header \
+set term cairolatex pdf color size 6in, 4.8in lw 2 #standalone header \
        #"\\usepackage\{amsmath\}"
 set output outp
 
@@ -144,7 +144,7 @@ set ylabel "\$\\Delta \\chi^2\$"
 
 set arrow 2 nohead from getx(fitp), ymin_top to getx(fitp), ymax_top dt 2
 set key title "" at getx(fitp)+0.02*(xr_1-xr_0), ymin_top + 0.75 * (ymax_top - ymin_top) top left samplen 1.5
-plot for [i=2:col_top] f_all u (getx($1)):i w histe lw 2 dt 1 lc rgb word(color, i-1) t word(names, i)
+plot for [i=2:col_top] f_all u (getx($1)):i w histe lw 2 dt 1 lc rgb word(color, i-1) t system("echo ".word(names, i)." | sed 's:_: :g'")
 
 
 unset multiplot

@@ -15,4 +15,4 @@ xr_t = (xr_1-xr_0) / 6.
 x_lab = "\$\\sin^2 2 \\theta_\{13\}\$"
 x_form = "%g"
 
-load "plot_common.glp"
+load "plot_common.gpl"

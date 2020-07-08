@@ -34,16 +34,16 @@ set format y yform
 
 set key top right sample 1.5
 
-set term cairolatex pdf color size 5in, 4in lw 2 #standalone header \
+set term cairolatex pdf color size 6in, 4.8in lw 2 #standalone header \
        #"\\usepackage\{amsmath\}"
 set output outp
 
 
 #set object circle at bfx, bfy radius 0.05 fillcolor rgb 'black' fillstyle solid noborder
 set label at bfx, bfy "" point pt  9 ps 1 lc rgb 'black'
-plot for [i=3:cols] cont.'_'.word(names, i).'.dat' index 4 w l lw 2 \
-	lc rgb word(color, i-2) t word(names, i), \
-     for [i=3:cols] cont.'_'.word(names, i).'.dat' index 0 w l lw 2 lc rgb word(color, i-2) not 
+plot for [i=3:cols] cont.'_'.word(names, i).'.dat' index 0 w l lw 2 \
+	lc rgb word(color, i-2) t system("echo ".word(names, i)." | sed 's:_: :g'"), \
+     for [i=3:cols] cont.'_'.word(names, i).'.dat' index 3 w l lw 2 lc rgb word(color, i-2) not 
 
 #for [i=3:cols] cont.'_'.word(names, i).'.dat' index 1 w l lw 2 lc rgb word(color, i-2) dt 2 not, \
 

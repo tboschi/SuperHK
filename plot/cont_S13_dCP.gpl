@@ -23,4 +23,4 @@ yform = "%.1P\$\\pi\$"
 nx = 13
 ny = 61
 
-load 'cont_common.glp'
+load 'cont_common.gpl'

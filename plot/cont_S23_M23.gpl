@@ -23,4 +23,4 @@ yform = "%g"
 nx = 19
 ny = 13
 
-load 'cont_common.glp'
+load 'cont_common.gpl'

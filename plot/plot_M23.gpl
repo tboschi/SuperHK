@@ -15,6 +15,6 @@ xr_t = (xr_1-xr_0) / 6.
 x_lab = "\$\\Delta m_\{32\}^2 / 10\^\{-3\}\$"
 x_form = "%g"
 
-load "plot_common.glp"
+load "plot_common.gpl"
 
 
