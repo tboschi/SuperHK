@@ -54,6 +54,9 @@ class Oscillator
 		void Reset();
 		std::map<double, Eigen::MatrixXd>::iterator FindEnergy(double energy);
 
+		double Length();	// return total baseline
+		double Density();	// return average density
+
 
 
 		Eigen::MatrixXcd TransitionMatrix(double energy);

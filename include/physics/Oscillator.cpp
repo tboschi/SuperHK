@@ -137,6 +137,18 @@ std::map<double, Eigen::MatrixXd>::iterator Oscillator::FindEnergy(double energy
 	return mLUT.end();
 }
 
+double Oscillator::Length() {
+	return std::accumulate(lens_dens.begin(), lens_dens.end(), 0,
+			[&](double sum, std::pair<double, double> ild)
+			{ return sum + ild.first; });
+}
+
+double Oscillator::Density() {
+	return std::accumulate(lens_dens.begin(), lens_dens.end(), 0,
+			[&](double sum, std::pair<double, double> ild)
+			{ return sum + ild.first * ild.second; }) / Length();
+}
+
 /////////////**********************ENTERING THE WORLD OF PHYSICS AND BLACK MAGIC HERE
 //
 //
