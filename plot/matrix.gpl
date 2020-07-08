@@ -28,7 +28,7 @@ yr_1 = 2.554
 nx = 61
 ny = 13
 
-load 'matrix_line.glp'
+load 'matrix_line.gpl'
 
 
 
@@ -49,7 +49,7 @@ yr_1 = 2.554
 nx = 19
 ny = 13
 
-load 'matrix_line.glp'
+load 'matrix_line.gpl'
 
 
 
@@ -70,7 +70,7 @@ yr_1 = 2.554
 nx = 13
 ny = 13
 
-load 'matrix_line.glp'
+load 'matrix_line.gpl'
 
 
 
@@ -92,7 +92,7 @@ nx = 19
 ny = 61
 
 
-load 'matrix_line.glp'
+load 'matrix_line.gpl'
 
 
 
@@ -114,7 +114,7 @@ nx = 19
 ny = 61
 
 
-load 'matrix_line.glp'
+load 'matrix_line.gpl'
 
 
 ## S13 vs S23
@@ -135,7 +135,7 @@ nx = 13
 ny = 19
 
 
-load 'matrix_line.glp'
+load 'matrix_line.gpl'
 
 
 
@@ -195,7 +195,7 @@ y1form = "%g"
 x2form = "%g"
 y2form = ""
 
-load "matrix_chi2.glp"
+load "matrix_chi2.gpl"
 
 ## dCP vs chi2
 print "plotting dCP vs chi2"
@@ -229,7 +229,7 @@ x2form = "%g$"
 y1form = ""
 
 
-load "matrix_chi2.glp"
+load "matrix_chi2.gpl"
 
 
 ## S23 vs chi2
@@ -264,7 +264,7 @@ x2form = "%g"
 y2form = ""
 
 
-load "matrix_chi2.glp"
+load "matrix_chi2.gpl"
 
 
 ## S13 vs chi2
@@ -299,7 +299,7 @@ x2form = "%g"
 y2form = "%g"
 
 
-load "matrix_chi2.glp"
+load "matrix_chi2.gpl"
 
 
 ####contours
@@ -346,7 +346,7 @@ y2form = ""
 nx = 61
 ny = 13
 
-load 'matrix_cont.glp'
+load 'matrix_cont.gpl'
 
 
 
@@ -388,7 +388,7 @@ y1form = ""
 x2form = ""
 y2form = ""
 
-load 'matrix_cont.glp'
+load 'matrix_cont.gpl'
 
 
 
@@ -431,7 +431,7 @@ y1form = ""
 x2form = ""
 y2form = "%g"
 
-load 'matrix_cont.glp'
+load 'matrix_cont.gpl'
 
 
 
@@ -476,7 +476,7 @@ y1form = "%g"
 x2form = ""
 y2form = ""
 
-load 'matrix_cont.glp'
+load 'matrix_cont.gpl'
 
 
 
@@ -520,7 +520,7 @@ x2form = ""
 #y2form = "%.1P\$\\pi\$"
 y2form = "%g"
 
-load 'matrix_cont.glp'
+load 'matrix_cont.gpl'
 
 
 ## S13 vs S23
@@ -561,7 +561,7 @@ y1form = "%g"
 x2form = ""
 y2form = "%g"
 
-load 'matrix_cont.glp'
+load 'matrix_cont.gpl'
 
 
 
