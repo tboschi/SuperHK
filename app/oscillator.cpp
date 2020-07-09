@@ -4,9 +4,9 @@
 #include <string>
 #include <chrono>
 
-#include "physics/Oscillator.h"
 #include "tools/CardDealer.h"
-#include "tools/Const.h"
+#include "physics/Const.h"
+#include "physics/Oscillator.h"
 
 int main(int argc, char** argv)
 {
@@ -37,8 +37,8 @@ int main(int argc, char** argv)
 		osc->SetMasses<Oscillator::inverted>(M12, M23);
 	osc->SetPMNS<Oscillator::sin2>(S12, S13, S23, dCP);
 
-	//osc_NH->SetPMNS<Oscillator::sin2>(S12, S13, S23, dCP);// * Const::fPi);
-	//osc_IH->SetPMNS<Oscillator::sin2>(S12, S13, S23, dCP);// * Const::fPi);
+	//osc_NH->SetPMNS<Oscillator::sin2>(S12, S13, S23, dCP);// * Const::pi);
+	//osc_IH->SetPMNS<Oscillator::sin2>(S12, S13, S23, dCP);// * Const::pi);
 
 	std::string outFile;
 	cd->Get("output", outFile);

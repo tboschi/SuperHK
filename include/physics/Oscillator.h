@@ -12,9 +12,10 @@
 #include <cmath>
 #include <complex>
 #include <utility>
+#include <algorithm>
 
-#include "tools/Const.h"
 #include "tools/CardDealer.h"
+#include "physics/Const.h"
 #include "physics/Flavours.h"
 
 #include "Eigen/Dense"
@@ -41,15 +42,16 @@ class Oscillator
 	public:
 		Oscillator(const std::vector<double> &lengths,
 			   const std::vector<double> &densities,
-			   int numDimension = 3, bool lut = false);
+			   int neutrinos = 3, bool lut = false,
+			   double threshold = 1e-9);
 		Oscillator(const std::string &densityFile,
-			   int numDimension = 3);
-		Oscillator(CardDealer *cd,
-			   int numDimension = 3);
+			   int neutrinos = 3, bool lut = false,
+			   double threshold = 1e-9);
+		Oscillator(CardDealer *cd);
 
-		void SetDensity(const std::string &densityFile);
+		void SetMatterProfile(const std::string &densityFile);
 
-		double Probability(Nu in, Nu out, double energy);
+		double Probability(Nu in, Nu out, double energy, bool force = false);
 		void Oscillate(Nu in, Nu out, TH1D* h);
 		void Reset();
 		std::map<double, Eigen::MatrixXd>::iterator FindEnergy(double energy);
@@ -63,8 +65,8 @@ class Oscillator
 		Eigen::MatrixXcd TransitionMatrix(double ff, double l2e);
 		void MatterMatrices(Eigen::MatrixXd &dmMatVac,
 				    Eigen::MatrixXd &dmMatMat,
-				    const double &ff);
-		Eigen::VectorXd MatterStates(const double &ff);
+				    double ff);
+		Eigen::VectorXd MatterStates(double ff, int off = 0);
 
 		template<masses type>
 		void SetMasses(double m1, double m2)
@@ -110,16 +112,18 @@ class Oscillator
 		Eigen::VectorXd Masses();
 
 	private:
-		Eigen::MatrixXcd _pmnsM, pmnsM, transM;
+		Eigen::MatrixXcd _pmns; //, _pmnsM, pmnsM, trans;
 		Eigen::VectorXd dms;
 		std::vector<std::pair<double, double> > lens_dens;
 
-		int nDim;	//number of neutrinos
-		bool kAntineutrino, kLUT;
+		int _dim;	//number of neutrinos
+		double _thr;
+		bool kLUT;
 
 		//Fermi constant in SI units times Avogadro's constant (eV² cm³)/(mol GeV)
-		double fG = Const::fGF * pow(Const::fhBarC * Const::m/Const::cm, 3) * Const::fNa *
-			    Const::GeV/Const::eV;
+		//double fG2 = Const::GF * pow(Const::hBarC * Const::m/Const::cm, 3) * Const::Na * Const::GeV/Const::eV;
+		//double fG = Const::GF * Const::Na * pow(Const::hBarC, 3) * 1e13;
+		double fG, fG2;
 
 		std::map<double, Eigen::MatrixXd > mLUT;
 		//double fG = 1.52588e-4 / sqrt(8);

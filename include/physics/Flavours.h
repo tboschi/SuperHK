@@ -4,21 +4,19 @@
 enum Nu
 {
 	//neutrinos
-	E_ = 1,
+	E_ = 0,
 	electron = E_,
-	M_ = 2,
+	M_ = 1,
 	muon = M_,
-	T_ = 3,
+	T_ = 2,
 	tau = T_,
-	////////////////
-	//antineutrinos
-	//they should be all negative
-	Eb = -E_,
+	Eb = 3,
 	antielectron = Eb,
-	Mb = -M_,
+	Mb = 4,
 	antimuon = Mb,
-	Tb = -T_,
+	Tb = 5,
 	antitau = Tb,
+	
 };
 
 #endif

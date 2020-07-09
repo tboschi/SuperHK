@@ -19,6 +19,6 @@ density_profile	"data/DensityProfileTochibora.dat"
 #density_profile	"data/DensityProfileVacuum.dat"
 
 #base "baseball_plot_dots.dat"
-output "oscillation_old.dat"
+output "oscillation_new.dat"
 
 mass_hierarchy	"normal"
