@@ -22,3 +22,5 @@ density_profile	"data/DensityProfileTochibora.dat"
 output "oscillation_new.dat"
 
 mass_hierarchy	"normal"
+LUT	1
+threshold	1e-9

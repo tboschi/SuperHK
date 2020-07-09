@@ -52,6 +52,7 @@ sample	"E_FHC"	"E_RHC"	"M_FHC"	"M_RHC"
 density_profile	"data/DensityProfileTochibora.dat"
 true_hierarchy	"normal"
 fit_hierarchy	"normal"
+LUT	1
 
 #proportion of statistics
 stats	1.00
