@@ -43,7 +43,7 @@ set output outp
 set label at bfx, bfy "" point pt  9 ps 1 lc rgb 'black'
 plot for [i=3:cols] cont.'_'.word(names, i).'.dat' index 0 w l lw 2 \
 	lc rgb word(color, i-2) t system("echo ".word(names, i)." | sed 's:_: :g'"), \
-     for [i=3:cols] cont.'_'.word(names, i).'.dat' index 3 w l lw 2 lc rgb word(color, i-2) not 
+     for [i=3:cols] cont.'_'.word(names, i).'.dat' index 4 w l lw 2 lc rgb word(color, i-2) not 
 
 #for [i=3:cols] cont.'_'.word(names, i).'.dat' index 1 w l lw 2 lc rgb word(color, i-2) dt 2 not, \
 
