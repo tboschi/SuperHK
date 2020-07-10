@@ -111,6 +111,7 @@ sed -i "s:^corr_name.*:corr_name\t\"$mtype\":"  $card
 
 #just stats, comment systematics
 if [ "$ss" = true ] ; then
+	echo "statistics only fit"
 	sed -i "/^systematic_/s:^:#:" $card
 else # update systematics
 	sed -i "/^#systematic_/s:^#::" $card
