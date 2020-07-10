@@ -94,8 +94,6 @@ ChiSquared::ChiSquared(CardDealer *card, int nbins) :
 			std::cout << "\t" << it.first << " -> " << it.second << std::endl;
 	}
 
-	maxIteration = 10;
-	fitErr = 1e-6;
 
 	if (!cd->Get("lm_0", lm_0))
 		lm_0 = 1;		//default value
@@ -103,6 +101,11 @@ ChiSquared::ChiSquared(CardDealer *card, int nbins) :
 		lm_up = 5;		//default value
 	if (!cd->Get("lm_down", lm_down))
 		lm_down = 10;		//default value
+
+	if (!cd->Get("max_iterations", maxIteration))
+		maxIteration = 10;
+	if (!cd->Get("fit_error", fitErr))
+		fitErr = 1e-9;
 
 
 	if (!cd->Get("verbose", kVerbosity))
@@ -141,41 +144,57 @@ void ChiSquared::DefineBinning() {
 	// extract bining from spectra
 	// binning is compressed, such that nonempty bins are not stored
 
-	// unoscillated spectrum, just for counting nonempty bins
-	std::map<std::string, TH1D*> spectra = BuildSpectrum();
-
 	_nBin = 0;
 	_allBin = 0;
 	_limits.clear();	// for construct TH1D* / spectra
 	_binpos.clear();
-	_global.clear();
+	//_global.clear();
 
-	for (const auto &it : spectra) {
-		int b0 = std::max(it.second->FindFirstBinAbove() - 1, 0);
-		int b1 = std::min(it.second->FindLastBinAbove(),
-				  it.second->GetNbinsX());
+	// unoscillated spectrum, just for counting nonempty bins
+	std::map<std::string, Eigen::MatrixXd> spectra = BuildSpectrum();
 
-		//int b1 = it.second->GetNbinsX();
-		//if (it.first.find_first_of("E") != std::string::npos)
-		//	b1 = it.second->FindBin(1.251);	// 1.25 GeV hard cut-off
+	//const double *bins = it.second->GetXaxis()
+	///* global binning */	      ->GetXbins()->GetArray();
+	for (const auto &is : spectra) {
+		int b0, b1;
+		for (int i = 0; i < is.second.size(); ++i)
+			if (is.second(i) > 0) {	// first bin above zero
+				b0 = i;
+				break;
+			}
+		for (int i = is.second.size(); i > 0; --i)
+			if (is.second(i-1) > 0)	{ // last bin above zero
+				b1 = i;
+				break;
+			}
+		if (kVerbosity > 2)
+			std::cout << "sample " << is.first << " has binning between "
+				  << b0 << " and " << b1 << std::endl;
+		//int b0 = std::max(is.second->FindFirstBinAbove() - 1, 0);
+		//int b1 = std::min(is.second->FindLastBinAbove(),
+		//		  is.second->GetNbinsX());
+
+		//int b1 = is.second->GetNbinsX();
+		//if (is.first.find_first_of("E") != std::string::npos)
+		//	b1 = is.second->FindBin(1.251);	// 1.25 GeV hard cut-off
 		// store first and last bin
 		// refers to TH1D
-		//_limits[it.first] = b1;
-		_limits[it.first] = std::pair<int, int>(b0, b1);
+		//_limits[is.first] = b1;
+		_limits[is.first] = std::pair<int, int>(b0, b1);
 		// refers to _global
-		_binpos[it.first] = std::pair<int, int>(_nBin,
+		_binpos[is.first] = std::pair<int, int>(_nBin,
 							_nBin + b1 - b0);
 
-		const double *bins = it.second->GetXaxis()
-		/* global binning */	      ->GetXbins()->GetArray();
-		//_global[it.first].assign(bins, bins + b1 + 1);
-		_global[it.first].assign(bins, bins + it.second->GetNbinsX() + 1);
+		//const double *bins = is.second->GetXaxis()
+		///* global binning */	      ->GetXbins()->GetArray();
+		//_global[is.first].assign(bins, bins + b1 + 1);
+		//_global[is.first] = bins;
 
 		// count number of total bins
 		_nBin += b1 - b0;
-		_allBin += it.second->GetNbinsX();
+		_allBin += is.second.size();
 
-		delete it.second;
+		//delete is.second;
 	}
 	
 	if (kVerbosity)
@@ -274,6 +293,7 @@ void ChiSquared::LoadSystematics()
 	if (!cd->Get("syst_last", sysB))
 		sysB = _nSys;
 
+	zeroEpsilons = true;
 	int off = 0;	// offset for global bin
 	for (const std::string &it : _type) {
 		// it is sample type name
@@ -283,6 +303,7 @@ void ChiSquared::LoadSystematics()
 				  << " parameters will be set to zero and not fitted\n";
 			continue;
 		}
+		zeroEpsilons = false;
 
 		if (kVerbosity > 1)
 			std::cout << "opening file " << fileName << std::endl;
@@ -364,7 +385,7 @@ void ChiSquared::LoadSystematics()
 Eigen::VectorXd ChiSquared::ConstructSpectrum(Oscillator *osc) {
 	// BuildSpectrum and then collates everything on a Eigen::Vector
 
-	std::map<std::string, TH1D*> spectra = BuildSpectrum(osc);
+	std::map<std::string, Eigen::MatrixXd> spectra = BuildSpectrum(osc);
 
 	double stats;	//for scaling
 	if (!cd->Get("stats", stats))
@@ -377,25 +398,19 @@ Eigen::VectorXd ChiSquared::ConstructSpectrum(Oscillator *osc) {
 		auto lims = _limits[is.first];
 		//for (int n = 0; n < _limits[is.first]; ++n, ++j) 
 		for (int n = lims.first; n < lims.second; ++n, ++j) 
-			vect(j) = is.second->GetBinContent(n+1) * stats;
-
-		delete is.second;
+			vect(j) = is.second(n) * stats;
 	}
 
 	return vect;
 }
 
-std::map<std::string, TH1D*> ChiSquared::BuildSpectrum(Oscillator *osc) {
+std::map<std::string, Eigen::MatrixXd> ChiSquared::BuildSpectrum(Oscillator *osc) {
 	// build the observables as TH1D objects
 	// and return map with histograms for each type
 	// if no oscillator is passed (default = 0), spectra are not oscillated
 	//
 	std::string reco_file;
-
-	TF1* f1 = new TF1("const", "[0]", 0, 1);
-	f1->SetParameter(0, 1.0);
-
-	std::map<std::string, TH1D*> spectra;
+	std::map<std::string, Eigen::MatrixXd> spectra;
 
 	for (const std::string &ih : _horn) {	//FHC, RHC
 		int cm = 0;	// mode counter
@@ -404,56 +419,43 @@ std::map<std::string, TH1D*> ChiSquared::BuildSpectrum(Oscillator *osc) {
 			cd->Get("reco_" + im + "_" + ih, reco_file);
 			if (kVerbosity > 2)
 				std::cout << "using reconstruction file " << reco_file << std::endl;
-			Reco *reco = new Reco(reco_file);
+			Reco reco(reco_file);
 
-			const double *bins;
-			int nBin = reco->BinsX(bins);
-			f1->SetRange(bins[0], bins[nBin-1]);
-
-			// flux contains the weight of spectrum
-			std::string fname = ih + "_" + im;
-			TH1D* flux = new TH1D(fname.c_str(), fname.c_str(), nBin, bins);
-			flux->SetDirectory(0);
-			flux->Add(f1);	//filled with ones
-
+			Eigen::VectorXd probs =
+				Eigen::VectorXd::Constant(reco.BinsX().size()-1, 1);
 			if (osc) {
-				if (kVerbosity > 2)
+				if (kVerbosity > 3)
 					std::cout << "Oscillating spectrum\n";
-				osc->Oscillate(_fin[cm], _fout[cm], flux);
+				probs = osc->Oscillate(_fin[cm], _fout[cm], reco.BinsX());
 			}
-			else if (kVerbosity > 2)
+			else if (kVerbosity > 3)
 				std::cout << "Not oscillating\n";
 
 			for (const std::string &ic : _chan) {	//CCQE, CCnQE, NC x E, M
-				if (ic.find("NC") == std::string::npos)	//it is not a NC
-					reco->Scale(ic, flux);
-				else if (im == "nuM0_nuE0" || im == "nuMB_nuEB") //and no events for
-					reco->Scale(ic, 0.0);			     //these two
-				//else no need to scale for NC event
-				//reco->Scale(chan[ic], flux);
+				if (ic.find("NC") != std::string::npos)	{//it is not a NC
+					if (im == "nuM0_nuE0"	// no NC events
+					 || im == "nuMB_nuEB")	// for appearance chans
+						continue;
+					probs.setConstant(1);
+				} // no need to scale for NC event
 
-				TH1D *py = reco->Project(ic, 'y');
-				if (py) {
-					std::string hname = ic.substr(0, ic.find_first_of('_')) + "_" + ih;
-					if (kVerbosity > 2)
-						std::cout << "Projecting " << hname
-							  << " from "
-							  << ih << ", " << im << ", "
-							  << ic << std::endl;
+				// E_FHC, E_RHC, M_FHC, M_RHC
+				std::string hname = ic.substr(0, ic.find_first_of('_')) + "_" + ih;
+				if (kVerbosity > 3)
+					std::cout << "Projecting " << hname << " from " << ih
+						  << ", " << im << ", " << ic << std::endl;
 
-					if (spectra.count(hname) && spectra[hname])
-						spectra[hname]->Add(py);
-					else
-						spectra[hname] = static_cast<TH1D*>(py->Clone());
-				}
+				if (spectra.count(hname))
+					spectra[hname] += reco(ic) * probs;
+				else
+					spectra[hname] = reco(ic) * probs;
+				
+				if (!_global.count(hname))
+					_global[hname] = reco.BinsY();	// store binning information
 			}
-			delete flux;
-			delete reco;
 			++cm;
 		}
 	}
-
-	delete f1;
 
 	return spectra;
 }
@@ -569,7 +571,7 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 
 	int tries = 0;
 	// if _nSys == 0 there is no fit, good for stats only
-	while (_nSys > 0 && !FindMinimum(On, En, epsil) && tries < maxIteration) {
+	while (!zeroEpsilons > 0 && !FindMinimum(On, En, epsil) && tries < maxIteration) {
 		++tries;
 		double x2 = X2(On, En, epsil);
 
@@ -595,6 +597,11 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 		epsil.setRandom();
 		epsil = best_eps + (std::abs(step) < 1 ? step : 1) * epsil;
 	}
+	if (kVerbosity > 1)
+		std::cout << "Number of attempts: " << tries << std::endl;
+
+	if (zeroEpsilons)	// no need to fit
+		return epsil;
 
 	if (tries < maxIteration)
 		return epsil;
@@ -931,7 +938,7 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 		int m0 = slices[n].first, dm = slices[n].second - m0;
 		const Eigen::ArrayXd ev = Ep.segment(m0, dm);
 
-		if (kVerbosity > 3)
+		if (kVerbosity > 4)
 			std::cout << "type " << it << ", bin "
 				  << n + _binpos[it].first
 				  << " scales are between "
@@ -1050,6 +1057,7 @@ Eigen::ArrayXd ChiSquared::ObsX2n(const Eigen::VectorXd &On,
 		for (int n = _binpos[it].first; n < _binpos[it].second; ++n) {
 			double en = Scale(gam, skerr, n, it);
 			chi2(n) = 2 * en - 2 * On(n) * (1 + log(en / On(n)));
+			//std::cout << "bin " << n << " -> x2 " << chi2(n) << std::endl;
 		}
 	}
 

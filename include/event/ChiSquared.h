@@ -39,7 +39,7 @@ class ChiSquared
 
 		Eigen::VectorXd ConstructSpectrum(Oscillator *osc = 0);
 		Eigen::VectorXd LoadSpectrum(int pt, std::string from = "");
-		std::map<std::string, TH1D*> BuildSpectrum(Oscillator *osc = 0);
+		std::map<std::string, Eigen::MatrixXd> BuildSpectrum(Oscillator *osc = 0);
 
 		bool PointInFile(TFile *f, int pt);
 
@@ -161,6 +161,7 @@ class ChiSquared
 		int badFitThreshold;
 		int maxIteration;
 		double fitErr;
+		bool zeroEpsilons;
 
 		double lm_0, lm_up, lm_down;	//control fit parameters
 

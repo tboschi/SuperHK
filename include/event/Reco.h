@@ -20,69 +20,32 @@
 #include "TH2D.h"
 #include "TAxis.h"
 
+#include "Eigen/Dense"
+
 class Reco
 {
 	public:
-		enum Type
-		{
-			E0_E0,
-			M0_M0,
-			M0_E0,
-			EB_EB,
-			MB_MB,
-			MB_EB
-		};
-
-		enum Ring
-		{
-			Elike,
-			Mlike,
-		};
-
-		enum Interaction
-		{
-			CCQE,
-			CCnQE,
-			NC,
-		};
-
 		Reco(std::string cardReco);
-		Reco(const Reco & r);	//copy ctor
-		~Reco();
+		//Reco(const Reco & r);	//copy ctor
+		//~Reco();
 
-		//Clone functions, so that an object from this class
-		//owns valid copies of the histograms
-		template <class T>
-		TH2D* Clone(T* x)
-		{
-			TH2D* h;
-			if (x)
-			{
-				h = dynamic_cast<TH2D*> (x->Clone());
-				h->SetDirectory(0);
-			}
-			else
-				h = NULL;
+		Eigen::MatrixXd operator()(std::string name);
+		std::vector<double> BinsX(std::string name = "");
+		std::vector<double> BinsY(std::string name = "");
 
-			return h;
-		}
-
-		TH2D* Get(std::string name);
-
-		void Scale(std::string name, double X);
 		void Scale(double X);
-		void Scale(std::string name, TH1D* h, char axis = 'x');
-		void Scale(TH1D* h, char axis = 'x');
+		void Scale(std::string name, double X);
 
-		TH1D* Project(std::string name, char axis = 'x', std::string app = "");
-		void SaveProjections(std::string baseName, char axis = 'x');
-
-		int BinsX(const double *&bins);
-		int BinsY(const double *&bins);
+		Eigen::MatrixXd Apply(std::string name, TH1D* h, char axis = 'x');
+		Eigen::MatrixXd Apply(std::string name, Eigen::VectorXd &vec, char axis = 'x');
 
 	private:
-		std::map<std::string, TH2D*> mReco;
-		std::map<std::string, TH2D*>::iterator irh;
+		std::map<std::string, Eigen::MatrixXd> _reco;
+		std::map<std::string, std::vector<double> > _binX;
+		std::map<std::string, std::vector<double> > _binY;
+
+		//std::map<std::string, TH2D*> mReco;
+		//std::map<std::string, TH2D*>::iterator irh;
 };
 
 #endif

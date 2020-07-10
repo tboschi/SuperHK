@@ -10,138 +10,133 @@ Reco::Reco(std::string cardReco)
 	if (!cd.Get("scale", weight))
 		weight = 1.0;
 
+	//std::cout << "opening " << fileReco << std::endl;
 	TFile* inFile = new TFile(fileReco.c_str(), "READ");
 	if (inFile->IsZombie())
-		std::cerr << "Reco: file " << fileReco << " does not exist" << std::endl;
+		std::cerr << "WARNING - Reco: file " << fileReco
+			  << " does not exist" << std::endl;
 
 	std::map<std::string, std::string> mSD;
-	std::map<std::string, std::string>::iterator is;
 	//look if there is a particular event
 	if (cd.Get("Ring_", mSD))
-	{
-		for (is = mSD.begin(); is != mSD.end(); ++is)
-		{
-			mReco[is->first] = Clone(inFile->Get(is->second.c_str()));
-			Scale(is->first, weight);
+		for (const auto &is : mSD) {
+			//std::cout << "histogram " << is.first << " - " << is.second << std::endl;
+			// TH2D is made of (xbins + 2) ( ybins + 2)
+			// y0 : x0 x1 x2 x3 x4 ...
+			// y1 : x0 x1 x2 x3 x4 ...
+			// y2 : x0 x1 x2 x3 x4 ...
+			// y3 : x0 x1 x2 x3 x4 ...
+			// y4 : x0 x1 x2 x3 x4 ...
+			// .....
+			// as there are overflow and underflow bins
+			// correct array starts from 1 to ybins + 1
+			if (!inFile->Get(is.second.c_str()))
+				continue;
+
+			TH2D *h2 = static_cast<TH2D*>
+				(inFile->Get(is.second.c_str()));
+		
+			int xs = h2->GetNbinsX();// E_true and n_cols
+			int ys = h2->GetNbinsY();// E_reco and n_rows
+			// catching xs+2 X y2 section
+			Eigen::MatrixXd rm = Eigen::Map<Eigen::MatrixXd>
+				(h2->GetArray() + xs + 2, xs + 2, ys);
+			//std::cout << "raw\n";
+			//for (int g = 0; g < 801; ++g)
+			//	std::cout << *(h2->GetArray()+g) << "\t";
+			//std::cout << std::endl;
+
+			// remove first and last columns
+			rm.transposeInPlace();
+			rm.leftCols(xs) = rm.middleCols(1, xs);
+			rm.conservativeResize(ys, xs);
+
+			rm *= weight;
+			_reco[is.first] = rm;
+
+			const double *bx = h2->GetXaxis()->GetXbins()->GetArray();
+			const double *by = h2->GetYaxis()->GetXbins()->GetArray();
+			_binX[is.first].assign(bx, bx + xs + 1);
+			_binY[is.first].assign(by, by + ys + 1);
 		}
-	}
 
 	inFile->Close();
 }
 
+// happy with default copy constructor and destructor
+
 //copy ctor
-Reco::Reco(const Reco & r)
-{
-	std::map<std::string, TH2D*>::const_iterator ich;
-	for (ich = (r.mReco).begin(); ich != (r.mReco).end(); ++ich)
-		mReco[ich->first] = Clone(ich->second);
-}
+//Reco::Reco(const Reco & r)
+//{
+//}
 
 //detor
-Reco::~Reco()
-{
-	for (irh = mReco.begin(); irh != mReco.end(); ++irh)
-		delete irh->second;
-}
+//Reco::~Reco()
+//{
+//}
 
 
 //Get functions
 
-TH2D* Reco::Get(std::string name)
+Eigen::MatrixXd Reco::operator()(std::string name)
 {
-	return mReco[name];
+	if (_reco.count(name))
+		return _reco[name];
+	else {
+		std::cerr << "WARNING - Reco: the reconstruction matrix \""
+			  << name << "\" does not exist\n";
+		return _reco.begin()->second;
+	}
 }
 
-void Reco::Scale(std::string name, double X)
+std::vector<double> Reco::BinsX(std::string name)
 {
-	if (Get(name))
-		Get(name)->Scale(X);
+	if (_binX.count(name))
+		return _binX[name];
+	else
+		return _binX.begin()->second;
 }
 
+std::vector<double> Reco::BinsY(std::string name)
+{
+	if (_binY.count(name))
+		return _binY[name];
+	else
+		return _binY.begin()->second;
+}
+
+// rescale all matrices
 void Reco::Scale(double X)
 {
-	for (irh = mReco.begin(); irh != mReco.end(); ++irh)
+	for (auto irh = _reco.begin(); irh != _reco.end(); ++irh)
 		Scale(irh->first, X);
 }
 
-void Reco::Scale(std::string name, TH1D* h, char axis)
+// rescale matrix by name
+void Reco::Scale(std::string name, double X)
 {
-	TAxis *ax0, *ax1;
-	switch (axis)
-	{
-		case 'x':
-			ax0 = Get(name)->GetXaxis();
-			ax1 = Get(name)->GetYaxis();
-			break;
-		case 'y':
-			ax0 = Get(name)->GetYaxis();
-			ax1 = Get(name)->GetXaxis();
-			break;
-	}
-
-	for (int ix = 1; ix < ax0->GetNbins()+1; ++ix)
-	{
-		//std::cout << "scale bin " << ix << "\t" << ax0->GetBinCenter(ix) << " GeV" << std::endl;
-		int bin = h->FindBin(ax0->GetBinCenter(ix));
-		double cn = h->GetBinContent(bin);
-
-		//std::cout << "range " << lb << "\t" << ub << "\tavg : " << avg << std::endl;
-		double cc = 0;
-		for (int iy = 1; iy < ax1->GetNbins()+1; ++iy)
-		{
-			Get(name)->SetBinContent(ix, iy, Get(name)->GetBinContent(ix, iy) * cn);
-			//cc += Get(name)->GetBinContent(ix, iy);
-		}
-	}
-}
-
-void Reco::Scale(TH1D* h, char axis)
-{
-	for (irh = mReco.begin(); irh != mReco.end(); ++irh)
-		Scale(irh->first, h, axis);
-}
-
-TH1D* Reco::Project(std::string name, char axis, std::string app)
-{
-	if (Get(name))
-	{
-		std::string pname = name + app;
-		switch (axis)
-		{
-			case 'x':
-				return Get(name)->ProjectionX(pname.c_str());
-			case 'y':
-				return Get(name)->ProjectionY(pname.c_str());
-		}
-	}
+	if (_reco.count(name))
+		_reco[name] *= X;
 	else
-		return 0;
+		std::cerr << "WARNING - Reco: the reconstruction matrix \""
+			  << name << "\" does not exist\n";
 }
 
-void Reco::SaveProjections(std::string baseName, char axis)
+// apply vector to matrix to do both scaling and project
+// axis is the TH1D direction, so if axis = 'x', then result is in 'y' direction
+Eigen::MatrixXd Reco::Apply(std::string name, TH1D* h, char axis)
 {
-	for (irh = mReco.begin(); irh != mReco.end(); ++irh)
-	{
-		TH1D* hP = Project(irh->first, axis);
-		std::string name = baseName + "_" + irh->first;
-		if (hP)
-		{
-			hP->SetName(name.c_str());
-			hP->Write(name.c_str(), TObject::kWriteDelete);
-		}
+	Eigen::VectorXd vec = Eigen::Map<Eigen::VectorXd>
+		(h->GetArray()+1, h->GetNbinsX(), 1);
+	return Apply(name, vec, axis);
+}
+
+Eigen::MatrixXd Reco::Apply(std::string name, Eigen::VectorXd &vec, char axis)
+{
+	switch (axis) {
+		case 'x':
+			return _reco[name] * vec;
+		case 'y':
+			return _reco[name].transpose() * vec;
 	}
-}
-
-int Reco::BinsX(const double *&bins)
-{
-	TAxis *ax = mReco.begin()->second->GetXaxis();
-	bins = ax->GetXbins()->GetArray();
-	return ax->GetNbins();
-}
-
-int Reco::BinsY(const double *&bins)
-{
-	TAxis *ax = mReco.begin()->second->GetYaxis();
-	bins = ax->GetXbins()->GetArray();
-	return ax->GetNbins();
 }
