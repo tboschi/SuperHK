@@ -100,19 +100,13 @@ double Oscillator::Probability(Nu in, Nu out, double energy, bool force)
 }
 
 
-void Oscillator::Oscillate(Nu in, Nu out, TH1D* h)
+Eigen::VectorXd Oscillator::Oscillate(Nu in, Nu out,
+				const std::vector<double> &bins)
 {
-	for (int i = 1; i < h->GetNbinsX()+1; ++i)
-	{
-		double en = h->GetBinCenter(i);
-		double cn = h->GetBinContent(i);
-
-		//if (std::abs(cn) < 1e-9)
-		//	continue;
-
-		h->SetBinContent(i, cn * Probability(in, out, en));
-		//std::cout << "bin " << en << " : " << cn << " -> " << h->GetBinContent(i) << std::endl;
-	}
+	Eigen::VectorXd vb(bins.size() - 1);
+	for (int i = 0; i < vb.size(); ++i)
+		vb(i) = Probability(in, out, (bins[i+1] + bins[i]) / 2.);
+	return vb;
 }
 
 void Oscillator::Reset()
