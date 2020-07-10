@@ -2,10 +2,13 @@
 lm_0	1
 lm_up	5
 lm_down	10
+
+max_iterations	10
+fit_error	1e-9
 #################################
 
 # verbosity on (1) or off (0)
-verbose	1
+verbose	3
 fast	0
 
 #true oscillation parametres to be fitted
