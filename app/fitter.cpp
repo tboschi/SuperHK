@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 	
 	double * Epsilons = new double[fitter->NumSys()];
 	double * Errors   = new double[fitter->NumSys()];
-	double X2, SysX2;
+	double X2, ObsX2, SysX2;
 	double Time;
 	int Point, tPoint;
 	cd->Get("Point", tPoint);
@@ -164,8 +164,9 @@ int main(int argc, char** argv)
 		Eigen::VectorXd eps = fitter->FitX2(trueSpectra, fitSpectra);
 		Eigen::MatrixXd var = fitter->Covariance(trueSpectra, fitSpectra, eps);
 
-		X2    = fitter->X2(trueSpectra, fitSpectra, eps);
+		ObsX2 = fitter->ObsX2(trueSpectra, fitSpectra, eps);
 		SysX2 = fitter->SysX2(eps);
+		X2 = ObsX2 + SysX2;
 
 
 		for (int c = 0; c < eps.size(); ++c)	//eps.size == NumSys
@@ -176,7 +177,7 @@ int main(int argc, char** argv)
 
 		if (kVerbosity)
 			std::cout << "X2 computed " << X2 << " ("
-				  << X2-SysX2 << " + " << SysX2 << ")\n" << std::endl;
+				  << ObsX2 << " + " << SysX2 << ")\n" << std::endl;
 
 
 		auto t_end = std::chrono::high_resolution_clock::now();
