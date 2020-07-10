@@ -52,7 +52,9 @@ class Oscillator
 		void SetMatterProfile(const std::string &densityFile);
 
 		double Probability(Nu in, Nu out, double energy, bool force = false);
-		void Oscillate(Nu in, Nu out, TH1D* h);
+		//void Oscillate(Nu in, Nu out, TH1D* h);
+		Eigen::VectorXd Oscillate(Nu in, Nu out,
+				const std::vector<double> &bins);
 		void Reset();
 		std::map<double, Eigen::MatrixXd>::iterator FindEnergy(double energy);
 
@@ -83,6 +85,9 @@ class Oscillator
 					SetMasses_abs(m1, m2);
 					break;
 			}
+
+			//reset lookup table
+			mLUT.clear();
 		}
 		void SetMasses_NH(double dms21, double dms23);
 		void SetMasses_IH(double dms21, double dms23);
@@ -103,6 +108,9 @@ class Oscillator
 					SetPMNS_angles(s12, s13, s23, cp);
 					break;
 			}
+
+			//reset lookup table
+			mLUT.clear();
 		}
 		void SetPMNS_sin(double s12, double s13, double s23, double cp);
 		void SetPMNS_sin2(double s12, double s13, double s23, double cp);
