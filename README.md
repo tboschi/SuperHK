@@ -1,4 +1,4 @@
-# Easy Osc3++
+# Easy Osc3++ - v2.0
 
 The core of this simplified version of osc3++ is given by the ```event/ChiSquared``` class.
 The main code in ```app/fitter.cpp``` uses the class to load systematics, build distributions and minimise the chi-squared.
@@ -14,6 +14,12 @@ The true point is defined by the *Point* variable: in the default space, point 4
 A set of script is used to facilitate the execution of the code and extraction of results.
 In executing the following scripts, the structure of the folder is important.
 We will refer to paths where input files to be fitted are created as ```global``` (data only for atmospheric sample, but configuration files for beam sample too), and as ```root``` to where the outputs of the fitted file will be.
+
+## Differences with previous version
+
+Version v2.0 handles the energy scaling error more exactly as it is implemented as an anlaytic function.
+Hence, the exact Jacobian and Hessians are used during minimisation.
+Oscillator and Reco classes have been remodelled to improve optimization and maximise use of vector instructions.
 
 ## Requirements
 
