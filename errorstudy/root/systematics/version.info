@@ -1,4 +1,0 @@
-# wget splines and matrices from http://hep.lancs.ac.uk/~tdealtry/oa/...
-# for the systematic set of interest
-
-wget -A root -r -l1 -nd -np -e robots=off http://hep.lancs.ac.uk/~tdealtry/oa/190829/10

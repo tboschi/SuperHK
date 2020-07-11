@@ -1,4 +1,4 @@
-# Easy Osc3++
+# Easy Osc3++ - v1.0
 
 The core of this simplified version of osc3++ is given by the ```event/ChiSquared``` class.
 The main code in ```app/fitter.cpp``` uses the class to load systematics, build distributions and minimise the chi-squared.
