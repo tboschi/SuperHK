@@ -292,6 +292,9 @@ void ChiSquared::LoadSystematics()
 		sysA = 0;
 	if (!cd->Get("syst_last", sysB))
 		sysB = _nSys;
+	std::vector<int> skip;
+	cd->Get("skip", skip);	// errors to skip
+	std::set<int> skip_sys(skip.begin(), skip.end());
 
 	zeroEpsilons = true;
 	int off = 0;	// offset for global bin
@@ -317,7 +320,7 @@ void ChiSquared::LoadSystematics()
 		{
 			std::string sysname = k->GetName();
 
-			//if (skip_syst.find(sysname) != skip_sys.end()) {
+			//if (skip_sys.find(sysname) != skip_sys.end()) {
 			//	if (kVerbosity)
 			//		std::cout << "Not accepting " << sysname << std::endl;
 			//	continue;	// to be implemented
@@ -345,7 +348,8 @@ void ChiSquared::LoadSystematics()
 				//sysname is just number now
 
 				k_err = std::stoi(sysname);
-				if (k_err < sysA || k_err >= sysB)
+				if (k_err < sysA || k_err >= sysB
+				    || skip_sys.find(k_err) != skip_sys.end())
 					continue;
 				//k_err += _nScale;
 
@@ -363,7 +367,8 @@ void ChiSquared::LoadSystematics()
 				//sysname is just number
 
 				k_err = std::stoi(sysname);
-				if (k_err < sysA || k_err >= sysB)
+				if (k_err < sysA || k_err >= sysB
+				    || skip_sys.find(k_err) != skip_sys.end())
 					continue;
 				//k_err += _nScale;
 

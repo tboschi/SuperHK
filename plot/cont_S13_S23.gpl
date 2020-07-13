@@ -9,8 +9,10 @@ outp = dataset."_cont_S13_S23.tex"
 getx(x) = 4*x*(1-x)
 gety(y) = y
 
-xr_0 = 0.070
-xr_1 = 0.1001
+#xr_0 = 0.070
+#xr_1 = 0.1001
+xr_0 = getx(0.0197)
+xr_1 = getx(0.0239)
 yr_0 = 0.426
 yr_1 = 0.579
 

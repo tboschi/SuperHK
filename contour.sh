@@ -4,10 +4,8 @@ Contour=/data/tboschi/HKsens/OscAna/SuperHK/bin/buildcontours
 root=/data/tboschi/HKsens/
 
 pp=false
-tr=false
 while getopts 'fr:p' flag; do
 	case "${flag}" in
-		f) tr=true ;;
 		r) root="${OPTARG}" ;;
 		p) pp=true ;;
 		*) exit 1 ;;
@@ -31,13 +29,12 @@ if [ ${#list[@]} -eq 0 ] ; then
 	list=($(ls -d $sens/point_*/))
 fi
 
-name=""
+name="SpaghettiSens"
 outp=""
 if [ "$pp" = true ] ; then
-	name="SpaghettiSens_penalised"
+	#name="SpaghettiSens_penalised"
 	outp="gaussian"
 else
-	name="SpaghettiSens"
 	outp="uniform"
 fi
 
@@ -61,12 +58,7 @@ for ll in "${list[@]}" ; do
 	tupdt=$(date -r $updt +%s)
 
 	#check when last contour was done
-	echo filtering $tr
-	if [ "$tr" = true ] ; then
-		last=$cont/$dir/$outp'_filter.root'
-	else
-		last=$cont/$dir/$outp'.root'
-	fi
+	last=$cont/$dir/$outp'.root'
 	tlast=0
 	if [ -s $last ] ; then
 		tlast=$(date +%s -r $last)

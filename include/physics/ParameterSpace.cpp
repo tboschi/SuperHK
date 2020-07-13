@@ -27,13 +27,14 @@ void ParameterSpace::Init()
 
 			//varmap[ip->first] = new double;
 			binning[ip.first] = bins;
+			nominal[ip.first] = 0;
 		}
 		else
 		{
-
-			bool linear = true;
-			if (ip.second.size() > 4 && ip.second[3] == 1)	//log
-				linear = false;
+			if (ip.second.size() > 3)	//log
+				nominal[ip.first] = int(ip.second[3]);
+			else
+				nominal[ip.first] = int(ip.second[2]-1) / 2;
 
 			//create array with bins
 			std::vector<double> bins(ip.second[2]);
@@ -143,4 +144,37 @@ std::map<std::string, double> ParameterSpace::GetEntry(int n)
 	}
 
 	return vars;
+}
+
+void ParameterSpace::GetNominal(double &M12, double &M23,
+			      double &S12, double &S13, double &S23, double &dCP)
+{
+	std::map<std::string, double> noms = GetNominal();
+	M12 = noms["M12"];
+	M23 = noms["M23"];
+	S12 = noms["S12"];
+	S13 = noms["S13"];
+	S23 = noms["S23"];
+	dCP = noms["CP"];
+}
+
+std::map<std::string, double> ParameterSpace::GetNominal()
+{
+	std::map<std::string, double> vars;
+	for (const auto &ir : binning)
+		vars[ir.first] = ir.second[nominal[ir.first]];
+
+	return vars;
+}
+
+int ParameterSpace::GetNominalEntry()
+{
+	int n = 0, q = 1;
+	Binning::reverse_iterator ir;
+	for (ir = binning.rbegin(); ir != binning.rend(); ++ir) {
+		n += nominal[ir->first] * q;
+		q *= ir->second.size();
+	}
+
+	return n;
 }

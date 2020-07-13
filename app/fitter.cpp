@@ -64,7 +64,8 @@ int main(int argc, char** argv)
 	double X2, ObsX2, SysX2;
 	double Time;
 	int Point, tPoint;
-	cd->Get("Point", tPoint);
+	if (!cd->Get("Point", tPoint))
+		tPoint = parms->GetNominalEntry();
 
 	double M12, tM12;
 	double M23, tM23;
@@ -165,7 +166,7 @@ int main(int argc, char** argv)
 		Eigen::VectorXd fitSpectra = fitter->ConstructSpectrum(osc);
 
 		Eigen::VectorXd eps = fitter->FitX2(trueSpectra, fitSpectra);
-		Eigen::VectorXd var = fitter->Covariance(trueSpectra, fitSpectra, eps);
+		Eigen::VectorXd var = fitter->Variance(trueSpectra, fitSpectra, eps);
 
 		ObsX2 = fitter->ObsX2(trueSpectra, fitSpectra, eps);
 		SysX2 = fitter->SysX2(eps);

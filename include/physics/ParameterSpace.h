@@ -33,12 +33,18 @@ class ParameterSpace
 			      double &S12, double &S13, double &S23, double &dCP);
 		std::map<std::string, double> GetEntry(int n);
 
+		void GetNominal(double &M12, double &M23,
+			      double &S12, double &S13, double &S23, double &dCP);
+		std::map<std::string, double> GetNominal();
+		int GetNominalEntry();
+
 	private:
 		CardDealer *cd;
 
 		//std::map<std::string, double*> varmap;	//map to address of variables
 		//std::map<std::string, double*>::iterator iv;
 		Binning binning, penals;	//map of bins
+		std::map<std::string, int> nominal;
 };
 
 #endif

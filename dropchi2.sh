@@ -6,13 +6,13 @@ root=/data/tboschi/HKsenHK
 
 #samples=(T2HK)
 
-ff=false
-while getopts 'fr:p:n:' flag; do
+pp=false
+while getopts 'pf:r:n:' flag; do
 	case "${flag}" in
-		f) ff=true ;;
 		r) root="${OPTARG}" ;;
-		p) point="${OPTARG}" ;;
+		f) point="${OPTARG}" ;;
 		n) name="${OPTARG}" ;;
+		p) pp=true ;;
 		*) exit 1 ;;
 	esac
 done
@@ -21,11 +21,12 @@ shift $((OPTIND-1))
 
 root=${root%/}
 
-if [ "$ff" = true ]; then
-	tgt='gaussian_filter'
+if [ "$pp" = true ] ; then
+	tgt="gaussian"
 else
-	tgt='gaussian'
+	tgt="uniform"
 fi
+
 
 for ss in "$@"
 do
@@ -49,6 +50,7 @@ if [ -s ${setsens[0]} ] ; then
 	$Sens ${setsens[@]}
 fi
 
+echo "creating dir" $name
 mkdir -p plot/$name
 
 if [ $name ]
