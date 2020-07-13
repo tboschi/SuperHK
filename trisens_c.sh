@@ -140,7 +140,8 @@ if [ ! -s $global/$pinfo ] ; then
 	exit 1
 fi
 
-point=$(cat $global/$pinfo)
+./bin/oscillation_point $card $root/sensitivity/$pinfo
+point=$(cat $root/sensitivity/$pinfo)
 point=(${point})
 
 MAX_JOBS=300
