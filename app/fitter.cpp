@@ -58,8 +58,9 @@ int main(int argc, char** argv)
 	std::string outName;
 	cd->Get("output", outName);	//path for out file with extension
 	
-	double * Epsilons = new double[fitter->NumSys()];
-	double * Errors   = new double[fitter->NumSys()];
+	//double *Epsilons = new double[fitter->NumSys()];
+	//double *Errors   = new double[fitter->NumSys()];
+	double *Epsilons, *Errors;
 	double X2, ObsX2, SysX2;
 	double Time;
 	int Point, tPoint;
@@ -139,6 +140,8 @@ int main(int argc, char** argv)
 		Point = i;
 		parms->GetEntry(Point, M12, M23, S12, S13, S23, dCP);
 
+		double PenX2 = parms->GetPenalty(Point);
+
 		//fast fit flag, which means skips unless dCP is 0, ±pi, or tdCP
 		if (kFast && std::abs(dCP - tdCP) > 1e-5 &&
 			     std::abs(std::sin(dCP)) > 1e-5)
@@ -162,23 +165,20 @@ int main(int argc, char** argv)
 		Eigen::VectorXd fitSpectra = fitter->ConstructSpectrum(osc);
 
 		Eigen::VectorXd eps = fitter->FitX2(trueSpectra, fitSpectra);
-		Eigen::MatrixXd var = fitter->Covariance(trueSpectra, fitSpectra, eps);
+		Eigen::VectorXd var = fitter->Covariance(trueSpectra, fitSpectra, eps);
 
 		ObsX2 = fitter->ObsX2(trueSpectra, fitSpectra, eps);
 		SysX2 = fitter->SysX2(eps);
-		X2 = ObsX2 + SysX2;
+		X2 = ObsX2 + SysX2 + PenX2;
 
-
-		for (int c = 0; c < eps.size(); ++c)	//eps.size == NumSys
-		{
-			Epsilons[c] = eps(c);
-			Errors[c] = sqrt(var(c, c));
-		}
+		var = var.cwiseSqrt();
+		Epsilons = eps.data();
+		Errors = var.data();
 
 		if (kVerbosity)
 			std::cout << "X2 computed " << X2 << " ("
-				  << ObsX2 << " + " << SysX2 << ")\n" << std::endl;
-
+				  << ObsX2 << " + " << SysX2 << " + "
+				  << PenX2 << ")\n" << std::endl;
 
 		auto t_end = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double, std::milli> t_duration = t_end - t_begin;

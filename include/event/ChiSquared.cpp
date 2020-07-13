@@ -1018,8 +1018,14 @@ Eigen::MatrixXd ChiSquared::Covariance(const Eigen::VectorXd &On,
 	//modified expected events with systematics
 	Eigen::MatrixXd hes = Hessian(On, En, epsil);
 
-	//return hes.inverse();
-	return hes;
+	return hes.inverse();
+}
+
+Eigen::VectorXd ChiSquared::Variance(const Eigen::VectorXd &On,
+				     const Eigen::VectorXd &En,
+				     const Eigen::VectorXd &epsil)
+{
+	return Covariance(On, En, epsil).diagonal();
 }
 
 

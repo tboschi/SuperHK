@@ -10,44 +10,47 @@ void ParameterSpace::Init()
 {
 	Binning parms;
 	cd->Get("parm_", parms);
+	cd->Get("penalty_", penals);
 
 	//each parameters has start, end and points saved in a vector with three elems
 	//bin width = bw = (e - s) / (p - 1)
-	Binning::iterator ip;	//loop on parms
-	for (ip = parms.begin(); ip != parms.end(); ++ip)
+	//Binning::iterator ip;	//loop on parms
+	//for (ip = parms.begin(); ip != parms.end(); ++ip)
+	for (const auto &ip : parms)
 	{
 		//if less than three elements skip 
-		if (ip->second.size() < 3)
+		//if (ip->second.size() < 3)
+		if (ip.second.size() < 3)
 		{
 			std::vector<double> bins(1);
-			bins[0] = ip->second.at(0);
+			bins[0] = ip.second[0];
 
 			//varmap[ip->first] = new double;
-			binning[ip->first] = bins;
+			binning[ip.first] = bins;
 		}
 		else
 		{
 
 			bool linear = true;
-			if (ip->second.size() > 4 && ip->second.at(3) == 1)	//log
+			if (ip.second.size() > 4 && ip.second[3] == 1)	//log
 				linear = false;
 
 			//create array with bins
-			std::vector<double> bins(ip->second.at(2));
+			std::vector<double> bins(ip.second[2]);
 
 			//bin width
-			double bw = std::abs(ip->second.at(1) - ip->second.at(0)) / 
-				    (ip->second.at(2) - 1);
+			double bw = std::abs(ip.second[1] - ip.second[0]) / 
+				    (ip.second[2] - 1);
 
 			//fill first bin
-			bins[0] = std::min(ip->second.at(0), ip->second.at(1));
+			bins[0] = std::min(ip.second[0], ip.second[1]);
 
 			//and add step until end
-			for (int i = 1; i < ip->second.at(2); ++i)
+			for (int i = 1; i < ip.second[2]; ++i)
 				bins[i] = bins[i-1] + bw;
 
 			//varmap[ip->first] = new double;		//null pointer
-			binning[ip->first] = bins;
+			binning[ip.first] = bins;
 		}
 	}
 }
@@ -63,26 +66,26 @@ ParameterSpace::Binning ParameterSpace::GetBinning()
 ParameterSpace::Binning ParameterSpace::GetHistogramBinning()
 {
 	Binning histbin;
-	Binning::iterator ib;
-	for (ib = binning.begin(); ib != binning.end(); ++ib)
+	//for (ib = binning.begin(); ib != binning.end(); ++ib)
+	for (const auto &ib : binning)
 	{
 		//returns only non-flat bins
-		if (ib->second.size() < 2)
+		if (ib.second.size() < 2)
 			continue;
 
-		std::vector<double> bins(ib->second.size() + 1);
+		std::vector<double> bins(ib.second.size() + 1);
 
 		//bin width
-		double bw = std::abs(ib->second.at(1) - ib->second.at(0));
+		double bw = std::abs(ib.second[1] - ib.second[0]);
 
 		//fill first bin
-		bins[0] = ib->second.at(0) - bw / 2.;
+		bins[0] = ib.second[0] - bw / 2.;
 
 		//and add step until end
 		for (int i = 1; i < bins.size(); ++i)
 			bins[i] = bins[i-1] + bw;
 
-		histbin[ib->first] = bins;
+		histbin[ib.first] = bins;
 	}
 
 	return histbin;
@@ -90,12 +93,25 @@ ParameterSpace::Binning ParameterSpace::GetHistogramBinning()
 
 int ParameterSpace::GetEntries()
 {
-	int npoints = binning.begin()->second.size();
-	Binning::iterator ib;
-	for (ib = std::next(binning.begin()); ib != binning.end(); ++ib)
-		npoints *= ib->second.size();
+	int npoints = 1;
+	for (const auto &ib : binning)
+		npoints *= ib.second.size();
 
 	return npoints;
+}
+
+double ParameterSpace::GetPenalty(int n)
+{
+	std::map<std::string, double> parms = GetEntry(n);
+
+	double x2 = 0;
+	for (const auto &ip : penals) {
+		if (ip.second.size() < 2)
+			continue;
+		x2 += pow((parms[ip.first] - ip.second[0]) / ip.second[1], 2);
+	}
+
+	return x2;
 }
 
 void ParameterSpace::GetEntry(int n, double &M12, double &M23,

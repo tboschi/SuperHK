@@ -28,6 +28,7 @@ class ParameterSpace
 		Binning GetBinning();
 
 		int GetEntries();
+		double GetPenalty(int n);
 		void GetEntry(int n, double &M12, double &M23,
 			      double &S12, double &S13, double &S23, double &dCP);
 		std::map<std::string, double> GetEntry(int n);
@@ -37,7 +38,7 @@ class ParameterSpace
 
 		//std::map<std::string, double*> varmap;	//map to address of variables
 		//std::map<std::string, double*>::iterator iv;
-		Binning binning;	//map of bins
+		Binning binning, penals;	//map of bins
 };
 
 #endif

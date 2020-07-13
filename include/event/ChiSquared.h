@@ -77,6 +77,9 @@ class ChiSquared
 		Eigen::MatrixXd Covariance(const Eigen::VectorXd &On,
 					   const Eigen::VectorXd &En,
 					   const Eigen::VectorXd &epsil);
+		Eigen::VectorXd Variance(const Eigen::VectorXd &On,
+					 const Eigen::VectorXd &En,
+					 const Eigen::VectorXd &epsil);
 		
 		double X2(const Eigen::VectorXd &On,
 			  const Eigen::VectorXd &En,

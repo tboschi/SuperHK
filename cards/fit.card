@@ -22,13 +22,18 @@ fast	0
 Point	49773
 
 #asim space
-parm_M12	0.0000753	0.0000753	1	
-parm_S12	0.304		0.304		1
-#fitted 
-parm_S13	0.0178175	0.0256584	13
-parm_M23	0.002464	0.002554	13
-parm_S23	0.426		0.579		19
-parm_CP		-3.14159265359	3.14159265359	61
+parm_M12	0.0000753	0.0000753	1	#
+#parm_S12	0.304		0.304		1
+parm_S12	0.307		0.307		1	#
+###########
+#parm_S13	0.0178175	0.0256584	13	#
+parm_S13	0.0197		0.0239		13	# ok central value 0.0218 ± 0.0007
+parm_M23	0.002464	0.002554	13	# ok
+parm_S23	0.426		0.579		37	# change bins in s23 (old 19) - central value 0.528 ± 0.061
+parm_CP		-3.14159265359	3.14159265359	61	# change bins in dCP to 101?
+
+# add central and error values to add a gaussian penalty term
+penalty_S13	0.0218	0.0007
 
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
