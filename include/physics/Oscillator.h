@@ -13,6 +13,7 @@
 #include <complex>
 #include <utility>
 #include <algorithm>
+#include <numeric>
 
 #include "tools/CardDealer.h"
 #include "physics/Const.h"
