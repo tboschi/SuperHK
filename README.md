@@ -41,15 +41,24 @@ will create the executables in the ```bin/``` folder.
 
 ## Folder structure
 
+After building the executables, run
+```
+./setup.sh
+```
+to build the folder structure required by the framework.
+The script also downloads the input files from http://hep.lancs.ac.uk/~tdealtry/oa/.
+
+You can specify a specific path with the ```-p prefix``` option, as specified in the usage. The default value is the folder ```errorstudy/``` in the current working directory 
+
+
 Let's say the main path for the studies is the ```errorstudy/``` folder.
-Create a folder for the global inputs and parameter set (e.g. asim)
+The script creates a folder for the global inputs and parameter set (e.g. asim)
 ```
 mkdir -p errorstudy/global/asim
 mkdir -p errorstudy/global/reconstruction
 ```
-When dealing with atmospheric samples, ```asim``` will contain subfolders with oscillated files to be fitted, but most importantly ```.info``` files with a list of true points to fit: **point.info** to generate a simple chi-squared profile against one single true point, **scan.info** with all the points for a sensitivity sweep.
+When dealing with atmospheric samples, ```asim``` will contain subfolders with oscillated files to be fitted.
 The folder ```reconstruction``` keeps configuration files and root files used to build the beam observables. From VALOR.
-
 
 Create also folder for each set to be studied
 ```
@@ -60,10 +69,10 @@ and the sub-directory ```systematics``` contains spline root files and the corre
 The idea is that there is a single global folder with common parameters and multiple root folders, one for each systematic set.
 
 
-The errorstudy folder is templated in this repository.
-
 
 ## Creating the fitting space for atmospheric sample
+
+**WARNING** It is not supported in v2.0 of the fitter.
 
 **WARNING** *it uses ```GlobalOsc``` part of the original Osc3++ package. Skip if not interested in atmospheric stuff or do not have GlobalOsc installed.*
 
@@ -87,6 +96,8 @@ It uses ```app/purifysystematics.cpp``` and ```app/addmatrix.cpp```.
 ```
 ./prepare_systematics.sh -r errorstudy/root matrix1.root [matrix2.root ...]
 ```
+
+**N.B** this is done automatically by the ```setup.py``` script!
 
 # Run the fit
 
