@@ -584,7 +584,7 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 			std::cout << "~~~~~~ No convergence reached ~~~~~~~";
 
 		double dist = (best_eps - epsil).norm();
-		double step = x2 - best_x2;
+		double step = best_x2 - x2;
 		if (best_x2 > x2) {
 			best_x2 = x2;
 			best_eps = epsil;
