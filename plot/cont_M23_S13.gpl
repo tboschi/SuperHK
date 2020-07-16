@@ -7,14 +7,14 @@ cont = dataset."/line_X2M23S13"
 outp = dataset."_cont_M23_S13.tex"
 
 getx(x) = 1000.*x
-gety(y) = 4*y*(1-y)
+#gety(y) = 4*y*(1-y)
+gety(y) = y
+load "limits.gpl"
 
-xr_0 = 2.464
-xr_1 = 2.554
-#yr_0 = 0.070
-#yr_1 = 0.100
-yr_0 = getx(0.0197)
-yr_1 = getx(0.0239)
+xr_0 = getx(x0_M23)
+xr_1 = getx(x1_M23)
+yr_0 = gety(x0_S13)
+yr_1 = gety(x1_S13)
 
 set xl "\$\\Delta m_\{32\}^2 / 10\^\{-3\}\$"
 set yl "\$\\sin^2 2 \\theta_\{13\}\$"
@@ -22,7 +22,7 @@ set yl "\$\\sin^2 2 \\theta_\{13\}\$"
 xform = "%g"
 yform = "%g"
 
-nx = 13
-ny = 13
+nx = nn_M23
+ny = nn_S13
 
 load 'cont_common.gpl'

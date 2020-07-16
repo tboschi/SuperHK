@@ -8,11 +8,12 @@ outp = dataset."_cont_M23_S23.tex"
 
 getx(x) = 1000.*x
 gety(y) = y
+load "limits.gpl"
 
-xr_0 = 2.464
-xr_1 = 2.554
-yr_0 = 0.426
-yr_1 = 0.579
+xr_0 = getx(x0_M23)
+xr_1 = getx(x1_M23)
+yr_0 = gety(x0_S23)
+yr_1 = gety(x1_S23)
 
 set xl "\$\\Delta m_\{32\}^2 / 10\^\{-3\}\$"
 set yl "\$\\sin^2 \\theta_\{23\}\$"
@@ -20,7 +21,7 @@ set yl "\$\\sin^2 \\theta_\{23\}\$"
 xform = "%g"
 yform = "%g"
 
-nx = 13
-ny = 19
+nx = nn_M23
+ny = nn_S23
 
 load 'cont_common.gpl'

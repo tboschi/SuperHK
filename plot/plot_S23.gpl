@@ -6,11 +6,11 @@ f_all = dataset."/".dataset."_X2minS23_all.dat"
 f_dif = dataset."/".dataset."_X2minS23_diff.dat"
 outp = dataset."_chi2_S23.tex"
 
-
 getx(x) = x
+load "limits.gpl"
 
-xr_0 = 0.426
-xr_1 = 0.579
+xr_0 = getx(x0_S23)
+xr_1 = getx(x1_S23)
 xr_t = (xr_1-xr_0) / 6.
 x_lab = "\$\\sin^2 \\theta_\{23\}\$"
 x_form = "%g"

@@ -146,6 +146,9 @@ set arrow 2 nohead from getx(fitp), ymin_top to getx(fitp), ymax_top dt 2
 set key title "" at getx(fitp)+0.02*(xr_1-xr_0), ymin_top + 0.75 * (ymax_top - ymin_top) top left samplen 1.5
 plot for [i=2:col_top] f_all u (getx($1)):i w histe lw 2 dt 1 lc rgb word(color, i-1) t system("echo ".word(names, i)." | sed 's:_: :g'")
 
+       #'valor_nostat.dat' w l lw 2 lc rgb 'green' t "VALOR No syst", \
+       #'valor_stat.dat' w l lw 2 lc rgb 'cyan' t "VALOR syst"
+
 
 unset multiplot
 unset output

@@ -1,0 +1,50 @@
+#
+reset
+pi = 4.*atan(1.)
+
+file = dataset."/".dataset."_exclusion_all.dat"
+outp = dataset."_sensitivity.tex"
+
+color = "'black' 'red' 'blue' 'web-green' 'orange' 'dark-magenta'"
+names  = system("head -n1 ".file)
+
+stats file u 1:2 name 's' nooutput
+cols = s_columns
+ymax = s_max_y
+do for [c=3:cols] { 
+     stats file using 1:c name 's' nooutput
+     ymax = (ymax < s_max_y) ? s_max_y : ymax
+}
+
+ymax = (floor(ymax / 2) + 1) * 2
+
+set xr [-pi:pi]
+set mxtics 5
+set xtics -pi, pi/4.0, pi
+
+set format x "%.1P\$\\pi\$"
+set xlabel "\$\\delta_\\text\{CP\}\$"
+
+set yr [0:ymax]
+set ylabel "\$\\sigma (\\delta_\\text\{CP\})\$"
+set format y "%g"
+set ytics 0, 2, 100
+set mytics 10
+
+set label 1 "\$5 \\sigma\$" centre at 0, 5.5
+set label 2 "\$3 \\sigma\$" centre at 0, 3.5
+
+set key samplen 1.5 Left top left reverse
+
+#set term qt size 800, 455
+set term cairolatex pdf color size 5in, 3.5in lw 2 #standalone header \
+#	"\\usepackage\{amsmath\}"
+set output outp
+
+#plot for [c=2:cols] file u 1:c w l lw 2 lc rgb word(color, (c-1) % words(color)) t word(names, c), \
+#     5 w l dt 3 lc rgb "black" not, 3 w l dt 3 lc rgb "black" not
+
+plot for [c=2:cols] file u 1:c w l lw 2 lc rgb word(color, (c-2) % words(color) +1) t word(names, c), \
+     5 w l dt 3 lc rgb "black" not, 3 w l dt 3 lc rgb "black" not
+
+unset output

@@ -6,15 +6,15 @@ file = dataset."/".dataset."_X2S13CP.dat"
 cont = dataset."/line_X2S13CP"
 outp = dataset."_cont_S13_dCP.tex"
 
-getx(x) = 4*x*(1-x)
+#getx(x) = 4*x*(1-x)
+getx(x) = x
 gety(y) = y
+load "limits.gpl"
 
-#xr_0 = 0.070
-#xr_1 = 0.10001
-xr_0 = getx(0.0197)
-xr_1 = getx(0.0239)
-yr_0 = -pi
-yr_1 = pi
+xr_0 = getx(x0_S13)
+xr_1 = getx(x1_S13)
+yr_0 = gety(x0_CP)
+yr_1 = gety(x1_CP)
 
 set xl "\$\\sin^2 2 \\theta_\{13\}\$"
 set yl "\$\\delta_\\text\{CP\}\$"
@@ -22,7 +22,7 @@ set yl "\$\\delta_\\text\{CP\}\$"
 xform = "%g"
 yform = "%.1P\$\\pi\$"
 
-nx = 13
-ny = 61
+nx = nn_S13
+ny = nn_CP
 
 load 'cont_common.gpl'

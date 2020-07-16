@@ -7,10 +7,11 @@ f_dif = dataset."/".dataset."_X2minCP_diff.dat"
 outp = dataset."_chi2_dCP.tex"
 
 getx(x) = x
+load "limits.gpl"
 
-xr_0 = -pi
-xr_1 =  pi
-xr_t =  pi/4.0
+xr_0 = getx(x0_CP)
+xr_1 = getx(x1_CP)
+xr_t = (x1_CP-x0_CP)/8.0
 x_lab = "\$\\delta_\\text\{CP\}\$"
 x_form = "%.2P\$\\pi\$"
 

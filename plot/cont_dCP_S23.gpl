@@ -8,11 +8,12 @@ outp = dataset."_cont_dCP_S23.tex"
 
 getx(x) = x
 gety(y) = y
+load "limits.gpl"
 
-xr_0 = -pi
-xr_1 = pi
-yr_0 = 0.426
-yr_1 = 0.579
+xr_0 = getx(x0_CP)
+xr_1 = getx(x1_CP)
+yr_0 = gety(x0_S23)
+yr_1 = gety(x1_S23)
 
 set xl "\$\\delta_\\text\{CP\}\$"
 set yl "\$\\sin^2 \\theta_\{23\}\$"
@@ -22,7 +23,7 @@ yform = "%g"
 
 set xtics -pi, pi/5.0, pi
 
-nx = 61
-ny = 19
+nx = nn_CP
+ny = nn_S23
 
 load 'cont_common.gpl'

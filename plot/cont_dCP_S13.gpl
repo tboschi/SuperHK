@@ -7,14 +7,14 @@ cont = dataset."/line_X2CPS13"
 outp = dataset."_cont_dCP_S13.tex"
 
 getx(x) = x
-gety(y) = 4*y*(1-y)
+#gety(y) = 4*y*(1-y)
+gety(y) = y
+load "limits.gpl"
 
-xr_0 = -pi
-xr_1 = pi
-#yr_0 = 0.070
-#yr_1 = 0.100
-yr_0 = getx(0.0197)
-yr_1 = getx(0.0239)
+xr_0 = getx(x0_CP)
+xr_1 = getx(x1_CP)
+yr_0 = gety(x0_S13)
+yr_1 = gety(x1_S13)
 
 set xl "\$\\delta_\\text\{CP\}\$"
 set yl "\$\\sin^2 2 \\theta_\{13\}\$"
@@ -24,7 +24,7 @@ yform = "%g"
 
 set xtics -pi, pi/5.0, pi
 
-nx = 61
-ny = 13
+nx = nn_CP
+ny = nn_S13
 
 load 'cont_common.gpl'
