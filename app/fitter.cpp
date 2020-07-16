@@ -152,7 +152,7 @@ int main(int argc, char** argv)
 		{
 			std::cout << "\nFitting point " << Point << std::endl;
 			std::cout << "m23 " << M23 << ", s13 " << S13
-				  << ", s24 " << S23 << ", dcp " << dCP << std::endl;
+				  << ", s23 " << S23 << ", dcp " << dCP << std::endl;
 		}
 
 		auto t_begin = std::chrono::high_resolution_clock::now();
