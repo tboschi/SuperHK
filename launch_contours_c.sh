@@ -7,7 +7,6 @@ excl=./excludeall.sh
 study="/data/tboschi/HKsens/OscAna/SuperHK/errorstudy"
 point="asim/NH_NH"
 
-#model=( "0" "11a" "11b" "8" )
 #model=( "nuenorm1_corr" "nuenorm2_corr" "nuenorm3_corr" "nuenorm4_corr"  "nuenorm5_corr" 
 	#"nuenorm1_anti" "nuenorm2_anti" "nuenorm3_anti" "nuenorm4_anti"  "nuenorm5_anti" )
 #model=( "stats_untuned" )
@@ -17,7 +16,8 @@ point="asim/NH_NH"
         #"12_/asim/NH_NH" "12a/asim/NH_NH" "12b/asim/NH_NH" )
 #model=( "11a/asim/NH_NH" "11b/asim/NH_NH")
 #model=( "nuenorm1_corr/asim/NH_NH" "nuenorm2_corr/asim/NH_NH" "nuenorm3_corr/asim/NH_NH" "nuenorm4_corr/asim/NH_NH" "nuenorm5_corr/asim/NH_NH" "nuenorm1_anti/asim/NH_NH" "nuenorm2_anti/asim/NH_NH" "nuenorm3_anti/asim/NH_NH" "nuenorm4_anti/asim/NH_NH" "nuenorm5_anti/asim/NH_NH" )
-model=( "stats/asim/NH_NH" "new_nuenorm5_corr/asim/NH_NH" "new_nuenorm5_anti/asim/NH_NH" )
+#model=( "stats/asim/NH_NH" "new_nuenorm5_corr/asim/NH_NH" "new_nuenorm5_anti/asim/NH_NH" )
+model=( "stats/asim/NH_NH" "new_nuenorm5_corr/asim/NH_NH" "0/asim/NH_NH" )
 
 ff=false
 while getopts 'f' flag; do

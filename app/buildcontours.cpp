@@ -56,19 +56,20 @@ int main(int argc, char** argv)
 	ParameterSpace::Binning::iterator ix, iy;
 
 	std::map<std::string, double*> varmap;	//map to memory address for variables
-	for (ix = binning.begin(); ix != binning.end(); ++ix)
-	{
-		std::cout << "first " << ix->first << std::endl;
-		varmap[ix->first] = new double;		//null pointer
+	//for (ix = binning.begin(); ix != binning.end(); ++ix)
+	for (const auto &ix : binning) {
+		std::cout << "first " << ix.first << std::endl;
+		varmap[ix.first] = new double;		//null pointer
 	}
 
 
 	//map of combination of parameters so that each histogram can be linked
 	//to a set of parameters
 	std::map<std::string, std::vector<double*> > variables;
-	std::map<std::string, TH1*> histograms, histpoints;
+	std::map<std::string, TH1*> histograms, histpoints,
+				    histprofxy, histprofyx;
 
-	for (ix = binning.begin(); ix != binning.end(); ++ix)
+	for (auto ix = binning.begin(); ix != binning.end(); ++ix)
 	{
 		std::string name = "X2min" + ix->first;
 		std::string npnt = "Pmin"  + ix->first;
@@ -91,18 +92,18 @@ int main(int argc, char** argv)
 		variables[name] = vars;
 
 		//second loop for contouring
-		for (iy = std::next(ix); iy != binning.end(); ++iy)
+		for (auto iy = std::next(ix); iy != binning.end(); ++iy)
 		{
 			//these pointers will be used for accessing the map
-			ParameterSpace::Binning::iterator tx = ix;
-			ParameterSpace::Binning::iterator ty = iy;
+			auto tx = ix;
+			auto ty = iy;
 
-			//map keeps the elements sorted, so they are accessed in this order
-			//CP, M23, S13, S23, 	and the loop without swapping will be
-			//CP vs M23, CP vs S13, CP vs S23, M23 vs S13, M23 vs S23, S13 vs S23
-			//but we want this order
-			//CP vs M23, S13 vs CP, S23 vs CP, S13 vs M23, S23 vs M23, S13 vs S23
-			//so if ix has (C or M) and iy has S swap
+			// map keeps the elements sorted, so they are accessed in this order
+			// CP, M23, S13, S23, 	and the loop without swapping will be
+			// CP vs M23, CP vs S13, CP vs S23, M23 vs S13, M23 vs S23, S13 vs S23
+			// but we want this order
+			// CP vs M23, S13 vs CP, S23 vs CP, S13 vs M23, S23 vs M23, S13 vs S23
+			// so if ix has (C or M) and iy has S swap
 			if ( ( (ix->first.find_first_of('C') != std::string::npos) ||
 			       (ix->first.find_first_of('M') != std::string::npos) ) &&
 			        iy->first.find_first_of('S') != std::string::npos )
@@ -115,6 +116,9 @@ int main(int argc, char** argv)
 			//passing length of binning and address to vector memory
 			name = "X2" + tx->first + ty->first;
 			npnt = "P" + tx->first + ty->first;
+			std::string v_xy = "V"  + tx->first + "min" + ty->first;
+			std::string v_yx = "V"  + ty->first + "min" + tx->first;
+
 			std::cout << name << std::endl;
 
 			TH1 *cont = new TH2D(name.c_str(), name.c_str(),
@@ -125,12 +129,24 @@ int main(int argc, char** argv)
 					      binning[tx->first].size() - 1, &binning[tx->first][0],
 					      binning[ty->first].size() - 1, &binning[ty->first][0]);
 
+			TH1 *vpxy = new TH1D(v_xy.c_str(), v_xy.c_str(),
+					      binning[tx->first].size() - 1, &binning[tx->first][0]);
+			vpxy->GetYaxis()->SetRangeUser(binning[ty->first].front(), 
+						       binning[ty->first].back());
+
+			TH1 *vpyx = new TH1D(v_yx.c_str(), v_yx.c_str(),
+					      binning[ty->first].size() - 1, &binning[ty->first][0]);
+			vpyx->GetYaxis()->SetRangeUser(binning[tx->first].front(), 
+						       binning[tx->first].back());
+
 			vars.clear();
 			vars.push_back(varmap[tx->first]);
 			vars.push_back(varmap[ty->first]);
 
 			histograms[name] = cont;
 			histpoints[name] = cpnt;
+			histprofxy[name] = vpxy;
+			histprofyx[name] = vpyx;
 			variables[name] = vars;
 		}
 	}
@@ -156,21 +172,30 @@ int main(int argc, char** argv)
 	for (int n = 0; n < sX2->GetEntries(); ++n)
 	{
 		sX2->GetEntry(n);
+		//std::cout << "\nPoint " << point
+		//	  << ", m23 " << *varmap["M23"]
+		//	  << ", s13 " << *varmap["S13"]
+		//	  << ", s22 " << *varmap["S23"]
+		//	  << ", dcp " << *varmap["CP"] << std::endl;
 
-		for (ih = histograms.begin(); ih != histograms.end(); ++ih)
+		for (const auto &ih : histograms)
 		{
+			//std::cout << "histogram " << ih.first << std::endl;
 			int ibin = 0;	//find global bin
-			if (variables[ih->first].size() == 1)
-				ibin = ih->second->FindBin(*variables[ih->first].at(0));
-			else if (variables[ih->first].size() == 2)
-				ibin = ih->second->FindBin(*variables[ih->first].at(0),
-							   *variables[ih->first].at(1));
+			if (variables[ih.first].size() == 1)
+				ibin = ih.second->FindBin(*variables[ih.first][0]);
+			else if (variables[ih.first].size() == 2)
+				ibin = ih.second->FindBin(*variables[ih.first][0],
+							   *variables[ih.first][1]);
 
-			if (ih->second->GetBinContent(ibin) == 0 ||
-			    ih->second->GetBinContent(ibin) > X2)
+			if (ih.second->GetBinContent(ibin) == 0 ||
+			    ih.second->GetBinContent(ibin) > X2)
 			{
-				ih->second->SetBinContent(ibin, X2);
-				histpoints[ih->first]->SetBinContent(ibin, point);
+				ih.second->SetBinContent(ibin, X2);
+				histpoints[ih.first]->SetBinContent(ibin, point);
+				if (variables[ih.first].size() < 2)
+					continue;
+
 			}
 		}
 	}
@@ -178,10 +203,49 @@ int main(int argc, char** argv)
 	TFile *outf = new TFile(argv[2], "RECREATE");
 	outf->cd();
 
-	for (ih = histograms.begin(); ih != histograms.end(); ++ih)
-		ih->second->Write();
-	for (ih = histpoints.begin(); ih != histpoints.end(); ++ih)
-		ih->second->Write();
+	//for (ih = histograms.begin(); ih != histograms.end(); ++ih)
+	for (const auto &ih : histograms) {
+		TH2D* hh = static_cast<TH2D*>(ih.second);
+
+		hh->Write();
+
+		if (histprofxy.count(ih.first)) {
+			std::cout << "doing " << ih.first << " X axis\n";
+			for (int bx = 0; bx < hh->GetNbinsX(); ++bx) {
+				double min = hh->GetBinContent(bx+1, 1);
+				double var = hh->GetYaxis()->GetBinCenter(1);
+				for (int n = 1; n < hh->GetNbinsY(); ++n) {
+					if (hh->GetBinContent(bx+1, n+1) < min) {
+						min = hh->GetBinContent(bx+1, n+1);
+						var = hh->GetYaxis()->GetBinCenter(n+1);
+					}
+				}
+				histprofxy[ih.first]->SetBinContent(bx+1, var);
+			}
+			histprofxy[ih.first]->Write();
+		}
+
+		if (histprofyx.count(ih.first)) {
+			std::cout << "doing " << ih.first << " Y axis\n";
+			for (int by = 0; by < hh->GetNbinsY(); ++by) {
+				double min = hh->GetBinContent(1, by+1);
+				double var = hh->GetXaxis()->GetBinCenter(1);
+				for (int n = 1; n < hh->GetNbinsX(); ++n) {
+					if (hh->GetBinContent(n+1, by+1) < min) {
+						min = hh->GetBinContent(n+1, by+1);
+						var = hh->GetXaxis()->GetBinCenter(n+1);
+					}
+				}
+				histprofyx[ih.first]->SetBinContent(by+1, var);
+			}
+			histprofyx[ih.first]->Write();
+		}
+	}
+
+
+	//for (ih = histpoints.begin(); ih != histpoints.end(); ++ih)
+	for (const auto &ih : histpoints)
+		ih.second->Write();
 
 	outf->Close();
 	inf->Close();

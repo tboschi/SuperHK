@@ -67,11 +67,12 @@ for ll in "${list[@]}" ; do
 	echo $tlast, $tupdt
 
 	if [ $tupdt -gt $tlast ] ; then
-		echo "Creating" $outp "contour for" $dir
 
 		#contour of pure files
 		hadd -f $cont/$dir/all.root $sens/$dir/$name.*.root
-		$Contour $cont/$dir/all.root $cont/$dir/$outp.root $card $sens/$dir/this_sensitivity.card
+	fi
+	echo "Creating" $outp "contour for" $dir
+	$Contour $cont/$dir/all.root $cont/$dir/$outp.root $sens/$dir/this_sensitivity.card
 		#mv ChiSquared.root 
 
 		#if [ "$tr" = true ] ; then
@@ -82,7 +83,7 @@ for ll in "${list[@]}" ; do
 		#fi
 
 		#rm -f $cont/$dir/all.root
-	fi
+	#fi
 done
 
 echo "DONE"
