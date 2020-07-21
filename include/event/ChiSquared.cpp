@@ -29,7 +29,7 @@ ChiSquared::ChiSquared(CardDealer *card, int nbins) :
 		else
 			_type = {""};
 	}
-	else	//sample is defined
+	//else	//sample is defined
 
 	// maybe one scale error?	
 	if (!cd->Get("scale_", _scale)) {
@@ -626,7 +626,7 @@ bool ChiSquared::FindMinimum(const Eigen::VectorXd &On,
 	int c = 0;	//counter
 	double lambda = lm_0;
 
-	Eigen::VectorXd delta = Eigen::VectorXd::Constant(_nSys, 1);
+	Eigen::VectorXd delta = Eigen::VectorXd::Ones(_nSys);
 
 	double x2 = X2(On, En, epsil);
 	double diff = 1;
@@ -1171,7 +1171,7 @@ Eigen::ArrayXd ChiSquared::one_Fk(double err, int k)
 	Eigen::ArrayXd su = sysMatrix[du].col(k);
 
 	su = (su - sl) / (du - dl);
-	return Eigen::ArrayXd::Constant(_nBin, 1) + su * (err - dl) + sl;
+	return Eigen::ArrayXd::Ones(_nBin, 1) + su * (err - dl) + sl;
 }
 
 // this is Fp / (1 + F) which is derivative wrt epsilon
@@ -1207,7 +1207,7 @@ Eigen::ArrayXd ChiSquared::one_Fpk(double err, int k)
 	Eigen::ArrayXd su = sysMatrix[du].col(k);
 
 	su = (su - sl) / (du - dl);
-	sl = Eigen::ArrayXd::Constant(_nBin, 1) + su * (err - dl) + sl;
+	sl = Eigen::ArrayXd::Ones(_nBin) + su * (err - dl) + sl;
 
 	return su / sl;
 }
@@ -1581,5 +1581,6 @@ double ChiSquared::Hes(const std::vector<double> &term)
 {
 	//return pow(scale_err / shift, 2) / db * (f / shift - fd)
 	return 2 * pow(term[0] / term[1], 2) / term[4]
-		 * (term[2] / term[1] - term[3]);
+		 //* (term[2] / term[1] - term[3]);
+		 * (term[2] / term[1] - 2 * term[3]);
 }

@@ -70,7 +70,7 @@ bool CardDealer::ReadCard(const std::string cardFile)
 
 		while (ssl)	//while not end of line
 		{
-			//check if start of string, delimited by "..." or '...'
+			//check if start of string, should be delimited by "..." or '...'
 			if (ssl.peek() == '\'' || ssl.peek() == '\"')
 			{
 				char end = ssl.peek();
@@ -78,8 +78,11 @@ bool CardDealer::ReadCard(const std::string cardFile)
 
 				std::string word;
 				std::getline(ssl, word, end);
-				if (ssl.fail())
+				if (ssl.fail()) {
+					std::cerr << "ERROR - CardDealer : string variable is not closed with proper delimiter (" << end << ")" << std::endl;
+
 					break;
+				}
 				words.push_back(word);
 			}
 			//check if digit
