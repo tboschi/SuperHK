@@ -1578,5 +1578,6 @@ double ChiSquared::Hes(const std::vector<double> &term)
 {
 	//return pow(scale_err / shift, 2) / db * (f / shift - fd)
 	return 2 * pow(term[0] / term[1], 2) / term[4]
-		 * (term[2] / term[1] - term[3]);
+		 //* (term[2] / term[1] - term[3]);
+		 * (term[2] / term[1] - 2 * term[3]);
 }

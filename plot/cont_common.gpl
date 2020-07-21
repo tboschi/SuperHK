@@ -7,12 +7,20 @@ stats file using (gety($2)):3 name 'dy' nooutput
 
 set xr [xr_0:xr_1]
 set yr [yr_0:yr_1]
+set xtics xr_0, (xr_1-xr_0)*4/(nx-1), xr_1
+set ytics yr_0, (yr_1-yr_0)*4/(ny-1), yr_1
+set mxtics 4
+set mytics 4
+
+set style line 12 lc rgb 'cyan' lw 1 dt "."
+set grid xtics, mxtics, ytics, mytics ls 12 back
 
 cols = dx_columns
 bfx = dx_pos_min_y
 bfy = dy_pos_min_y
 
-set dgrid3d ny, nx, 2
+set dgrid3d ny, nx qnorm 2
+show dgrid3d
 set contour base
 set cntrparam level discrete 1, 1.645, 1.96, 2, 3
 unset surface

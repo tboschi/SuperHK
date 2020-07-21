@@ -12,7 +12,7 @@ load "limits.gpl"
 
 xr_0 = getx(x0_S13)
 xr_1 = getx(x1_S13)
-xr_t = (xr_1-xr_0) / 6.
+nn = nn_S13
 x_lab = "\$\\sin^2 \\theta_\{13\}\$"
 x_form = "%g"
 

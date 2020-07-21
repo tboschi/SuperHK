@@ -11,7 +11,7 @@ load "limits.gpl"
 
 xr_0 = getx(x0_M23)
 xr_1 = getx(x1_M23)
-xr_t = (xr_1-xr_0) / 6.
+nn = nn_M23
 x_lab = "\$\\Delta m_\{32\}^2 / 10\^\{-3\}\$"
 x_form = "%g"
 

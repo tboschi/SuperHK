@@ -54,10 +54,12 @@ set origin 0, 0
 set size 1, (MT+MP)
 
 set xl x_lab
-set xtics xr_0, xr_t, xr_1
+set xtics xr_0, (xr_1-xr_0)*4/(nn-1), xr_1
 set format x x_form
-set mxtics 5
+set mxtics 4
 
+set style line 12 lc rgb 'cyan' lw 1 dt "."
+set grid xtics, mxtics ls 12 back
 
 tt = 10.
 #extend range by tt% above and below
@@ -108,6 +110,7 @@ set format x ""
 
 
 ntics = (ymax_top - ymin_top) / 10. 
+print "ntics ", ntics
 if (ntics < 5.) {
 	dd = 5.
 } else {
@@ -120,9 +123,14 @@ if (ntics < 5.) {
 	if (ntics < 50) {
 	dd = 50.
 } else {
+	if (ntics < 100) {
 	dd = 100.
-}
-}}}
+} else {
+	if (ntics < 500) {
+	dd = 500.
+} else {
+	dd = 1000.
+}}}}}}
 
 
 ey_top = floor(log(ymax_top - ymin_top) / log(tt))
@@ -136,6 +144,7 @@ dy_top = ymax_top - ymin_top
 ntics = dy_top / dd
 
 set yr [ymin_top:ymax_top]
+print "increment ", ntics > 6 ? 2*dd : dd
 set ytics ymin_top, ntics > 6 ? 2*dd : dd, ymax_top
 set mytics 4
 

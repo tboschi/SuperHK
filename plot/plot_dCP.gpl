@@ -11,7 +11,7 @@ load "limits.gpl"
 
 xr_0 = getx(x0_CP)
 xr_1 = getx(x1_CP)
-xr_t = (x1_CP-x0_CP)/8.0
+nn = nn_CP
 x_lab = "\$\\delta_\\text\{CP\}\$"
 x_form = "%.2P\$\\pi\$"
 
