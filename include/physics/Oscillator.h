@@ -64,8 +64,8 @@ class Oscillator
 
 
 
-		Eigen::MatrixXcd TransitionMatrix(double energy);
-		Eigen::MatrixXcd TransitionMatrix(double ff, double l2e);
+		Eigen::MatrixXcd TransitionMatrix(double energy, double phase = 0);
+		Eigen::MatrixXcd TransitionMatrix(double ff, double l2e, double phase = 0);
 		void MatterMatrices(Eigen::MatrixXd &dmMatVac,
 				    Eigen::MatrixXd &dmMatMat,
 				    double ff);

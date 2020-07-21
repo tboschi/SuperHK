@@ -72,6 +72,11 @@ void Oscillator::SetMatterProfile(const std::string &densityFile)
 	}
 }
 
+void Oscillator::SetMatterProfile(const std::vector<std::pair<double, double> > &l_d)
+{
+	lens_dens = l_d;
+}
+
 //return oscillation probability from falvour in to flavour out at energy given
 //the lengths and densities are fixed beforehand
 double Oscillator::Probability(Nu in, Nu out, double energy, bool force)
@@ -151,26 +156,32 @@ double Oscillator::Density() {
 //
 //
 //This is equivalent to propagate(int) in BargerPropagator.cc
-Eigen::MatrixXcd Oscillator::TransitionMatrix(double energy)
+Eigen::MatrixXcd Oscillator::TransitionMatrix(double energy, double phase)
 {
 	//trans.setIdentity();
 	Eigen::MatrixXcd trans = Eigen::MatrixXcd::Identity(2*_dim, 2*_dim);
 
-	for (const auto &ld : lens_dens)
+	// looping through different layers and densities
+	for (auto ld = lens_dens.begin(); ld != lens_dens.end(); ++ld)
 	{
-		double ff  = -sqrt(8) * fG * energy * ld.second/2.0;
-		double l2e = Const::L2E * ld.first/energy;
+		// compute some energy factors...?
+		double ff  = -sqrt(8) * fG * energy * ld->second/2.0;
+		double l2e = Const::L2E * ld->first/energy;
 
-		//std::cout << "factor " << ff << std::endl;
-
-		trans *= TransitionMatrix(ff, l2e);
+		// apply phase offset only to penultimate element..why?
+		// it is needed for mantle averaging: by default phase = 0
+		// apart from mantle avg
+		if (ld == lens_dens.end()-2)
+			trans *= TransitionMatrix(ff, l2e, phase);
+		else
+			trans *= TransitionMatrix(ff, l2e);
 	}
 
 	return _pmns * trans * _pmns.adjoint();
 }
 
 //This is equivalent to getA in mosc.cc
-Eigen::MatrixXcd Oscillator::TransitionMatrix(double ff, double l2e)
+Eigen::MatrixXcd Oscillator::TransitionMatrix(double ff, double l2e, double phase)
 {
 	Eigen::MatrixXd dmMatVac(2*_dim, _dim),
 			dmMatAnt(2*_dim, _dim);
@@ -186,6 +197,8 @@ Eigen::MatrixXcd Oscillator::TransitionMatrix(double ff, double l2e)
 
 	Eigen::VectorXd mat_phi = -dmMatVac.row(0) * l2e;
 	Eigen::VectorXd ant_phi = -dmMatVac.row(_dim) * l2e;
+	mat_phi(_dim-1) += phase;
+	ant_phi(_dim-1) += phase;
 	for (int k = 0; k < _dim; ++k) {
 		vmat[k].topLeftCorner(_dim, _dim) *= std::complex<double>
 				(std::cos(mat_phi(k)), std::sin(mat_phi(k)));
