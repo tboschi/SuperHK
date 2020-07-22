@@ -698,7 +698,7 @@ Eigen::VectorXd ChiSquared::Jacobian(const Eigen::VectorXd &On,
 	Eigen::MatrixXd hes(_nSys, _nSys);
 	JacobianHessian(jac, hes, On, En, epsil);
 
-	return jac;
+	return 2 * jac;
 }
 
 
@@ -710,7 +710,7 @@ Eigen::MatrixXd ChiSquared::Hessian(const Eigen::VectorXd &On,
 	Eigen::MatrixXd hes(_nSys, _nSys);
 	JacobianHessian(jac, hes, On, En, epsil);
 
-	return hes;
+	return 2 * hes;
 }
 
 /*
@@ -941,7 +941,7 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 	//for (int n = _binpos[it].first; n < _binpos[it].second; ++n) {
 
 		int m0 = slices[n].first, dm = slices[n].second - m0;
-		const Eigen::ArrayXd ev = Ep.segment(m0, dm);
+		const Eigen::ArrayXd &ev = Ep.segment(m0, dm);
 
 		if (kVerbosity > 4)
 			std::cout << "type " << it << ", bin "
@@ -958,7 +958,7 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 
 		// jacobian
 		if (_nScale) {
-			jac(t)    += one_oe * en_jac;
+			jac(t) += one_oe * en_jac;
 
 			// hessian of scale error first
 			//std::cout << "large " << on << ", " << en
@@ -977,12 +977,13 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 		//do the rest, including mixed term with SK syst
 		for (int k = 0; k < _nSys - _nScale; ++k) {
 			// scaled jacobian in this bin
-			Eigen::ArrayXd kk = Fp.col(k).segment(m0, dm);
+			const Eigen::ArrayXd &kk = Fp.col(k).segment(m0, dm);
 
+			// ev * kk is the derivative wrt to k-th syst
 			double gn_jac = (scales[n] * ev * kk).sum();
 
 			// jacobian
-			jac(k)    += one_oe * gn_jac;
+			jac(k) += one_oe * gn_jac;
 
 			//diagonal term
 			hes(k, k) += on * pow(gn_jac / en, 2);
@@ -990,7 +991,8 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 			if (_nScale)
 				//mixed term with SK error
 				hes(k, t) += en_jac * gn_jac * on / en / en
-					+ one_oe * (jacobs[n] * kk).sum();
+					+ one_oe * (jacobs[n] * ev * kk).sum();
+					//+ one_oe * (jacobs[n] * kk).sum();
 
 			// mixed terms with non energy scale parameters
 			for (int j = k + 1; j < _nSys - _nScale; ++j) {
@@ -998,7 +1000,8 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 				if (kVerbosity > 5)
 					std::cout << "n " << n << "\tk " << k
 						  << "\tj " << j << "\n";
-				Eigen::ArrayXd jj = Fp.col(j).segment(m0, dm);
+				const Eigen::ArrayXd &jj
+					= Fp.col(j).segment(m0, dm);
 
 				hes(k, j) += gn_jac * on / en / en
 					  * (scales[n] * ev * jj).sum()
@@ -1578,6 +1581,5 @@ double ChiSquared::Hes(const std::vector<double> &term)
 {
 	//return pow(scale_err / shift, 2) / db * (f / shift - fd)
 	return 2 * pow(term[0] / term[1], 2) / term[4]
-		 //* (term[2] / term[1] - term[3]);
-		 * (term[2] / term[1] - 2 * term[3]);
+		 * (term[2] / term[1] - term[3]);
 }
