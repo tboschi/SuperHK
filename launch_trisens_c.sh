@@ -12,7 +12,8 @@ model=("0") #"11a" "11b" "8")
 
 #model=( "-s -r $study/stats/asim/ -1 NH -2 NH"
 #	"-r $study/new_nuenorm5_corr/asim/ -1 NH -2 NH"
-model=(	"-r $study/0/asim/ -1 NH -2 NH")
+#model=(	"-r $study/0/asim/ -1 NH -2 NH")
+model=(	"-r $study/nominal_energyscale_fine_2/asim/ -1 NH -2 NH")
 
 for mod in "${model[@]}" ; do
 #while [ $count -lt $lengt ] ; do

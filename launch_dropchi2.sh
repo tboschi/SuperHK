@@ -16,9 +16,30 @@ Plot=./create_plots.sh
 ##point="point_96927"
 #point="point_358443"
 
-model=("stats/asim/NH_NH" "new_nuenorm5_corr/asim/NH_NH" "0/asim/NH_NH")
-name="validate_all"
-point="point_118595"
+#model=("stats/asim/NH_NH" "new_nuenorm5_corr/asim/NH_NH" "0/asim/NH_NH")
+#model=("stats/asim/NH_NH" "0/asim/NH_NH" "11a/asim/NH_NH" "11b/asim/NH_NH")
+#name="validate_scale"
+#point="point_118595"
+
+#model=("stats/asim/NH_NH" "new_nuenorm5_corr/asim/NH_NH" "0/asim/NH_NH")
+model=("stats_fine/asim/NH_NH" "nominal_fine/asim/NH_NH" "nominal_energyscale_fine/asim/NH_NH" "nominal_2energyscale_fine/asim/NH_NH" )
+name="fine_scale"
+point="point_81209"
+
+
+
+parms=("M23" "S13" "S23" "CP")
+card="errorstudy/${model[0]}/sensitivity/$point/this_sensitivity.card"
+lims="plot/limits.gpl"
+echo "pi = 4.*atan(1.)" > "$lims"
+for p in "${parms[@]}"
+do
+	echo "" >> $lims
+	cat "$card" | awk -v par=$p '/^parm/ && $0~par {print "x0_" par " = " $2}' >> $lims
+	cat "$card" | awk -v par=$p '/^parm/ && $0~par {print "x1_" par " = " $3}' >> $lims
+	cat "$card" | awk -v par=$p '/^parm/ && $0~par {print "nn_" par " = " $4}' >> $lims
+done
+
 
 echo Extract chi2 information
 $Drop -p -f $point -n "$name" -r "errorstudy/" "${model[@]}"

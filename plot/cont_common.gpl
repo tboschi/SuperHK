@@ -5,6 +5,8 @@ names  = system("head -n1 ".file)
 stats file using (getx($1)):3 name 'dx' nooutput
 stats file using (gety($2)):3 name 'dy' nooutput
 
+#set palette defined (0 0 0 0, 1 0 0 1, 2 0 1 1)
+
 set xr [xr_0:xr_1]
 set yr [yr_0:yr_1]
 set xtics xr_0, (xr_1-xr_0)*4/(nx-1), xr_1
@@ -46,13 +48,15 @@ set term cairolatex pdf color size 6in, 4.8in lw 2 #standalone header \
        #"\\usepackage\{amsmath\}"
 set output outp
 
+#set cbrange [0:15]
 
 #set object circle at bfx, bfy radius 0.05 fillcolor rgb 'black' fillstyle solid noborder
-set label at bfx, bfy "" point pt  9 ps 1 lc rgb 'black'
+set label at bfx, bfy "" point pt  9 ps 1 lc rgb 'black' front
 plot for [i=3:cols] cont.'_'.word(names, i).'.dat' index 0 w l lw 2 \
 	lc rgb word(color, i-2) t system("echo ".word(names, i)." | sed 's:_: :g'"), \
-     for [i=3:cols] cont.'_'.word(names, i).'.dat' index 4 w l lw 2 lc rgb word(color, i-2) not 
+     for [i=3:cols] cont.'_'.word(names, i).'.dat' index 4 w l lw 2 lc rgb word(color, i-2) not
 
+#file u (getx($1)):(gety($2)):(sqrt(column(5)))  with image not, \
 #for [i=3:cols] cont.'_'.word(names, i).'.dat' index 1 w l lw 2 lc rgb word(color, i-2) dt 2 not, \
 
 unset output

@@ -11,6 +11,10 @@ fit_error	1e-9
 verbose	2
 fast	0
 
+
+
+
+
 #true oscillation parametres to be fitted
 #name	"asim"
 #M12	7.53e-5
@@ -39,14 +43,27 @@ parm_M12	0.0000753	0.0000753	1	#
 parm_S12	0.307		0.307		1	#
 ###########
 #parm_S13	0.0178175	0.0256584	13	#
-parm_S13	0.0197		0.0239		25	12 # central value 0.0218 ± 0.0007
-parm_M23	0.002464	0.002554	25	12 # ok
-parm_S23	0.426		0.579		37	24 # change bins in s23 (old 19) - central value 0.528 ± 0.061
-parm_CP		-3.14159265359	3.14159265359	61	15 # change bins in dCP to 101?
+#parm_S13	0.0197		0.0239		25	12 # central value 0.0218 ± 0.0007
+#parm_M23	0.002464	0.002554	25	12 # ok
+#### new
+#parm_S13	0.0197		0.0239		13	6 # central value 0.0218 ± 0.0007
+#parm_M23	0.002464	0.002554	13	6 # ok
+#parm_S23	0.426		0.579		37	24 # change bins in s23 (old 19) - central value 0.528 ± 0.017
+#parm_CP		-3.14159265359	3.14159265359	61	15 # change bins in dCP to 101?
 
+### test
+parm_M23	0.002464	0.002554	13	6 # c.v. 0.002509 ± 0.000015
+parm_S13	0.0197		0.0239		13	6 # c.v. 0.0218 ± 0.0007
+parm_S23	0.426		0.579		31	20 # change bins in s23 (old 19) - c.v. 0.528 ± 0.017
+parm_CP		-3.14159265359	0.0		31	15 # change bins in dCP to 101?
+#parm_CP		-3.14159265359	3.14159265359	61	15 # change bins in dCP to 101?
 
 # add central and error values to add a gaussian penalty term
 penalty_S13	0.0218	0.0007
+
+
+
+
 
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
@@ -60,9 +77,9 @@ output	"/data/tboschi/HKsens/errorstudy/0/asim/NH_NH/sensitivity/moms/SpaghettiS
 # need a version of CardDelaer which can handle string arrays
 sample	"E_FHC"	"E_RHC"	"M_FHC"	"M_RHC"
 #energy scale error for E or M
-#scale	0.024	if just one
-#scale_E	 0.024
-#scale_M  0.024
+scale	0.024	#if just one
+#scale_E	0.024
+#scale_M	0.024
 
 #sample	"M_FHC"	"M_RHC"
 #sample	"atmo"
