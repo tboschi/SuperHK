@@ -2,7 +2,7 @@
 
 //ctor
 BeamSample::BeamSample(CardDealer *card) :
-	cd(card)
+	Sample(card)
 {
 	Init();
 }
@@ -14,11 +14,11 @@ void BeamSample::Init()
 	_chan = {"E_CCQE", "M_CCQE", "E_CCnQE", "M_CCnQE", "E_NC", "M_NC"};
 	_horn = {"FHC", "RHC"};
 	//std::map<std::string, std::pair<flavour, flavour> >
-	_oscf = { {"nuE0_nuE0", std::make_pair(Nu::E_, Nu::E_)}
-		  {"nuM0_nuM0", std::make_pair(Nu::M_, Nu::M_)}
-		  {"nuM0_nuE0", std::make_pair(Nu::E_, Nu::E_)}
-		  {"nuEB_nuEB", std::make_pair(Nu::Eb, Nu::Eb)}
-		  {"nuMB_nuMB", std::make_pair(Nu::Mb, Nu::Mb)}
+	_oscf = { {"nuE0_nuE0", std::make_pair(Nu::E_, Nu::E_)},
+		  {"nuM0_nuM0", std::make_pair(Nu::M_, Nu::M_)},
+		  {"nuM0_nuE0", std::make_pair(Nu::M_, Nu::E_)},
+		  {"nuEB_nuEB", std::make_pair(Nu::Eb, Nu::Eb)},
+		  {"nuMB_nuMB", std::make_pair(Nu::Mb, Nu::Mb)},
 		  {"nuMB_nuEB", std::make_pair(Nu::Mb, Nu::Eb)} };
 	// _fin = {Nu::E_, Nu::M_, Nu::M_, Nu::Eb, Nu::Mb, Nu::Mb};
 	//_fout = {Nu::E_, Nu::M_, Nu::E_, Nu::Eb, Nu::Mb, Nu::Eb};
@@ -89,6 +89,11 @@ void BeamSample::Init()
 		for (const auto &it : _scale)
 			std::cout << "\t" << it.first << " -> " << it.second << std::endl;
 	}
+
+	DefineBinning();
+
+	LoadReconstruction();
+	LoadSystematics();
 }
 
 
@@ -100,6 +105,7 @@ void BeamSample::LoadReconstruction()
 	for (const std::string &ih : _horn)	//FHC, RHC
 		for (const std::string &im : _mode)	//nuE->nuE, nuM->nuE, nuM->nuM
 			LoadReconstruction("reco_" + im + "_" + ih);
+			//LoadReconstruction("beam_" + im + "_" + ih);
 }
 
 void BeamSample::LoadReconstruction(std::string channel)
@@ -179,36 +185,11 @@ void BeamSample::LoadReconstruction(std::string channel)
 
 			const double *bx = h2->GetXaxis()->GetXbins()->GetArray();
 			const double *by = h2->GetYaxis()->GetXbins()->GetArray();
-			_binX[is.first].assign(bx, bx + xs + 1);
-			_binY[is.first].assign(by, by + ys + 1);
+			//_binX[is.first].assign(bx, bx + xs + 1);
+			//_binY[is.first].assign(by, by + ys + 1);
 		}
 
 	inFile->Close();
-}
-
-
-Eigen::VectorXd BeamSample::ConstructSample(Oscillator *osc) {
-	// BuildSpectrum and then collates everything on a Eigen::Vector
-
-	std::map<std::string, Eigen::MatrixXd> samples = BuildSamples(osc);
-
-	double stats;	//for scaling
-	if (!cd->Get("stats", stats))
-		stats = 1.0;
-
-	Eigen::VectorXd vect(_nBin);
-
-	int off = 0;	//add offset
-	for (const auto &is : samples) {
-		auto lims = _limits[is.first];
-
-		int span = lims.second - lims.first;
-		vect.segment(off, span) = is.second(lims.first, span) * stats;
-
-		off += span;
-	}
-
-	return vect;
 }
 
 
@@ -222,16 +203,17 @@ std::map<std::string, Eigen::VectorXd> BeamSample::BuildSamples(Oscillator *osc)
 		    || ir.first.find("nuMB_nuEB") != std::string::npos ) )
 			continue;	// this shouldn't exist, but just in case...
 
-		std::string hname = ir;
-		size_t len = ir.find_last_of('_') - ir.find_first_of('_');
+		std::string hname = ir.first;
+		size_t len = hname.find_last_of('_') - hname.find_first_of('_');
 		
 		Eigen::VectorXd probs = Eigen::VectorXd::Constant(ir.second.cols(), 1);
-		if (osc && ir.first.find("NC") == std::string::npos) {
+		if (osc && hname.find("NC") == std::string::npos) {
 			// not a NC channel
 			if (kVerbosity > 3)
 				std::cout << "Oscillating spectrum\n";
-			auto chan = _oscf[ir.substr(ir.find_first_of('_') + 1, len - 1)];
-			probs = osc->Oscillate(chan.first, chan.second, ir.second.cols());
+			//Nu::Flavour nu0 = Nu::fromString();
+			auto chan = _oscf[hname.substr(hname.find_first_of('_') + 1, len - 1)];
+			probs = osc->Oscillate(chan.first, chan.second, _global[ir.first]);
 		}
 		else if (kVerbosity > 3)
 			std::cout << "Not oscillating\n";
@@ -248,62 +230,6 @@ std::map<std::string, Eigen::VectorXd> BeamSample::BuildSamples(Oscillator *osc)
 	return samples;
 }
 
-void BeamSample::DefineBinning() {
-	// extract bining from recostruction matrices
-	// binning is compressed, such that nonempty bins are not stored
-
-	_nBin = 0;
-	_allBin = 0;
-	_limits.clear(); _binpos.clear(); _global.clear();
-
-	// unoscillated spectrum, just for counting nonempty bins
-	std::map<std::string, Eigen::VectorXd> samples = BuildSamples();
-
-	//const double *bins = it.second->GetXaxis()
-	///* global binning */	      ->GetXbins()->GetArray();
-	for (const auto &is : samples) {
-		int b0, b1;
-		for (int i = 0; i < is.second.size(); ++i)
-			if (is.second(i) > 0) {	// first bin above zero
-				b0 = i;
-				break;
-			}
-		for (int i = is.second.size(); i > 0; --i)
-			if (is.second(i-1) > 0)	{ // last bin above zero
-				b1 = i;
-				break;
-			}
-		if (kVerbosity > 2)
-			std::cout << "sample " << is.first << " has binning between "
-				  << b0 << " and " << b1 << std::endl;
-
-		// if it was TH1D, but it is not anymore
-		//int b0 = std::max(is.second->FindFirstBinAbove() - 1, 0);
-		//int b1 = std::min(is.second->FindLastBinAbove(),
-		//		  is.second->GetNbinsX());
-
-		// store first and last non empty bins
-		_limits[is.first] = std::pair<int, int>(b0, b1);
-
-		// refers to position as global binning
-		// eventually the samples will be flattened in one dimension,
-		// so it is useful to know where the samples start and end
-		_binpos[is.first] = std::pair<int, int>(_nBin, _nBin + b1 - b0);
-
-		// store global binning information for energy shift
-		_global[hname] = is.second.rows();
-
-		// count number of total bins
-		_nBin += b1 - b0;
-		_allBin += is.second.size();
-
-		//delete is.second;
-	}
-	
-	if (kVerbosity)
-		std::cout << "Number of nonzero bins: "
-			  << _nBin << " / " << _allBin << std::endl;
-}
 
 
 /*
@@ -327,7 +253,7 @@ void BeamSample::LoadSystematics()
 	
 	if (mat_file.empty()) {	// only scale error
 		//last _nScale entries are for energy scale
-		corr = Eigen::MatrixXd::Identity(_nScale, _nScale);
+		_corr = Eigen::MatrixXd::Identity(_nScale, _nScale);
 		_nSys = _nScale;
 		return;
 	}
@@ -340,7 +266,7 @@ void BeamSample::LoadSystematics()
 		if (kVerbosity > 0)
 			std::cerr << "WARNING - BeamSample: file " << mat_file
 				  << " does not exist" << std::endl;
-		continue;
+		return;
 	}
 
 	TMatrixT<double> * cmat = static_cast<TMatrixT<double>*>(mf->Get(mat_name.c_str()));
@@ -359,34 +285,34 @@ void BeamSample::LoadSystematics()
 		std::cout << "Limiting systematics between "
 			  << sysA << " and " << sysB << std::endl;
 	//last _nScale entries are for energy scale
-	corr = Eigen::MatrixXd::Zero(_nScale + sysB - sysA, _nScale + sysB - sysA);
-	corr.bottomRightCorner(_nScale, _nScale) = Eigen::MatrixXd::Identity(_nScale, _nScale);
+	_corr = Eigen::MatrixXd::Zero(_nScale + sysB - sysA, _nScale + sysB - sysA);
+	_corr.bottomRightCorner(_nScale, _nScale) = Eigen::MatrixXd::Identity(_nScale, _nScale);
 
 	for (int r = sysA; r < sysB; ++r)
 		for (int c = sysA; c < sysB; ++c)
-			corr(r + - sysA, c + - sysA) = (*cmat)(r, c);
+			_corr(r + - sysA, c + - sysA) = (*cmat)(r, c);
 	mf->Close();
 
-	corr = corr.inverse();
-	//std::cout << "corr diag\n" << corr.diagonal() << std::endl;
+	_corr = _corr.inverse();
+	//std::cout << "_corr diag\n" << _corr.diagonal() << std::endl;
 
 	if (kVerbosity) {
 		std::cout << "Importing " << sysB-sysA
 			  << " entries from " << mat_name
 			  << " ( " << mat_file << " ) " << std::endl;
 		std::cout << "Total number of systematics is "
-			  << corr.cols() << std::endl;
+			  << _corr.cols() << std::endl;
 	}
 
 	// define number of systematics!
-	_nSys = corr.cols();
+	_nSys = _corr.cols();
 
 
 	// now I am ready to import 1sigma histogram represeting linearisation of systematics
-	sysMatrix.clear();
-	sysMatrix[0] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
+	_sysMatrix.clear();
+	_sysMatrix[0] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
 	for (int sigma = -3; sigma < 4; sigma += 2)
-		sysMatrix[sigma] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
+		_sysMatrix[sigma] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
 
 	std::vector<int> skip;
 	cd->Get("skip", skip);	// errors to skip
@@ -405,8 +331,9 @@ void BeamSample::LoadSystematics()
 
 		if (kVerbosity > 1)
 			std::cout << "BeamSample: opening file " << file_name << std::endl;
+		zeroEpsilons = false;
 
-		TFile *sysf = new TFile(fileName.c_str());
+		TFile *sysf = new TFile(file_name.c_str());
 		if (sysf->IsZombie()) {
 			if (kVerbosity > 0)
 				std::cerr << "WARNING - BeamSample: file " << file_name
@@ -415,6 +342,7 @@ void BeamSample::LoadSystematics()
 		}
 
 		TIter next(sysf->GetListOfKeys());
+		TH1D* hsys;
 		TKey *k;
 		auto lims = _limits[it];	// bin limits
 		while (k = static_cast<TKey*>(next()))
@@ -433,14 +361,14 @@ void BeamSample::LoadSystematics()
 				else if (sysname.find("p3") != std::string::npos)
 					sigma = 3;
 
-				TH1D* hsys = static_cast<TH1D*>(sysf->Get(sysname.c_str()));
+				hsys = static_cast<TH1D*>(sysf->Get(sysname.c_str()));
 
 				sysname.erase(sysname.find_last_of('_'));
 				sysname.erase(0, sysname.find_first_of('_')+1);
 				//sysname is just number now
 			}
 			else {
-				TH1D* hsys = static_cast<TH1D*>(sysf->Get(sysname.c_str()));
+				hsys = static_cast<TH1D*>(sysf->Get(sysname.c_str()));
 				sysname.erase(0, sysname.find_first_of('_')+1);
 				//sysname is just number
 			}
@@ -455,11 +383,11 @@ void BeamSample::LoadSystematics()
 
 			for (int n = lims.first, j = 0; n < lims.second; ++n, ++j) {
 				if (sigma)	// it is a spline file, i.e. sigma != 0
-					sysMatrix[sigma](off + j, k_err - sysA)
+					_sysMatrix[sigma](off + j, k_err - sysA)
 						= sigma * (hsys->GetBinContent(n+1) - 1);
 				else		// not a spline, fill manually
 					for (sigma = -3; sigma < 4; sigma += 2)
-						sysMatrix[sigma](off + j, k_err - sysA)
+						_sysMatrix[sigma](off + j, k_err - sysA)
 							= sigma * (hsys->GetBinContent(n+1) - 1);
 			}
 		}
@@ -468,83 +396,162 @@ void BeamSample::LoadSystematics()
 	}
 }
 
-
-
-
-// happy with default copy constructor and destructor
-
-//copy ctor
-//BeamSample::BeamSample(const BeamSample & r)
-//{
-//}
-
-//detor
-//BeamSample::~BeamSample()
-//{
-//}
-
-
-//Get functions
-
-Eigen::MatrixXd BeamSample::operator()(std::string name)
+std::vector<std::pair<int, int> > BeamSample::AllSlices(std::string it, double skerr)
 {
-	if (_reco.count(name))
-		return _reco[name];
-	else {
-		std::cerr << "WARNING - BeamSample: the reconstruction matrix \""
-			  << name << "\" does not exist\n";
-		return _reco.begin()->second;
+	if (!_nScale)
+		return Sample::AllSlices(it, skerr);
+
+	std::vector<std::pair<int, int> > allslices;
+
+	// energy shift
+	double shift = 1 + skerr * _scale[it];
+	// offset between global bin and energy bin
+	int off = _binpos[it].first - _limits[it].first;
+	// absolute systematic error for this scale parameter
+
+	// loop over bins of this sample
+	for (int n = _binpos[it].first; n < _binpos[it].second; ++n) {
+		int m0 = StartingBin(it, shift, n);
+		int m1 = EndingBin(it, shift, n);
+		allslices.push_back(std::make_pair(m0 + off, m1 + off));
 	}
+
+	return allslices;
 }
 
-std::vector<double> BeamSample::BinsX(std::string name)
-{
-	if (_binX.count(name))
-		return _binX[name];
-	else
-		return _binX.begin()->second;
-}
 
-std::vector<double> BeamSample::BinsY(std::string name)
+// FactorFn needs ChiSquared object to call
+std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it, double skerr)
 {
-	if (_binY.count(name))
-		return _binY[name];
-	else
-		return _binY.begin()->second;
-}
+	if (!_nScale)
+		return Sample::AllScale(factor, it, skerr);
 
-// rescale all matrices
-void BeamSample::Scale(double X)
-{
-	for (auto irh = _reco.begin(); irh != _reco.end(); ++irh)
-		Scale(irh->first, X);
-}
+	std::vector<Eigen::ArrayXd> allfacts;
 
-// rescale matrix by name
-void BeamSample::Scale(std::string name, double X)
-{
-	if (_reco.count(name))
-		_reco[name] *= X;
-	else
-		std::cerr << "WARNING - BeamSample: the reconstruction matrix \""
-			  << name << "\" does not exist\n";
-}
+	// scale error value
+	double scale_err = _scale[it];
+	// energy shift
+	double shift = 1 + skerr * scale_err;
+	// offset between global bin and energy bin
+	int off = _binpos[it].first - _limits[it].first;
+	// absolute systematic error for this scale parameter
 
-// apply vector to matrix to do both scaling and project
-// axis is the TH1D direction, so if axis = 'x', then result is in 'y' direction
-Eigen::MatrixXd BeamSample::Apply(std::string name, TH1D* h, char axis)
-{
-	Eigen::VectorXd vec = Eigen::Map<Eigen::VectorXd>
-		(h->GetArray()+1, h->GetNbinsX(), 1);
-	return Apply(name, vec, axis);
-}
+	// alias to binning
+	std::vector<double> &global = _global[it];
 
-Eigen::MatrixXd BeamSample::Apply(std::string name, Eigen::VectorXd &vec, char axis)
-{
-	switch (axis) {
-		case 'x':
-			return _reco[name] * vec;
-		case 'y':
-			return _reco[name].transpose() * vec;
+	// loop over bins of this sample
+	for (int n = _binpos[it].first; n < _binpos[it].second; ++n) {
+
+		// scale systematic is related to bin number
+		// scaling bin start
+		int m0 = StartingBin(it, shift, n);
+		int m1 = EndingBin(it, shift, n);
+
+		// unscaled/original bins
+		double b0_n = global[n - off];
+		double b1_n = global[n - off + 1];
+
+		std::vector<double> thisfact;
+		for (int m = m0; m < m1; ++m) {
+
+			// scaled bins
+			double b0_m = global[m];
+			double b1_m = std::min(global[m + 1], 30 / shift);
+			//std::cout << "contains " << b0_m << " and " << b1_m << std::endl;
+			//continue/break computation because there is no overlap
+			if (shift * b0_m > b1_n) {
+				//std::cout << "stopping at " << m
+				//	  << " instead of " << m1-1 << std::endl;
+				break;
+			}
+
+			double f = (b1_n - b0_n + shift * (b1_m - b0_m)
+					- std::abs(b0_n - shift * b0_m)
+					- std::abs(b1_n - shift * b1_m)) / 2.;
+
+			int s0 = b0_n - shift * b0_m < 0 ? -1 : 1;
+			int s1 = b1_n - shift * b1_m < 0 ? -1 : 1;
+			double ss = f > 0 ? 1 : 0.5;	//continuity factor
+			double fd = ss * (b1_m - b0_m + s0 * b0_m + s1 * b1_m) / 2.;
+
+			std::vector<double> terms = {scale_err, shift,
+				f, fd, b1_m - b0_m};
+			thisfact.push_back((this->*factor)(terms));
+		}
+
+		Eigen::ArrayXd arr = Eigen::Map<Eigen::ArrayXd>
+			(thisfact.data(), thisfact.size(), 1);
+		allfacts.push_back(arr);
 	}
+
+	return allfacts;
 }
+
+/*
+double Scale(FactorFn factor,
+		const Eigen::ArrayXd &En,
+		double skerr, int n, std::string it, int m0)
+{
+	if (!_nScale) 	// no scaling
+		return En(n);
+
+	if (it.empty())
+		it = TypeFromBin(n);
+
+	double scale_err = _scale[it];	// this is Error value
+	double shift = 1 + skerr * scale_err;
+	//
+	// binary search for starting bin
+	// return starting point for following loop
+
+	if (m0 < 0)
+		m0 = StartingBin(it, shift, n);
+
+	int off = _binpos[it].first - _limits[it].first;
+
+	// unscaled/original bins
+	double b0_n = _global[it][n - off];
+	double b1_n = _global[it][n - off + 1];
+
+	//std::cout << "type " << it << " from " << _binpos[it].first << " to " << _binpos[it].second << std::endl;
+	//std::cout << "bin " << n << " : " << b0_n << " - " << b1_n << std::endl;
+	//std::cout << "starting from " << m0 << ": "
+	//<< shift * _global[it][m0] << " and " << shift * _global[it][m0 + 1] << "\n";
+	//std::cout << "offset " << off << " from " << m0 + off << std::endl;
+
+	double ret = 0;
+	// Loop over unscaled/original edges only nonempty bins
+	for (int m = m0; m < _global[it].size()-1; ++m) {
+		// scaled bins
+		double b0_m = _global[it][m];
+		double b1_m = std::min(_global[it][m + 1], 30 / shift);
+		//continue/break computation because there is no overlap
+		if (shift * b0_m > b1_n)
+			break;
+
+		double f = (b1_n - b0_n + shift * (b1_m - b0_m)
+				- std::abs(b0_n - shift * b0_m)
+				- std::abs(b1_n - shift * b1_m)) / 2.;
+
+		//if (f < 0)	// should never be negative
+		//	continue;
+
+
+		int s0 = b0_n - shift * b0_m < 0 ? -1 : 1;
+		int s1 = b1_n - shift * b1_m < 0 ? -1 : 1;
+		double ss = f > 0 ? 1 : 0.5;	//continuity factor
+		double fd = ss * (b1_m - b0_m + s0 * b0_m + s1 * b1_m) / 2.;
+
+		std::vector<double> terms = {scale_err, shift, f, fd, b1_m - b0_m};
+		ret += En(m + off) * (this->*factor)(terms);
+		//std::cout << "  " << m << " : "
+		//	<< b0_m * shift << " - "
+		//	<< b1_m * shift << "\t" << En(m + off)
+		//	  << "\t" << (this->*factor)(terms) << std::endl;
+
+	}
+	//std::cout << "returning " << ret << std::endl << std::endl;
+
+	return ret;
+}
+*/
