@@ -22,8 +22,8 @@ Plot=./create_plots.sh
 #point="point_118595"
 
 #model=("stats/asim/NH_NH" "new_nuenorm5_corr/asim/NH_NH" "0/asim/NH_NH")
-model=("stats_fine/asim/NH_NH" "nominal_fine/asim/NH_NH" "nominal_energyscale_fine/asim/NH_NH" "nominal_2energyscale_fine/asim/NH_NH" )
-name="fine_scale"
+model=("stats_fine/asim/NH_NH" "nominal_fine/asim/NH_NH" "nominal_energyscale_fine/asim/NH_NH" "nominal_energyscale_fine_2/asim/NH_NH" )
+name="fine_scale_fix"
 point="point_81209"
 
 

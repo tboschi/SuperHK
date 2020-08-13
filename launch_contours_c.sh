@@ -18,11 +18,7 @@ point="asim/NH_NH"
 #model=( "nuenorm1_corr/asim/NH_NH" "nuenorm2_corr/asim/NH_NH" "nuenorm3_corr/asim/NH_NH" "nuenorm4_corr/asim/NH_NH" "nuenorm5_corr/asim/NH_NH" "nuenorm1_anti/asim/NH_NH" "nuenorm2_anti/asim/NH_NH" "nuenorm3_anti/asim/NH_NH" "nuenorm4_anti/asim/NH_NH" "nuenorm5_anti/asim/NH_NH" )
 #model=( "stats/asim/NH_NH" "new_nuenorm5_corr/asim/NH_NH" "new_nuenorm5_anti/asim/NH_NH" )
 #model=( "stats/asim/NH_NH" "new_nuenorm5_corr/asim/NH_NH" "0/asim/NH_NH" )
-model=( "stats_fine/asim/NH_NH" "nominal_fine/asim/NH_NH" "nominal_energyscale_fine/asim/NH_NH" )
-
-ff=false
-while getopts 'f' flag; do
-	case "${flag}" in
+model=( "stats_fine/asim/NH_NH" "nominal_fine/asim/NH_NH" "nominal_energyscale_fine_2/asim/NH_NH" )
 
 ff=false
 while getopts 'f' flag; do

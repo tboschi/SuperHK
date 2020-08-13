@@ -15,12 +15,15 @@ M23	2.4e-3
 dCP	0
 
 #earth density profile between JPARK and SK
-density_profile	"data/DensityProfileTochibora.dat"
+#density_profile	"data/DensityProfileTochibora.dat"
 #density_profile	"data/DensityProfileVacuum.dat"
 
 #base "baseball_plot_dots.dat"
-output "oscillation_new.dat"
+output "atmospheric_oscillation.dat"
 
 mass_hierarchy	"normal"
-LUT	1
+LUT	0
 threshold	1e-9
+
+production_heights	"data/prod_honda/kam-ally-*"
+matter_profile		"data/PREM.dat"
