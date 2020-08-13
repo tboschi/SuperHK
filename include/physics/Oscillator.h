@@ -11,7 +11,7 @@
 #include <map>
 #include <cmath>
 #include <complex>
-#include <utility>
+#include <tuple>
 #include <algorithm>
 #include <numeric>
 
@@ -41,8 +41,15 @@ class Oscillator
 		};
 
 	public:
+		typedef std::vector<std::tuple<double, double, double> > Profile;
+
 		Oscillator(const std::vector<double> &lengths,
 			   const std::vector<double> &densities,
+			   int neutrinos = 3, bool lut = false,
+			   double threshold = 1e-9);
+		Oscillator(const std::vector<double> &lengths,
+			   const std::vector<double> &densities,
+			   const std::vector<double> &electrons,
 			   int neutrinos = 3, bool lut = false,
 			   double threshold = 1e-9);
 		Oscillator(const std::string &densityFile,
@@ -51,29 +58,36 @@ class Oscillator
 		Oscillator(CardDealer *cd);
 
 		void SetMatterProfile(const std::string &densityFile);
+		void SetMatterProfile(const Oscillator::Profile &l_d);
 
-		double Probability(Nu in, Nu out, double energy, bool force = false);
+		double Probability(Nu::Flavour in, Nu::Flavour out,
+				double energy, bool force = false);
 		//void Oscillate(Nu in, Nu out, TH1D* h);
-		Eigen::VectorXd Oscillate(Nu in, Nu out,
+		Eigen::VectorXd Oscillate(Nu::Flavour in, Nu::Flavour out,
 				const std::vector<double> &bins);
 		void Reset();
 		std::map<double, Eigen::MatrixXd>::iterator FindEnergy(double energy);
 
 		double Length();	// return total baseline
 		double Density();	// return average density
+		double ElectronDensity(); // return average electron density
 
 
 
-		Eigen::MatrixXcd TransitionMatrix(double energy, double phase = 0);
-		Eigen::MatrixXcd TransitionMatrix(double ff, double l2e, double phase = 0);
+		Eigen::MatrixXcd TransitionMatrix(double energy);
+		Eigen::MatrixXcd TransitionMatrix(double ff, double l2e);
 		void MatterMatrices(Eigen::MatrixXd &dmMatVac,
 				    Eigen::MatrixXd &dmMatMat,
 				    double ff);
 		Eigen::VectorXd MatterStates(double ff, int off = 0);
 
+		void AutoSet(CardDealer *cd);
+
 		template<masses type>
 		void SetMasses(double m1, double m2)
 		{
+			Reset();
+
 			switch (type)
 			{
 				case masses::normal:
@@ -88,7 +102,7 @@ class Oscillator
 			}
 
 			//reset lookup table
-			mLUT.clear();
+			Reset();
 		}
 		void SetMasses_NH(double dms21, double dms23);
 		void SetMasses_IH(double dms21, double dms23);
@@ -111,7 +125,7 @@ class Oscillator
 			}
 
 			//reset lookup table
-			mLUT.clear();
+			Reset();
 		}
 		void SetPMNS_sin(double s12, double s13, double s23, double cp);
 		void SetPMNS_sin2(double s12, double s13, double s23, double cp);
@@ -123,7 +137,7 @@ class Oscillator
 	private:
 		Eigen::MatrixXcd _pmns; //, _pmnsM, pmnsM, trans;
 		Eigen::VectorXd dms;
-		std::vector<std::pair<double, double> > lens_dens;
+		Profile _lens_dens;
 
 		int _dim;	//number of neutrinos
 		double _thr;

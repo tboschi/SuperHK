@@ -9,7 +9,24 @@ Oscillator::Oscillator(const std::vector<double> &lengths,
 	kLUT(lut)
 {
 	for (int i = 0; i < lengths.size(); ++i)
-		lens_dens.push_back(std::make_pair(lengths[i], densities[i]));
+		_lens_dens.push_back(std::make_tuple(lengths[i], densities[i], 0.5));
+
+	//trans = Eigen::MatrixXcd::Identity(_dim, _dim);
+}
+
+Oscillator::Oscillator(const std::vector<double> &lengths,
+		       const std::vector<double> &densities,
+		       const std::vector<double> &electrons,
+		       int neutrino, bool lut, double threshold) :
+	fG(Const::GF * Const::Na * pow(Const::hBarC * 1e8, 3)),
+	_dim(neutrino),
+	_thr(threshold),
+	kLUT(lut)
+{
+	for (int i = 0; i < lengths.size(); ++i)
+		_lens_dens.push_back(std::make_tuple(lengths[i],
+						     densities[i],
+						     electrons[i]));
 
 	//trans = Eigen::MatrixXcd::Identity(_dim, _dim);
 }
@@ -33,8 +50,8 @@ Oscillator::Oscillator(CardDealer *cd) :
 	if (cd->Get("density_profile", densityFile))
 		SetMatterProfile(densityFile);
 	else {	//default  vacuum oscillation
-		lens_dens.clear();
-		lens_dens.push_back(std::make_pair(295., 0));
+		_lens_dens.clear();
+		_lens_dens.push_back(std::make_tuple(295., 0, 0.5));
 	}
 
 	if (!cd->Get("neutrinos", _dim))//look up table stores matrices
@@ -43,16 +60,17 @@ Oscillator::Oscillator(CardDealer *cd) :
 	if (!cd->Get("threshold", _thr))
 		_thr = 1e-9;	// default value
 
-	int lut;
-	if (!cd->Get("LUT", lut))	//look up table stores matrices
+	if (!cd->Get("LUT", kLUT))	//look up table stores matrices
 		kLUT = false;
-	else
-		kLUT = lut;
 }
 
+/* file defines matter profile as a list of max 3 values
+ * length, density, and electron percentage (optional)
+ */
 void Oscillator::SetMatterProfile(const std::string &densityFile)
 {
-	lens_dens.clear();
+	Reset();
+	_lens_dens.clear();
 
 	std::ifstream inf(densityFile);
 	std::string line;
@@ -67,19 +85,29 @@ void Oscillator::SetMatterProfile(const std::string &densityFile)
 			continue;
 
 		std::stringstream ssl(line);
-		if (ssl >> ll >> dd)
-			lens_dens.push_back(std::make_pair(ll, dd));
+		std::vector<double> row;
+		double ent;
+		row.reserve(3);	// three columns needed
+
+		while (ssl >> ent)
+			row.push_back(ent);
+
+		if (row.size() < 3)
+			row[2] = 0.5;	// electron density default
+
+		_lens_dens.push_back(std::make_tuple(row[0], row[1], row[2]));
 	}
 }
 
-void Oscillator::SetMatterProfile(const std::vector<std::pair<double, double> > &l_d)
+void Oscillator::SetMatterProfile(const Oscillator::Profile &l_d)
 {
-	lens_dens = l_d;
+	Reset();
+	_lens_dens = l_d;
 }
 
-//return oscillation probability from falvour in to flavour out at energy given
+//return oscillation probability from flavour in to flavour out at energy given
 //the lengths and densities are fixed beforehand
-double Oscillator::Probability(Nu in, Nu out, double energy, bool force)
+double Oscillator::Probability(Nu::Flavour in, Nu::Flavour out, double energy, bool force)
 {
 	if (std::abs(in - out) >= 3 && !force)
 	{
@@ -104,13 +132,15 @@ double Oscillator::Probability(Nu in, Nu out, double energy, bool force)
 	}
 }
 
-
-Eigen::VectorXd Oscillator::Oscillate(Nu in, Nu out,
+Eigen::VectorXd Oscillator::Oscillate(Nu::Flavour in, Nu::Flavour out,
 				const std::vector<double> &bins)
 {
 	Eigen::VectorXd vb(bins.size() - 1);
 	for (int i = 0; i < vb.size(); ++i)
 		vb(i) = Probability(in, out, (bins[i+1] + bins[i]) / 2.);
+	//Eigen::VectorXd vb(bins.size());
+	//for (int i = 0; i < vb.size(); ++i)
+	//	vb(i) = Probability(in, out, bins[i]);
 	return vb;
 }
 
@@ -139,15 +169,24 @@ std::map<double, Eigen::MatrixXd>::iterator Oscillator::FindEnergy(double energy
 }
 
 double Oscillator::Length() {
-	return std::accumulate(lens_dens.begin(), lens_dens.end(), 0,
-			[&](double sum, std::pair<double, double> ild)
-			{ return sum + ild.first; });
+	return std::accumulate(_lens_dens.begin(), _lens_dens.end(), 0,
+			[&](double sum, std::tuple<double, double, double> ild)
+			{ return sum + std::get<0>(ild); });
 }
 
 double Oscillator::Density() {
-	return std::accumulate(lens_dens.begin(), lens_dens.end(), 0,
-			[&](double sum, std::pair<double, double> ild)
-			{ return sum + ild.first * ild.second; }) / Length();
+	return std::accumulate(_lens_dens.begin(), _lens_dens.end(), 0,
+			[&](double sum, std::tuple<double, double, double> ild)
+			{ return sum + std::get<0>(ild) * std::get<1>(ild); })
+		/ Length();
+}
+
+double Oscillator::ElectronDensity() {
+	return std::accumulate(_lens_dens.begin(), _lens_dens.end(), 0,
+			[&](double sum, std::tuple<double, double, double> ild)
+			{ return sum + std::get<0>(ild) * std::get<1>(ild)
+				     * std::get<2>(ild); })
+		/ Length();
 }
 
 //*****************************************************************
@@ -156,32 +195,29 @@ double Oscillator::Density() {
 //
 //
 //This is equivalent to propagate(int) in BargerPropagator.cc
-Eigen::MatrixXcd Oscillator::TransitionMatrix(double energy, double phase)
+Eigen::MatrixXcd Oscillator::TransitionMatrix(double energy)
 {
 	//trans.setIdentity();
 	Eigen::MatrixXcd trans = Eigen::MatrixXcd::Identity(2*_dim, 2*_dim);
 
 	// looping through different layers and densities
-	for (auto ld = lens_dens.begin(); ld != lens_dens.end(); ++ld)
+	//for (auto ld = _lens_dens.begin(); ld != _lens_dens.end(); ++ld)
+	for (const auto &ld : _lens_dens)
 	{
-		// compute some energy factors...?
-		double ff  = -sqrt(8) * fG * energy * ld->second/2.0;
-		double l2e = Const::L2E * ld->first/energy;
+		//ld is a tuple containing <length, density, electron fraction>
+		// compute some energy factors...
+		double ff  = -sqrt(8) * fG * energy * std::get<1>(ld)
+						    * std::get<2>(ld);
+		double l2e = Const::L2E * std::get<0>(ld) / energy;
 
-		// apply phase offset only to penultimate element..why?
-		// it is needed for mantle averaging: by default phase = 0
-		// apart from mantle avg
-		if (ld == lens_dens.end()-2)
-			trans *= TransitionMatrix(ff, l2e, phase);
-		else
-			trans *= TransitionMatrix(ff, l2e);
+		trans *= TransitionMatrix(ff, l2e);
 	}
 
 	return _pmns * trans * _pmns.adjoint();
 }
 
 //This is equivalent to getA in mosc.cc
-Eigen::MatrixXcd Oscillator::TransitionMatrix(double ff, double l2e, double phase)
+Eigen::MatrixXcd Oscillator::TransitionMatrix(double ff, double l2e)
 {
 	Eigen::MatrixXd dmMatVac(2*_dim, _dim),
 			dmMatAnt(2*_dim, _dim);
@@ -197,8 +233,6 @@ Eigen::MatrixXcd Oscillator::TransitionMatrix(double ff, double l2e, double phas
 
 	Eigen::VectorXd mat_phi = -dmMatVac.row(0) * l2e;
 	Eigen::VectorXd ant_phi = -dmMatVac.row(_dim) * l2e;
-	mat_phi(_dim-1) += phase;
-	ant_phi(_dim-1) += phase;
 	for (int k = 0; k < _dim; ++k) {
 		vmat[k].topLeftCorner(_dim, _dim) *= std::complex<double>
 				(std::cos(mat_phi(k)), std::sin(mat_phi(k)));
@@ -316,9 +350,38 @@ Eigen::VectorXd Oscillator::MatterStates(double ff, int off)	//density factor
 	return vMat;
 }
 
+void Oscillator::AutoSet(CardDealer *cd) {
+
+	double M12, M23, S12, S13, S23, dCP;
+	if (!cd->Get("M12", M12))
+		M12 = 7.6e-5;
+	if (!cd->Get("M23", M23))
+		M23 = 2.4e-3;
+	if (!cd->Get("S12", S12))
+		S12 = 0.32;
+	if (!cd->Get("S13", S13))
+		S13 = 0.0256584;
+	if (!cd->Get("S23", S23))
+		S23 = 0.5;
+	if (!cd->Get("dCP", dCP))
+		dCP = 0;
+
+	std::string mh;
+	if (!cd->Get("mass_hierarchy", mh))
+		mh = "normal";
+
+	if (mh == "normal")
+		SetMasses<Oscillator::normal>(M12, M23);
+	else if (mh == "inverted")
+		SetMasses<Oscillator::inverted>(M12, M23);
+	SetPMNS<Oscillator::sin2>(S12, S13, S23, dCP);
+}
+
 //set pmns and masses
 void Oscillator::SetMasses_NH(double dms21, double dms23)
 {
+	Reset();
+
 	dms = Eigen::VectorXd::Zero(_dim);
 	dms << 0, dms21, dms21+dms23;
 }
@@ -330,12 +393,16 @@ void Oscillator::SetMasses_IH(double dms21, double dms23)
 
 void Oscillator::SetMasses_abs(double ms2, double ms3)
 {
+	Reset();
+
 	dms = Eigen::VectorXd::Zero(_dim);
 	dms << 0, ms2, ms3;
 }
 
 void Oscillator::SetPMNS_sin(double s12, double s13, double s23, double cp) 
 {
+	Reset();
+
 	double c12 = sqrt(1 - s12*s12);
 	double c13 = sqrt(1 - s13*s13);
 	double c23 = sqrt(1 - s23*s23);

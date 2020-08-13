@@ -11,9 +11,12 @@ namespace Const
 	static const double Na = 6.02214085774e23;	//mol-1
 
 	static const double GF = 1.16637876e-5;		//Fermi constant in natural units
+	//static const double GF = 1.16637876e-23;	//GF / (hBarC)^3 in eV^-2
 	static const double GF2 = GF*GF;		//From PDG
 
 	static const double L2E = 2.534;		//L km over E GeV conversion
+	static const double EarthR = 6378.0;		// km, Earth's radius
+	static const double rhoAir = 0.001225;		// g/cm³, air density
 
 	static const double pi = 3.1415926536;		//pi
 	static const double pi2 = pi*pi;		//pi
