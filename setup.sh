@@ -30,14 +30,21 @@ fi
 
 
 newbuild=""
-PREFIX=${PREFIX%/}
+if [[ "$PREFIX" != /* ]]
+then
+	PREFIX=$PWD/${PREFIX%/}
+else
+	PREFIX=${PREFIX%/}
+fi
+
 
 OA="http://hep.lancs.ac.uk/~tdealtry/oa"
+HK="https://pprc.qmul.ac.uk/~tboschi/HK/atmo"
 
 echo "Bulding folder structure in $PREFIX"
 
 build () { #1 is path
-	if [ "$(ls -A $PREFIX/$1/*.root)" ] && [ "$force" = false ] ; then
+	if [ "$(find $PREFIX/$1/ -mindepth)" ] && [ "$force" = false ] ; then
 		echo Folder $1 not empty.
 		echo Call ./setup.sh -f to force overwriting. Now skipping.
 		return 1
@@ -48,25 +55,25 @@ build () { #1 is path
 	mkdir $newbuild -p
 }
 
-down () { #1 is folder on OA, 2 is file type
-	if [ "$(ls -A $newbuild)" ] && [ "$force" = false ] ; then
-		return 1
-	fi
+down () { #1 is folder on web, 2 is file type
+	#if [ "$(ls -A $newbuild)" ] && [ "$force" = false ] ; then
+	#	return 1
+	#fi
 
 	mkdir .tmp
 	cd .tmp
-	echo Downloading $2 from $OA/$1
-	echo wget --accept=$2 -r -l1 -nd -np -e robots=off $OA/$1/
-	wget --accept=$2 -r -l1 -nd -np -e robots=off $OA/$1/
+	echo Downloading $2 from $1
+	echo wget --accept=$2 -r -l1 -nd -np -e robots=off $1/
+	wget --accept=$2 -r -l1 -nd -np -e robots=off $1/
 	mv *.* $newbuild
 	cd ..
 	rm -rf .tmp
 }
 
-create_card () {
+reco_beam () {
 #1 is card name, 2 is file name
-	card=$PREFIX/global/reconstruction/$1
-	file=$PREFIX/global/reconstruction/$2
+	card=$PREFIX/reconstruction_beam/$1
+	file=$PREFIX/reconstruction_beam/$2
 	cat > $card << EOF
 # card file automatically generated
 
@@ -74,16 +81,21 @@ create_card () {
 scale		1
 
 #TH2D objects to use inside the file
-Ring_E_CCQE	"enu_erec_1Re_CCQE"
-Ring_E_CCnQE	"enu_erec_1Re_CCnQE"
-Ring_E_NC	"enu_erec_1Re_NC"
-Ring_M_CCQE	"enu_erec_1Rmu_CCQE"
-Ring_M_CCnQE	"enu_erec_1Rmu_CCnQE"
-Ring_M_NC	"enu_erec_1Rmu_NC"
+ring_E_CCQE	"enu_erec_1Re_CCQE"
+ring_E_CCnQE	"enu_erec_1Re_CCnQE"
+ring_E_NC	"enu_erec_1Re_NC"
+ring_M_CCQE	"enu_erec_1Rmu_CCQE"
+ring_M_CCnQE	"enu_erec_1Rmu_CCnQE"
+ring_M_NC	"enu_erec_1Rmu_NC"
 
 
 reco_path "$file"
 EOF
+}
+
+reco_atmo () {
+#1 is file name
+	file=$PREFIX/reconstruction_atmo/$1
 }
 
 prepare () {
@@ -93,54 +105,77 @@ prepare () {
 	./prepare_systematics.sh -r $root $@
 }
 
-build global/reconstruction; down 190619 'enu_erec_*.root' 
-create_card "syst_nuE0_nuE0_FHC.card" "enu_erec_nue_x_nue.root"
-create_card "syst_nuE0_nuE0_RHC.card" "enu_erec_nue_crs_nue_anu.root"
-create_card "syst_nuEB_nuEB_FHC.card" "enu_erec_nuebar_x_nuebar.root"
-create_card "syst_nuEB_nuEB_RHC.card" "enu_erec_nuebar_crs_nuebar_anu.root"
-create_card "syst_nuM0_nuE0_FHC.card" "enu_erec_numu_x_nue.root"
-create_card "syst_nuM0_nuE0_RHC.card" "enu_erec_numu_crs_nue_anu.root"
-create_card "syst_nuM0_nuM0_FHC.card" "enu_erec_numu_x_numu.root"
-create_card "syst_nuM0_nuM0_RHC.card" "enu_erec_numu_crs_numu_anu.root"
-create_card "syst_nuMB_nuEB_FHC.card" "enu_erec_numubar_x_nuebar.root"
-create_card "syst_nuMB_nuEB_RHC.card" "enu_erec_numubar_crs_nuebar_anu.root"
-create_card "syst_nuMB_nuMB_FHC.card" "enu_erec_numubar_x_numubar.root"
-create_card "syst_nuMB_nuMB_RHC.card" "enu_erec_numubar_crs_numubar_anu.root"
-cp "data/binning.card" $PREFIX/global/reconstruction
-cp -r data/asim $PREFIX/global
+build reconstruction_atmo; down $HK '*.root' 
 
-build 0/systematics; down 190619/0 '*.root' 	#ok
+build reconstruction_beam; down $OA/190619 'enu_erec_*.root' 
+reco_beam "syst_nuE0_nuE0_FHC.card" "enu_erec_nue_x_nue.root"
+reco_beam "syst_nuE0_nuE0_RHC.card" "enu_erec_nue_crs_nue_anu.root"
+reco_beam "syst_nuEB_nuEB_FHC.card" "enu_erec_nuebar_x_nuebar.root"
+reco_beam "syst_nuEB_nuEB_RHC.card" "enu_erec_nuebar_crs_nuebar_anu.root"
+reco_beam "syst_nuM0_nuE0_FHC.card" "enu_erec_numu_x_nue.root"
+reco_beam "syst_nuM0_nuE0_RHC.card" "enu_erec_numu_crs_nue_anu.root"
+reco_beam "syst_nuM0_nuM0_FHC.card" "enu_erec_numu_x_numu.root"
+reco_beam "syst_nuM0_nuM0_RHC.card" "enu_erec_numu_crs_numu_anu.root"
+reco_beam "syst_nuMB_nuEB_FHC.card" "enu_erec_numubar_x_nuebar.root"
+reco_beam "syst_nuMB_nuEB_RHC.card" "enu_erec_numubar_crs_nuebar_anu.root"
+reco_beam "syst_nuMB_nuMB_FHC.card" "enu_erec_numubar_x_numubar.root"
+reco_beam "syst_nuMB_nuMB_RHC.card" "enu_erec_numubar_crs_numubar_anu.root"
+#cp "data/binning.card" $PREFIX/reconstruction_beam
+#cp -r data/asim $PREFIX/global
 
-build 1a/systematics; down 190829/1a '*.root' #ok
-build 1b/systematics; down 190829/1b '*.root' #ok
-build 2a/systematics; down 190829/2a '*.root' #ok
-build 2b/systematics; down 190829/2b '*.root' #ok
+build 0/systematics; down $OA/190619/0 '*.root' 	#ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/0/systematics
 
-build 6a/systematics; down 190905/6a '*.root' #ok
-build 7a/systematics; down 190905/7a '*.root' #ok
-build 67/systematics; down 190905/67 '*.root' #ok
+build 1a/systematics; down $OA/190829/1a '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/1a/systematics
+build 1b/systematics; down $OA/190829/1b '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/1b/systematics
+build 2a/systematics; down $OA/190829/2a '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/2a/systematics
+build 2b/systematics; down $OA/190829/2b '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/2b/systematics
 
-build 8/systematics ; down 190619/8  '*.root' #ok
+build 6a/systematics; down $OA/190905/6a '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/6a/systematics
+build 7a/systematics; down $OA/190905/7a '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/7a/systematics
+build 67/systematics; down $OA/190905/67 '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/67/systematics
 
-build 9/systematics ; down 190829/9  '*.root' #ok
-build 10/systematics; down 190829/10 '*.root' #ok
-build NC/systematics; down 190829/NC '*.root' #ok
+build 8/systematics ; down $OA/190619/8  '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/8/systematics
 
-build 11a/systematics; down 190619/11a '*.root' #ok
-build 11b/systematics; down 190619/11b '*.root' #ok
+build 9/systematics ; down $OA/190829/9  '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/9/systematics
+build 10/systematics; down $OA/190829/10 '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/10/systematics
+build NC/systematics; down $OA/190829/NC '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/NC/systematics
 
-build flux_lukas/systematics; down 190619/flux_lukas '*.root' #ok
+build 11a/systematics; down $OA/190619/11a '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/11a/systematics
+build 11b/systematics; down $OA/190619/11b '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/11b/systematics
 
-build nuenorm_5_corr/systematics; down 190712/nuenorm '*nue5.t2k.root' #ok
-				  down 191028 '*nue5*_corr.root' #ok
-build nuenorm_5_anti/systematics; down 190712/nuenorm '*nue5.t2k.root' #ok
-				  down 191028 '*nue5*_anticorr.root' #ok
+build flux_lukas/systematics; down $OA/190619/flux_lukas '*.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/flux_lukas/systematics
+
+echo CORR SYSTEMATICS
+build nuenorm_5_corr/systematics; down $OA/190712/nuenorm '*nue5.t2k.root' #ok
+echo "matrix"
+				  down $OA/191028 '*nue5*_corr.root' #ok
+echo ANTI SYSTEMATICS
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/nuenorm_5_corr/systematics
+build nuenorm_5_anti/systematics; down $OA/190712/nuenorm '*nue5.t2k.root' #ok
+echo "matrix"
+				  down $OA/191028 '*nue5*_anticorr.root' #ok
+cp $PREFIX/reconstruction_atmo/atmo_fij.root $PREFIX/nuenorm_5_anti/systematics
 
 
 banff="DataFit_Postfit_2018_final_v1_180907_sk_eb_valor_order_all_plus_scc.root"
 skdetfsi="SKJointErrorMatrix2018_Total_fitqun_v4_16thAug2017_VALOR_order.root"
 
-##prepare systematics
+#prepare systematics
 prepare 0 $banff $skdetfsi
 
 prepare 1a "banff_00_nonuenumucc_remove.root" $skdetfsi
