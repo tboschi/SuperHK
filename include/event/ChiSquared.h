@@ -13,6 +13,7 @@
 #include <cstring>
 #include <utility>
 #include <numeric>
+#include <memory>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -34,14 +35,20 @@ class ChiSquared
 {
 	public:
 		ChiSquared(CardDealer *card);
-		ChiSquared(CardDealer *card, const std::vector<Sample*> &sam);
-		void AddSample(Sample* sam);
+		ChiSquared(std::string card);
+		~ChiSquared();
+
+		template <class S>
+		void Add(std::string card) {
+			_sample.push_back(new S(card));
+		}
 
 		void Init();
-		void Combine();
+		bool Combine();
 		void CombineBinning();
 		void CombineCorrelation();
 		void CombineSystematics();
+		Eigen::VectorXd ConstructSamples(Oscillator *osc = 0);
 
 		int NumSys();
 		int NumBin();
@@ -103,7 +110,7 @@ class ChiSquared
 
 
 	private:
-		CardDealer *cd;
+		std::unique_ptr<CardDealer> cd;
 
 		//global parameters
 		int kVerbosity;

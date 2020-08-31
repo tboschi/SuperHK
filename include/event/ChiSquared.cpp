@@ -11,21 +11,27 @@
 #include "ChiSquared.h"
 
 ChiSquared::ChiSquared(CardDealer *card) :
-	cd(card),
+	cd(std::unique_ptr<CardDealer>(card)),
 	_nBin(-1),
 	_nSys(-1)
 {
 	Init();
 }
 
-ChiSquared::ChiSquared(CardDealer *card, const std::vector<Sample*> &sams) :
-	cd(card),
-	_sample(sams),
+ChiSquared::ChiSquared(std::string card) :
+	cd(std::unique_ptr<CardDealer>(new CardDealer(card))),
 	_nBin(-1),
 	_nSys(-1)
 {
 	Init();
 }
+
+ChiSquared::~ChiSquared()
+{
+	for (auto &is : _sample)
+		delete is;
+}
+
 
 void ChiSquared::Init()
 {
@@ -46,30 +52,21 @@ void ChiSquared::Init()
 		kVerbosity = 0;
 }
 
-void ChiSquared::AddSample(Sample* sam)
-{
-	_sample.push_back(sam);
-}
-
-void ChiSquared::Combine()
+bool ChiSquared::Combine()
 {
 	CombineBinning();
 	CombineCorrelation();
 	CombineSystematics();
+
+	return (_nBin >= 0 && _nSys >= 0);
 }
 
 
-/*
+// total number of systematics
 int ChiSquared::NumSys()
 {
-	if (_nSys < 0)
-		_nSys = std::accumulate(_sample.begin(), _sample.end(), 0,
-			[&](double sum, Sample* is)
-			{ return sum + is->NumSys(); });
-
 	return _nSys;
 }
-*/
 
 
 /*
@@ -116,6 +113,11 @@ void ChiSquared::CombineBinning() {
 // defines _nSys too
 void ChiSquared::CombineCorrelation()
 {
+	if (_nSys < 0)
+		_nSys = std::accumulate(_sample.begin(), _sample.end(), 0,
+			[&](double sum, Sample* is)
+			{ return sum + is->_nSys; });
+
 	_corr = Eigen::MatrixXd::Identity(_nSys, _nSys);
 	_nSys = 0;
 
@@ -124,19 +126,39 @@ void ChiSquared::CombineCorrelation()
 		_corr.block(_nSys, _nSys, ns, ns) = is->_corr;
 		_nSys += ns;
 	}
+
+	_corr = _corr.inverse();
 }
 
 void ChiSquared::CombineSystematics()
 {
-	zeroEpsilons = true;
-	for (const auto &is : _sample) {
-		_sysMatrix.insert(is->_sysMatrix.begin(), is->_sysMatrix.end());
-		zeroEpsilons = zeroEpsilons && is->zeroEpsilons;
+	zeroEpsilons = std::accumulate(_sample.begin(), _sample.end(), true,
+			[&](bool res, Sample *is) { return res && is->zeroEpsilons; });
+
+	_sysMatrix[0] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
+	for (int sigma = -3; sigma < 4; sigma += 2) {
+		_sysMatrix[sigma] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
+		int row_off = 0, col_off = 0;
+		for (const auto &is : _sample) {
+			_sysMatrix[sigma].block(row_off, col_off, is->_nBin, is->_nSys) =
+				is->_sysMatrix[sigma];
+			row_off += is->_nBin;
+			col_off += is->_nSys;
+		}
 	}
-
-
 }
 
+
+Eigen::VectorXd ChiSquared::ConstructSamples(Oscillator *osc) {
+	Eigen::VectorXd vect(_nBin);
+	int off = 0;
+	for (const auto &is : _sample) {
+		vect.segment(off, is->_nBin) = is->ConstructSamples(osc);
+		off += is->_nBin;
+	}
+
+	return vect;
+}
 
 //On is the true spectrum, En is the observed spectrum
 //return time taken for computation
@@ -149,7 +171,7 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 	Eigen::VectorXd best_eps = epsil;
 	double best_x2 = X2(On, En, best_eps);
 
-	int tries = 0;
+	int tries = 1;
 	// if _nSys == 0 there is no fit, good for stats only
 	while (!zeroEpsilons > 0 && !FindMinimum(On, En, epsil) && tries < maxIteration) {
 		++tries;
@@ -166,16 +188,17 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 			std::cout << " but new best!";
 		}
 
+		epsil.setRandom();
+		epsil = best_eps + (std::abs(step) > 0 ? std::min(step, 1.) : 1.) * epsil;
 
 		if (kVerbosity > 1) {
 			std::cout << " X2 " << best_x2 << std::endl;
 			std::cout << "distance from previous best " << dist
 				<< " with dx2 " << step << std::endl;
-			std::cout << "trying new point " << tries << std::endl;
+			std::cout << "trying new point (" << tries
+				  << ") at " << epsil.norm() << std::endl;
 			std::cout << std::endl;
 		}
-		epsil.setRandom();
-		epsil = best_eps + (std::abs(step) < 1 ? step : 1) * epsil;
 	}
 	if (kVerbosity > 1)
 		std::cout << "Number of attempts: " << tries << std::endl;
@@ -213,7 +236,7 @@ bool ChiSquared::FindMinimum(const Eigen::VectorXd &On,
 	if (kVerbosity > 2)
 		std::cout << "Minimising fit from x2: " << x2 << std::endl;
 
-	while (std::abs(diff) / DOF() > fitErr
+	while (std::abs(diff / DOF()) > fitErr
 	      && delta.norm() / _nSys > fitErr) {
 		++c;	//counter
 
@@ -223,8 +246,6 @@ bool ChiSquared::FindMinimum(const Eigen::VectorXd &On,
 		Eigen::MatrixXd hes(_nSys, _nSys);
 		JacobianHessian(jac, hes, On, En, epsil);
 
-		//std::cout << "jac\n" << jac.transpose() << "\n"
-		//	  << "hes\n" << hes.transpose() << std::endl;
 		//add diagonal to hesT hes
 		double maxd = hes.diagonal().maxCoeff();
 		hes.diagonal() += Eigen::VectorXd::Constant(_nSys, maxd * lambda);
@@ -239,7 +260,7 @@ bool ChiSquared::FindMinimum(const Eigen::VectorXd &On,
 		diff = x2 - x2_;
 
 		//if (x2_ < x2 || (1-cosb) * x2_ < x2)
-		if (x2_ < x2) {	//next x2 is better, update lambda and epsilons
+		if (diff > 0) {	//next x2 is better, update lambda and epsilons
 			lambda /= lm_down;
 			epsil = nextp;
 			x2 = x2_;
@@ -252,9 +273,9 @@ bool ChiSquared::FindMinimum(const Eigen::VectorXd &On,
 		//if (false)
 		if (kVerbosity > 2) {
 			std::cout << c << " -> l " << lambda
-				  << ",\tstep: " << std::abs(delta.norm() / _nSys)
+				  << ",\tstep: " << delta.norm() / _nSys
 				  << ", X2: " << x2
-				  << " ( " << std::abs(diff / DOF())
+				  << " ( " << diff / DOF()
 				  << " ) " << std::endl;
 		}
 	}
@@ -299,13 +320,20 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 	hes = _corr;		//hessian
 	//hes.setZero();		//hessian
 
+		//std::cout << "before jac\n" << jac.transpose() << "\n"
+		//	  << "before hes\n" << hes.transpose() << std::endl;
+
 	// event distribution with systematics applied
 	const Eigen::ArrayXd Ep = Gamma(En, epsil);
 	// matrix contains derivative terms for each systematics and for each bin
 	const Eigen::ArrayXXd Fp = one_Fp(epsil);
 
+	if (kVerbosity > 5)
+		std::cout << "Obs : " << On.transpose() << "\n"
+			  << "Exp : " << Ep.transpose() << std::endl;
+
 	// loop over samples
-	int err_off = 0;
+	int err_off = 0, bin_off = 0;
 	for (const auto &is : _sample) {	// beam or atmo
 		for (const std::string &it: is->_type) {	// 1Re, 1Rmu, ...
 			int t = is->ScaleError(it) + err_off;
@@ -316,30 +344,38 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 			std::vector<Eigen::ArrayXd> jacobs = is->AllScale(&Sample::Jac, it, skerr);
 			std::vector<Eigen::ArrayXd> hessis = is->AllScale(&Sample::Hes, it, skerr);
 
+
 	// looping over bins of given sample and type <is, it>
 	/* >>>>>>>>>>>>>>> */
-	const auto &binpos = is->_binpos[it];
-	for (int n = 0; n < binpos.second - binpos.first; ++n) {
+	for (int m = 0, n = is->_offset[it] + bin_off; m < is->_binpos[it].size(); ++m, ++n) {
 
-		int m0 = slices[n].first, dm = slices[n].second - m0;
+		int m0 = slices[m].first, dm = slices[m].second - m0;
+		m0 += bin_off;
 		const Eigen::ArrayXd &ev = Ep.segment(m0, dm);
 
 		if (kVerbosity > 4)
 			std::cout << "type " << it << ", bin "
-				  << n + binpos.first
+				  << is->_binpos[it][m] << " (abs " << n << ")"
 				  << " scales are between "
 				  << m0 << " and " << m0 + dm << std::endl;
 
-		double on = On(n + binpos.first);
-		double en = (scales[n] * ev).sum();
+		double on = On(n);
+		double en = (scales[m] * ev).sum();
 
 		double one_oe = 1 - on / en;
 
-		double en_jac = (jacobs[n] * ev).sum();
+		double en_jac = (jacobs[m] * ev).sum();
 
 		// jacobian
 		if (is->_nScale) {
 			jac(t) += one_oe * en_jac;
+			if (kVerbosity > 5)
+				std::cout << t << " jac " << one_oe * en_jac << " ("
+					  << jac(t) << ") = " << one_oe << ", "
+					  << on << ", " << en << ", [ "
+					  << scales[m].transpose() << " : "
+					  << ev.transpose() << " ] "
+					  << en_jac << std::endl;
 
 			// hessian of scale error first
 			//std::cout << "large " << on << ", " << en
@@ -352,7 +388,7 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 			//std::cout << "->terms " << on * pow(en_jac / en, 2)
 			//	  << "\t" << one_oe * (hessis[n] * ev).sum() << std::endl;
 			hes(t, t) += on * pow(en_jac / en, 2)
-				+ one_oe * (hessis[n] * ev).sum();
+				+ one_oe * (hessis[m] * ev).sum();
 		}
 
 		//do the rest, including mixed term with SK syst
@@ -362,10 +398,17 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 			const Eigen::ArrayXd &kk = Fp.col(k).segment(m0, dm);
 
 			// ev * kk is the derivative wrt to k-th syst
-			double gn_jac = (scales[n] * ev * kk).sum();
+			double gn_jac = (scales[m] * ev * kk).sum();
 
 			// jacobian
 			jac(k) += one_oe * gn_jac;
+			if (kVerbosity > 5)
+				std::cout << k << " jac " << one_oe * gn_jac << " ("
+					<< jac(k) << ") = " << one_oe << ", "
+					<< on << ", " << en << ", [ "
+					<< scales[m].transpose() << " : "
+					<< ev.transpose() << " : "
+					<< kk.transpose() << " ] " << gn_jac << std::endl;
 
 			//diagonal term
 			hes(k, k) += on * pow(gn_jac / en, 2);
@@ -373,23 +416,23 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 			if (is->_nScale)
 				//mixed term with SK error
 				hes(k, t) += en_jac * gn_jac * on / en / en
-					+ one_oe * (jacobs[n] * ev * kk).sum();
-					//+ one_oe * (jacobs[n] * kk).sum();
+					+ one_oe * (jacobs[m] * ev * kk).sum();
+					//+ one_oe * (jacobs[m] * kk).sum();
 
 			// mixed terms with non energy scale parameters
 			for (int j = k + 1; j < is->_nSys - is->_nScale; ++j) {
 				j += err_off;
 
 				if (kVerbosity > 5)
-					std::cout << "n " << n << "\tk " << k
+					std::cout << "m " << m << "\tk " << k
 						  << "\tj " << j << "\n";
 				const Eigen::ArrayXd &jj
 					= Fp.col(j).segment(m0, dm);
 
 				hes(k, j) += gn_jac * on / en / en
-					  * (scales[n] * ev * jj).sum()
+					  * (scales[m] * ev * jj).sum()
 					+ one_oe
-					* (scales[n] * ev * jj * kk).sum();
+					* (scales[m] * ev * jj * kk).sum();
 			}
 		}
 	}
@@ -397,6 +440,7 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 
 		}
 		err_off += is->_nSys;
+		bin_off += is->_nBin;
 		//std::cout << "\tend type\n";
 	}
 
@@ -450,25 +494,36 @@ Eigen::ArrayXd ChiSquared::ObsX2n(const Eigen::VectorXd &On,
 {
 	// modified expected events with systematics
 	Eigen::ArrayXd gam = Gamma(En, epsil);
-
-	
 	Eigen::ArrayXd chi2(_nBin);
 
-	int err_off = 0;
+	int err_off = 0, bin_off = 0;
 	for (const auto &is : _sample) {	// beam or atmo
 		for (const std::string &it: is->_type) {	// 1Re, 1Rmu, ...
+			//std::cout << "type " << it << std::endl;
 			int t = is->ScaleError(it) + err_off;
 			double skerr = t < is->_nSys ? epsil(t) : 0;
 
+			std::vector<std::pair<int, int> > slices = is->AllSlices(it, skerr);
 			std::vector<Eigen::ArrayXd> scales = is->AllScale(&Sample::Nor, it, skerr);
-			for (int n = is->_binpos[it].first; n < is->_binpos[it].second; ++n) {
-				double en = (scales[n] * gam).sum();
+
+			//for (int m = 0, n = is->_offset[it]; m < is->_binpos[it].size(); ++m, ++n) {
+			for (int m = 0, n = is->_offset[it] + bin_off;
+					m < is->_binpos[it].size(); ++m, ++n) {
+				//if (On(n) == 0)
+				//	continue;
+				int m0 = slices[m].first, dm = slices[m].second - m0;
+				m0 += bin_off;
+				double en = (scales[m] * gam.segment(m0, dm)).sum();
 				chi2(n) = 2 * en - 2 * On(n) * (1 + log(en / On(n)));
+
+				//std::cout << "x2 @ " << m << ", " << n << " = " << chi2(n)
+				//	  << " (" << en << ", " << En(n) << ", " << On(n) << ")" << std::endl;
+				//std::cout << "from " << slices[m].first << " to " << slices[m].second << std::endl;
+				//std::cout << scales[m].transpose() << " : " << gam.segment(m0, dm).transpose() << std::endl;
 			}
-				//std::cout << "bin " << n << " -> x2 " << chi2(n) << std::endl;
-				//double en = Scale(gam, skerr, n, it);
 		}
 		err_off += is->_nSys;
+		bin_off += is->_nBin;
 	}
 
 	return chi2;
@@ -485,13 +540,13 @@ double ChiSquared::SysX2(const Eigen::VectorXd &epsil) {
 Eigen::ArrayXd ChiSquared::Gamma(const Eigen::VectorXd &En,
 				 const Eigen::VectorXd &epsil)
 {
-	Eigen::ArrayXd gam = En.matrix();
+	Eigen::ArrayXd gam = En.array();
 
-	int err_off = 0;
+	int off = 0;
 	for (const auto &is : _sample) {	// beam or atmo
 		for (int k = 0; k < is->_nSys - is->_nScale; ++k)
-			gam *= one_Fk(epsil(k), k);
-		err_off += is->_nSys;
+			gam *= one_Fk(epsil(k + off), k + off);
+		off += is->_nSys;
 	}
 
 	return gam;
@@ -540,8 +595,12 @@ Eigen::ArrayXXd ChiSquared::one_Fp(const Eigen::VectorXd &epsil)
 {
 	Eigen::ArrayXXd fp(_nBin, _nSys);
 	
-	for (int k = 0; k < epsil.size(); ++k)
-		fp.col(k) = one_Fpk(epsil(k), k);
+	int off = 0;
+	for (const auto &is : _sample) {	// beam or atmo
+		for (int k = 0; k < is->_nSys - is->_nScale; ++k)
+			fp.col(k) = one_Fpk(epsil(k + off), k + off);
+		off += is->_nSys;
+	}
 
 	return fp;
 }
