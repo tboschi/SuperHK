@@ -7,12 +7,18 @@ BeamSample::BeamSample(CardDealer *card) :
 	Init();
 }
 
+BeamSample::BeamSample(std::string card) :
+	Sample(card)
+{
+	Init();
+}
+
 void BeamSample::Init()
 {
-	_mode = {"nuE0_nuE0", "nuM0_nuM0", "nuM0_nuE0",
-		 "nuEB_nuEB", "nuMB_nuMB", "nuMB_nuEB"};
-	_chan = {"E_CCQE", "M_CCQE", "E_CCnQE", "M_CCnQE", "E_NC", "M_NC"};
-	_horn = {"FHC", "RHC"};
+	//_mode = {"nuE0_nuE0", "nuM0_nuM0", "nuM0_nuE0",
+	//	 "nuEB_nuEB", "nuMB_nuMB", "nuMB_nuEB"};
+	//_chan = {"E_CCQE", "M_CCQE", "E_CCnQE", "M_CCnQE", "E_NC", "M_NC"};
+	//_horn = {"FHC", "RHC"};
 	//std::map<std::string, std::pair<flavour, flavour> >
 	_oscf = { {"nuE0_nuE0", std::make_pair(Nu::E_, Nu::E_)},
 		  {"nuM0_nuM0", std::make_pair(Nu::M_, Nu::M_)},
@@ -23,7 +29,8 @@ void BeamSample::Init()
 	// _fin = {Nu::E_, Nu::M_, Nu::M_, Nu::Eb, Nu::Mb, Nu::Mb};
 	//_fout = {Nu::E_, Nu::M_, Nu::E_, Nu::Eb, Nu::Mb, Nu::Eb};
 
-	if (!cd->Get("beam_sample", _type))
+	// if sample beam is not defined..
+	if (!cd->Get("sample_beam", _type))
 		// default value
 		_type = {"E_FHC", "E_RHC", "M_FHC", "M_RHC"};
 
@@ -81,45 +88,81 @@ void BeamSample::Init()
 		kVerbosity = 0;
 
 	if (kVerbosity) {
-		std::cout << "types: ";
+		std::cout << "BeamSample: types: ";
 		for (const auto &it : _type)
 			std::cout << "\t" << it;
 		std::cout << std::endl;
-		std::cout << "number of scale systematics " << _nScale << std::endl;
+		std::cout << "BeamSample: number of scale systematics " << _nScale << std::endl;
 		for (const auto &it : _scale)
 			std::cout << "\t" << it.first << " -> " << it.second << std::endl;
 	}
 
-	DefineBinning();
+	std::string profile;
+	if (!cd->Get("density_profile", profile) && kVerbosity)
+		std::cout << "BeamSample: density profile not set in card, please set it yourself" << std::endl;
+	else
+		_lens_dens = Oscillator::GetMatterProfile(profile);
+
 
 	LoadReconstruction();
+
+	DefineBinning();
 	LoadSystematics();
 }
 
 
 void BeamSample::LoadReconstruction()
 {
-	std::string reco_file;
-	std::map<std::string, Eigen::MatrixXd> spectra;
+	std::ifstream it(".reconstruction_files");
+	if (!it || it.peek() == std::ifstream::traits_type::eof()) {
+		std::string reco_files;
+		if (!cd->Get("reco_input", reco_files))
+			throw std::invalid_argument("BeamSample: no reconstruction files in card,"
+						    "very bad!");
 
-	for (const std::string &ih : _horn)	//FHC, RHC
-		for (const std::string &im : _mode)	//nuE->nuE, nuM->nuE, nuM->nuM
-			LoadReconstruction("reco_" + im + "_" + ih);
-			//LoadReconstruction("beam_" + im + "_" + ih);
-}
+		std::string cmd = "ls " + reco_files + " > .reconstruction_files";
+		system(cmd.c_str());
 
-void BeamSample::LoadReconstruction(std::string channel)
-{
-	std::string reco_file;
-	if (!cd->Get(channel, reco_file)) {
-		if (kVerbosity > 1)
-			std::cout << "WARNING - BeamSample: reconstruction file for channel \""
-				  << reco_file << "\" is missing" << std::endl;
-		return;
+		it.open(".reconstruction_files");
 	}
 
+	std::string file;
+	while (std::getline(it, file))
+		LoadReconstruction(file);
+
+//	for (const std::string &ih : _horn)	//FHC, RHC
+//		for (const std::string &im : _mode)	//nuE->nuE, nuM->nuE, nuM->nuM
+//			LoadReconstruction(im + "_" + ih);
+			//LoadReconstruction("beam_" + im + "_" + ih);
+
+	//cmd = "rm .reconstruction_files";
+	//system(cmd.c_str());
+}
+
+void BeamSample::LoadReconstruction(std::string reco_file)
+{
+//	std::string reco_file, type = "reco_" + channel;
+//	if (!cd->Get(type, reco_file)) {
+//		if (kVerbosity > 1)
+//			std::cout << "WARNING - BeamSample: reconstruction file for channel \""
+//				  << reco_file << "\" is missing" << std::endl;
+//		return;
+//	}
+//
+
+	if (reco_file.find("nu") == std::string::npos) {
+		std::cout << "BeamSample: file " << reco_file << " does not have "
+			<< "channel type (nu.._nu.._.HC format) in its name" << std::endl;
+		return;
+	}	
+
+	std::string channel = reco_file.substr(reco_file.find("nu"));
+	if (channel.find(".card") != std::string::npos)
+		channel.erase(channel.find(".card"));
+
 	if (kVerbosity > 2)
-		std::cout << "BeamSample: using reconstruction file " << reco_file << std::endl;
+		std::cout << "BeamSample: using reconstruction file " << reco_file
+			  << " for channel " << channel << std::endl;
 
 	CardDealer cd(reco_file);
 
@@ -146,9 +189,14 @@ void BeamSample::LoadReconstruction(std::string channel)
 
 	std::map<std::string, std::string> mSD;
 	//look if there is a particular event
-	if (cd.Get("Ring_", mSD))
+	if (cd.Get("ring_", mSD))
 		for (const auto &is : mSD) {
-			//std::cout << "histogram " << is.first << " - " << is.second << std::endl;
+			std::string type = is.first.substr(0, is.first.find_first_of('_'))
+					 + channel.substr(channel.find_last_of('_'));
+			if (_type.find(type) == _type.end())
+				continue;
+
+
 			// TH2D is made of (xbins + 2) ( ybins + 2)
 			// y0 : x0 x1 x2 x3 x4 ...
 			// y1 : x0 x1 x2 x3 x4 ...
@@ -184,7 +232,9 @@ void BeamSample::LoadReconstruction(std::string channel)
 			_reco[is.first + "_" + channel] = rm;
 
 			const double *bx = h2->GetXaxis()->GetXbins()->GetArray();
-			const double *by = h2->GetYaxis()->GetXbins()->GetArray();
+			//const double *by = h2->GetYaxis()->GetXbins()->GetArray();
+			if (!_global.count(type))
+				_global[type].assign(bx, bx + xs + 1);
 			//_binX[is.first].assign(bx, bx + xs + 1);
 			//_binY[is.first].assign(by, by + ys + 1);
 		}
@@ -195,9 +245,14 @@ void BeamSample::LoadReconstruction(std::string channel)
 
 std::map<std::string, Eigen::VectorXd> BeamSample::BuildSamples(Oscillator *osc)
 {
+	if (osc)
+		osc->SetMatterProfile(_lens_dens);
+
 	std::map<std::string, Eigen::VectorXd> samples;
 	for (const auto &ir : _reco) {
 
+		if (kVerbosity > 4)
+			std::cout << "BeamSample: using " << ir.first << std::endl;
 		if (ir.first.find("NC") != std::string::npos &&
 		     ( ir.first.find("nuM0_nuE0") != std::string::npos
 		    || ir.first.find("nuMB_nuEB") != std::string::npos ) )
@@ -205,21 +260,30 @@ std::map<std::string, Eigen::VectorXd> BeamSample::BuildSamples(Oscillator *osc)
 
 		std::string hname = ir.first;
 		size_t len = hname.find_last_of('_') - hname.find_first_of('_');
+
+		// this hould be 'nuE0_nuE0' like
+		std::string cname = hname.substr(hname.find("nu"), 9);
+		// this hould be 'E_FHC' like
+		hname.erase(hname.find_first_of('_'), len);
 		
 		Eigen::VectorXd probs = Eigen::VectorXd::Constant(ir.second.cols(), 1);
 		if (osc && hname.find("NC") == std::string::npos) {
 			// not a NC channel
-			if (kVerbosity > 3)
-				std::cout << "Oscillating spectrum\n";
-			//Nu::Flavour nu0 = Nu::fromString();
-			auto chan = _oscf[hname.substr(hname.find_first_of('_') + 1, len - 1)];
-			probs = osc->Oscillate(chan.first, chan.second, _global[ir.first]);
+			if (kVerbosity > 4)
+				std::cout << "Oscillating spectrum for " << cname << "\n";
+			const auto &chan = _oscf[cname];
+			const auto &bins = _global[hname]; //type?
+
+			Eigen::VectorXd vb(bins.size() - 1);
+			for (int i = 0; i < vb.size(); ++i)
+				probs(i) = osc->Probability(chan.first, chan.second,
+						(bins[i] + bins[i+1]) / 2.);
+
+			//probs = osc->Oscillate(chan.first, chan.second, _global[ir.first]);
 		}
 		else if (kVerbosity > 3)
 			std::cout << "Not oscillating\n";
 
-		// this hould be 'E_FHC' like
-		hname.erase(hname.find_first_of('_'), len);
 
 		if (samples.count(hname))
 			samples[hname] += ir.second * probs;
@@ -262,12 +326,9 @@ void BeamSample::LoadSystematics()
 		mat_name = "correlation";
 
 	TFile * mf = new TFile(mat_file.c_str());
-	if (mf->IsZombie()) {
-		if (kVerbosity > 0)
-			std::cerr << "WARNING - BeamSample: file " << mat_file
-				  << " does not exist" << std::endl;
-		return;
-	}
+	if (mf->IsZombie())
+		throw std::invalid_argument("BeamSample: cannot open file for beam systematics,"
+			    "cannot determine how many errors");
 
 	TMatrixT<double> * cmat = static_cast<TMatrixT<double>*>(mf->Get(mat_name.c_str()));
 
@@ -282,7 +343,7 @@ void BeamSample::LoadSystematics()
 		sysB = std::min(cmat->GetNcols(), sysB);
 
 	if (kVerbosity)
-		std::cout << "Limiting systematics between "
+		std::cout << "BeamSample: Limiting systematics between "
 			  << sysA << " and " << sysB << std::endl;
 	//last _nScale entries are for energy scale
 	_corr = Eigen::MatrixXd::Zero(_nScale + sysB - sysA, _nScale + sysB - sysA);
@@ -293,7 +354,7 @@ void BeamSample::LoadSystematics()
 			_corr(r + - sysA, c + - sysA) = (*cmat)(r, c);
 	mf->Close();
 
-	_corr = _corr.inverse();
+	//_corr = _corr.inverse();
 	//std::cout << "_corr diag\n" << _corr.diagonal() << std::endl;
 
 	if (kVerbosity) {
@@ -310,13 +371,16 @@ void BeamSample::LoadSystematics()
 
 	// now I am ready to import 1sigma histogram represeting linearisation of systematics
 	_sysMatrix.clear();
+	
+	if (kVerbosity)
+		std::cout << "BeamSample: creating matrix "
+			  << _nBin << " x " << _nSys << std::endl;
 	_sysMatrix[0] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
 	for (int sigma = -3; sigma < 4; sigma += 2)
 		_sysMatrix[sigma] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
 
-	std::vector<int> skip;
-	cd->Get("skip", skip);	// errors to skip
-	std::set<int> skip_sys(skip.begin(), skip.end());
+	std::set<int> skip_sys;
+	cd->Get("skip", skip_sys);	// errors to skip
 
 	zeroEpsilons = true;
 	int off = 0;	// offset for global bin
@@ -344,7 +408,6 @@ void BeamSample::LoadSystematics()
 		TIter next(sysf->GetListOfKeys());
 		TH1D* hsys;
 		TKey *k;
-		auto lims = _limits[it];	// bin limits
 		while (k = static_cast<TKey*>(next()))
 		{
 			std::string sysname = k->GetName();
@@ -375,46 +438,61 @@ void BeamSample::LoadSystematics()
 
 			k_err = std::stoi(sysname);
 			if (k_err < sysA || k_err >= sysB
-			    || skip_sys.find(k_err) != skip_sys.end())
+			    || skip_sys.find(k_err) != skip_sys.end()) {
+				if (kVerbosity)
+					std::cout << "BeamSample: skipping " << hsys->GetTitle()
+						<< " systematic" << std::endl;
 				continue;
+			}
 
 			// past this point there should be something in the systematic file
 			zeroEpsilons = false;
 
-			for (int n = lims.first, j = 0; n < lims.second; ++n, ++j) {
+			int i = _offset[it];
+			for (int n : _binpos[it]) {
 				if (sigma)	// it is a spline file, i.e. sigma != 0
-					_sysMatrix[sigma](off + j, k_err - sysA)
+					_sysMatrix[sigma](i, k_err - sysA)
 						= sigma * (hsys->GetBinContent(n+1) - 1);
 				else		// not a spline, fill manually
-					for (sigma = -3; sigma < 4; sigma += 2)
-						_sysMatrix[sigma](off + j, k_err - sysA)
-							= sigma * (hsys->GetBinContent(n+1) - 1);
+					for (int s = -3; s < 4; s += 2)
+						_sysMatrix[s](i, k_err - sysA)
+							= s * (hsys->GetBinContent(n+1) - 1);
+				++i;
 			}
 		}
-		off += lims.second - lims.first;
 		sysf->Close();
 	}
 }
 
 std::vector<std::pair<int, int> > BeamSample::AllSlices(std::string it, double skerr)
 {
-	if (!_nScale)
+	if (!_nScale) {
 		return Sample::AllSlices(it, skerr);
+	}
 
 	std::vector<std::pair<int, int> > allslices;
 
 	// energy shift
 	double shift = 1 + skerr * _scale[it];
 	// offset between global bin and energy bin
-	int off = _binpos[it].first - _limits[it].first;
+	//int off = _binpos[it].first - _limits[it].first;
 	// absolute systematic error for this scale parameter
 
-	// loop over bins of this sample
-	for (int n = _binpos[it].first; n < _binpos[it].second; ++n) {
-		int m0 = StartingBin(it, shift, n);
-		int m1 = EndingBin(it, shift, n);
-		allslices.push_back(std::make_pair(m0 + off, m1 + off));
+	// returns absolute bin position 
+	int i = _offset[it];
+	for (int n : _binpos[it]) {
+		int m0 = std::max(StartingBin(it, shift, n), _binpos[it].front()) - n + i;
+		int m1 = std::min(EndingBin(it, shift, n), _binpos[it].back()+1) - n + i;
+		allslices.push_back(std::make_pair(m0, m1));
+		++i;
 	}
+
+	// loop over bins of this sample
+	//for (int n = _binpos[it].first; n < _binpos[it].second; ++n) {
+	//	int m0 = StartingBin(it, shift, n);
+	//	int m1 = EndingBin(it, shift, n);
+	//	allslices.push_back(std::make_pair(m0 + off, m1 + off));
+	//}
 
 	return allslices;
 }
@@ -423,8 +501,9 @@ std::vector<std::pair<int, int> > BeamSample::AllSlices(std::string it, double s
 // FactorFn needs ChiSquared object to call
 std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it, double skerr)
 {
-	if (!_nScale)
+	if (!_nScale) {
 		return Sample::AllScale(factor, it, skerr);
+	}
 
 	std::vector<Eigen::ArrayXd> allfacts;
 
@@ -433,23 +512,32 @@ std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it
 	// energy shift
 	double shift = 1 + skerr * scale_err;
 	// offset between global bin and energy bin
-	int off = _binpos[it].first - _limits[it].first;
+	//int off = _binpos[it].first - _limits[it].first;
 	// absolute systematic error for this scale parameter
 
 	// alias to binning
 	std::vector<double> &global = _global[it];
 
-	// loop over bins of this sample
-	for (int n = _binpos[it].first; n < _binpos[it].second; ++n) {
+	//// loop over bins of this sample
+	//for (int n = _binpos[it].first; n < _binpos[it].second; ++n) {
 
 		// scale systematic is related to bin number
 		// scaling bin start
-		int m0 = StartingBin(it, shift, n);
-		int m1 = EndingBin(it, shift, n);
+		//int m0 = StartingBin(it, shift, n);
+		//int m1 = EndingBin(it, shift, n);
+
+	for (int n : _binpos[it]) {
+		// this is just relative bin position
+		int m0 = std::max(StartingBin(it, shift, n), _binpos[it].front());
+		int m1 = std::min(EndingBin(it, shift, n), _binpos[it].back()+1);
 
 		// unscaled/original bins
-		double b0_n = global[n - off];
-		double b1_n = global[n - off + 1];
+		//double b0_n = global[n - off];
+		//double b1_n = global[n - off + 1];
+		//
+		// bin edges
+		double b0_n = global[n];
+		double b1_n = global[n + 1];
 
 		std::vector<double> thisfact;
 		for (int m = m0; m < m1; ++m) {
@@ -457,7 +545,6 @@ std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it
 			// scaled bins
 			double b0_m = global[m];
 			double b1_m = std::min(global[m + 1], 30 / shift);
-			//std::cout << "contains " << b0_m << " and " << b1_m << std::endl;
 			//continue/break computation because there is no overlap
 			if (shift * b0_m > b1_n) {
 				//std::cout << "stopping at " << m

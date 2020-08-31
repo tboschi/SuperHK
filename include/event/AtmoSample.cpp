@@ -4,12 +4,21 @@ AtmoSample::AtmoSample(CardDealer *card) :
 	Sample(card)
 {
 	Init();
-	//std::string atmcard;
-	//if (cd->Get("atmospherecard", atmcard))
-	//	atm_path = new Atmosphere(atmcard);
-	//else
-	atm_path = std::unique_ptr<Atmosphere>(new Atmosphere(cd));
+	atm_path = std::unique_ptr<Atmosphere>(new Atmosphere(card));
 }
+
+AtmoSample::AtmoSample(std::string card) :
+	Sample(card)
+{
+	Init();
+	atm_path = std::unique_ptr<Atmosphere>(new Atmosphere(card));
+}
+
+AtmoSample::~AtmoSample()
+{
+	dm->Delete();
+}
+
 
 
 void AtmoSample::Init()
@@ -28,10 +37,10 @@ void AtmoSample::Init()
 		  {"nuMB_nuMB", std::make_pair(Nu::Mb, Nu::Mb)},
 		  {"nuMB_nuTB", std::make_pair(Nu::Mb, Nu::Tb)} };
 
-	if (!cd->Get("atmo_sample", _type))
+	if (!cd->Get("sample", _type))
 		// default value too long..
 		_type = { "MultiGeV_elike_barnue", 
-			  "MultiGeV_elike_nue", 
+			  "MultiGeV_elike_nue",
 			  "MultiGeV_mulike", 
 			  "MultiRing_elike_barnue", 
 			  "MultiRing_elike_nue", 
@@ -52,11 +61,11 @@ void AtmoSample::Init()
 
 
 	if (kVerbosity) {
-		std::cout << "types: ";
+		std::cout << "AtmoSample: types: ";
 		for (const auto &it : _type)
 			std::cout << "\t" << it;
 		std::cout << std::endl;
-		std::cout << "number of scale systematics " << _nScale << std::endl;
+		std::cout << "AtmoSample: number of scale systematics " << _nScale << std::endl;
 		for (const auto &it : _scale)
 			std::cout << "\t" << it.first << " -> " << it.second << std::endl;
 	}
@@ -73,7 +82,7 @@ void AtmoSample::LoadSystematics()
 {
 	zeroEpsilons = true;
 	std::string file_name, tree_name;
-	if (!cd->Get("systematic_atmo", file_name))
+	if (!cd->Get("systematic_file", file_name))
 		throw std::invalid_argument("AtmoSample: no systematic file for atmo sample,"
 			    "cannot determine number of systematics");
 
@@ -82,39 +91,45 @@ void AtmoSample::LoadSystematics()
 		throw std::invalid_argument("WARNING - AtmoSample: file " + file_name
 				  + " does not exist");
 
-	if (!cd->Get("atmo_tree", tree_name))
+	if (!cd->Get("systematic_tree", tree_name))
 		tree_name = "sigmatree";
 
 	std::set<std::string> skip_sys;
-	cd->Get("atmo_skip", skip_sys);	// errors to skip
+	cd->Get("skip", skip_sys);	// errors to skip
 
-	std::string name_err;
+	TString * name_ptr = new TString;
 	TTree * syst = static_cast<TTree*>(mf->Get(tree_name.c_str()));
-	syst->SetBranchAddress("FijName", &name_err);
+	syst->SetBranchAddress("FijName", &name_ptr);
 	//double error;
 	//syst->SetBranchAddress("Sigma", &error);
 
 	_nSys = 0;
 	for (int i = 0; i < syst->GetEntries(); ++i) {
 		syst->GetEntry(i);
+		std::string name_err = name_ptr->Data();
 		if (skip_sys.find(name_err) == skip_sys.end())
 			++_nSys;
 	}
+	std::cout << "AtmoSample: counted number of systematics " << _nSys << std::endl;
 
 	_corr = Eigen::MatrixXd::Identity(_nSys, _nSys);
 
 	_sysMatrix.clear();
+	if (kVerbosity)
+		std::cout << "AtmoSample: creating matrix "
+			  << _nBin << " x " << _nSys << std::endl;
 	_sysMatrix[0] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
 	for (int sigma = -3; sigma < 4; sigma += 2)
 		_sysMatrix[sigma] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
 
 	int k_err = 0;
-	int off = 0;	// offset for global bin
 	for (int i = 0; i < syst->GetEntries(); ++i) {
+		int off = 0;	// offset for global bin
 		syst->GetEntry(i);
+		std::string name_err = name_ptr->Data();
 		if (skip_sys.find(name_err) != skip_sys.end()) {
 			if (kVerbosity)
-				std::cout << "Skipping " << name_err
+				std::cout << "AtmoSample: skipping " << name_err
 					  << " systematic" << std::endl;
 			continue;
 		}
@@ -122,12 +137,13 @@ void AtmoSample::LoadSystematics()
 
 		TH1D* hsys = static_cast<TH1D*>(mf->Get(name_err.c_str()));
 		for (const std::string &it : _type) {
-			auto lims = _limits[it];	// bin limits
-			for (int n = lims.first, j = 0; n < lims.second; ++n, ++j)
+			int i = _offset[it];
+			for (int n : _binpos[it]) {
 				for (double sigma = -3; sigma < 4; sigma += 2)
-					_sysMatrix[sigma](off + j, k_err)
-						= sigma * (hsys->GetBinContent(n+1) - 1);
-			off += lims.second - lims.first;
+					_sysMatrix[sigma](i, k_err)
+						= sigma * hsys->GetBinContent(n+1);
+				++i;
+			}
 		}
 		++k_err;
 	}
@@ -158,6 +174,8 @@ void AtmoSample::LoadReconstruction() {
 
 	// store binning information as TH2D
 	for (const auto &ih : hist_types) {
+		if (_type.find(ih.first) == _type.end())
+			continue;
 		std::string ax0 = ih.first + "_0";
 		std::string ax1 = ih.first + "_1";
 		std::string hname = "reco_" + ih.first;
@@ -169,11 +187,17 @@ void AtmoSample::LoadReconstruction() {
 	}
 
 	std::string chain, tree_name; //, friends, friend_name;
-	cd->Get("tree_input", chain);
-	cd->Get("tree_name", tree_name);
+	if (!cd->Get("MC_input", chain))
+		throw std::invalid_argument("AtmoSample: no reconstruction files in card,"
+			       		    "very bad!");
+	if (!cd->Get("MC_tree_name", tree_name))
+		tree_name = "osc_tuple";
 	//cd->Get("friend_input", friends);
 	//cd->Get("friend_name", friend_name);
 
+	if (kVerbosity)
+		std::cout << "AtmoSample: opening " << chain
+			  << " for " << tree_name << std::endl;
 	dm = std::unique_ptr<TChain>(new TChain(tree_name.c_str()));
 	//TChain *fr = new TChain(friend_name.c_str());
 
@@ -262,15 +286,19 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 	for (const auto &ih : _reco_hist)
 		ih.second->Reset("ICES");
 
-	double scale;
-	if (!cd->Get("scale", scale))
+	double scale, start;
+	if (!cd->Get("MC_scale", scale))
 		scale = 188.4 / 22.5;	// HK to SK ratio
+	if (!cd->Get("height", start))
+		start = 15.0;		// most probable production height
 
 	dm->SetBranchStatus("*", 1);
 	int first_event_type = _type_names.begin()->first;
 	int last_event_type = _type_names.rbegin()->first;
 	// loop through all events and fill histograms
+	std::cout << "AtmoSample: reading " << dm->GetEntries() << " entries" << std::endl;
 	for (int i = 0; i < dm->GetEntries(); ++i) {
+		//std::cout << "entry " << i << std::endl;
 		dm->GetEntry(i);	// all branches
 		itype -= 1;
 
@@ -305,7 +333,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 		Nu::Flavour nu_out = Nu::fromPDG(ipnu);
 		if (osc) {
 			// LUT is cleared in this step
-			osc->SetMatterProfile(atm_path->MatterProfile(dirnu[2]));
+			osc->SetMatterProfile(atm_path->MatterProfile(dirnu[2], start));
 
 			// but thanks to LUT, probability is computed only once
 			if (ipnu > 0)	// neutrino
@@ -340,7 +368,6 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 
 	return samples;
 }
-
 
 void AtmoSample::LoadReconstruction(std::string channel)
 {
@@ -429,6 +456,7 @@ void AtmoSample::LoadReconstruction(std::string channel)
 // loop through MC files and defines true histograms
 // to add -> create card output
 // NOT A MEMBER FUNCTION, to be used as one off
+/*
 void CreateTensor(CardDealer *cd)
 {
 	// type of histogram, they are numbered with integer
@@ -568,7 +596,7 @@ void CreateTensor(CardDealer *cd)
 	int last_event_type = type_names.rbegin()->first;
 
 	double scale;
-	if (!cd->Get("scale", scale))
+	if (!cd->Get("MC_scale", scale))
 		scale = 188.4 / 22.5;	// HK to SK ratio
 	dm->SetBranchStatus("*", 1);
 	// loop through all events and fill histograms
@@ -696,3 +724,4 @@ void CreateTensor(CardDealer *cd)
 
 	bin_contents.clear();
 }
+*/

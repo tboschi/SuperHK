@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <memory>
 
 #include "tools/CardDealer.h"
 #include "physics/Oscillator.h"
@@ -24,10 +25,20 @@ class Sample
 {
 	public:
 		Sample(CardDealer *card) :
-			cd(card),
+			cd(std::unique_ptr<CardDealer>(card)),
 			_nBin(-1),
 			_nSys(-1),
-			_nScale(-1)
+			_nScale(0)
+       		{
+			if (!cd->Get("verbose", kVerbosity))
+				kVerbosity = 0;
+		}
+
+		Sample(std::string card) :
+			cd(std::unique_ptr<CardDealer>(new CardDealer(card))),
+			_nBin(-1),
+			_nSys(-1),
+			_nScale(0)
        		{
 			if (!cd->Get("verbose", kVerbosity))
 				kVerbosity = 0;
@@ -62,48 +73,74 @@ class Sample
 		virtual void DefineBinning() {
 			_nBin = 0;
 			_allBin = 0;
-			_limits.clear(); _binpos.clear(); _global.clear();
+			_offset.clear(); _binpos.clear();
 
 			// unoscillated spectrum, just for counting nonempty bins
 			std::map<std::string, Eigen::VectorXd> samples = BuildSamples();
 
+			if (kVerbosity > 1)
+				std::cout << "Sampe: number of samples " << samples.size() << std::endl;
 			for (const auto &is : samples) {
 				// find first and last non empty bins
-				int b0, b1;
+				//int b0 = 0, b1 = is.second.size();
+				//for (int i = 1; i < is.second.size(); ++i)
+				//	if (is.second(i) > 0) {	// first bin above zero
+				//		b0 = i;
+				//		break;
+				//	}
+				//for (int i = is.second.size()-1; i > 0; --i)
+				//	if (is.second(i-1) > 0)	{ // last bin above zero
+				//		b1 = i;
+				//		break;
+				//	}
+
+				std::vector<int> bpos;
+				bpos.reserve(is.second.size());
+
+				// bpos has nonzero bins
 				for (int i = 0; i < is.second.size(); ++i)
-					if (is.second(i) > 0) {	// first bin above zero
-						b0 = i;
-						break;
-					}
-				for (int i = is.second.size(); i > 0; --i)
-					if (is.second(i-1) > 0)	{ // last bin above zero
-						b1 = i;
-						break;
-					}
-				if (kVerbosity > 2)
-					std::cout << "sample " << is.first << " has binning between "
-						<< b0 << " and " << b1 << std::endl;
+					if (is.second(i) > 0)
+						bpos.push_back(i);
+
+				// lims has start and end of nonzero bins
+				//lims.push_back(_nBin + lims.front());
+				//for (int b = 1; b < lims.size()-1; ++b)
+				//	if (lims[b] - lims[b-1] > 1) {
+				//		lims.push_back(_nBin + lims[b-1]);
+				//		lims.push_back(_nBin + lims[b]);
+				//	}
+				//lims.push_back(_nBin + lims.back());
+
+				if (kVerbosity > 2) {
+					std::cout << "Sample: " << is.first << " has "
+						  << bpos.size() << " nonzero bins";
+					if (bpos.size())
+						  std::cout << ", from " << bpos.front()
+							  << " to " << bpos.back();
+					std::cout << std::endl;
+				}
 
 				// store first and last non empty bins
-				_limits[is.first] = std::pair<int, int>(b0, b1);
+				//_limits[is.first] = lims; //std::pair<int, int>(b0, b1);
+				_offset[is.first] = _nBin; //std::pair<int, int>(b0, b1);
 
 				// refers to position as global binning
 				// eventually the samples will be flattened in one dimension,
 				// so it is useful to know where the samples start and end
-				_binpos[is.first] = std::pair<int, int>(_nBin, _nBin + b1 - b0);
+				_binpos[is.first] = bpos; //std::pair<int, int>(_nBin, _nBin + b1 - b0);
 
 				// store global binning information for energy shift
 				//_global[is.first] = is.second.rows();
 
 				// count number of total bins
-				_nBin += b1 - b0;
+				_nBin += bpos.size();
 				_allBin += is.second.size();
 
 				//delete is.second;
 			}
 
 			if (kVerbosity)
-				std::cout << "Number of nonzero bins: "
+				std::cout << "Sample: Number of nonzero bins: "
 					<< _nBin << " / " << _allBin << std::endl;
 		}
 
@@ -119,16 +156,23 @@ class Sample
 
 			Eigen::VectorXd vect(_nBin);
 
-			int off = 0;	//add offset
+			// compress all samples into one vector without zeros
 			for (const auto &is : samples) {
-				auto lims = _limits[is.first];
-
-				int span = lims.second - lims.first;
-				vect.segment(off, span) = is.second.segment(lims.first, span)
-							* stats;
-
-				off += span;
+				int i = _offset[is.first];
+				for (int n : _binpos[is.first]) {
+					vect(i) = is.second(n);
+					++i;
+				}
 			}
+				//const auto &lims = _limits[is.first];
+
+				//int span = 0;
+				//int prev = _limits[is.first].front();
+				//for (int i : _limits[is.first]) {
+				//	vect.segment(off, span) = is.second.segment(lims[i], span) * stats;
+				//	off += span;
+				//}
+			//}
 
 			return vect;
 		}
@@ -138,7 +182,7 @@ class Sample
 		virtual void LoadSystematics() {};
 
 		// must be defined in derived
-		virtual std::map<std::string, Eigen::VectorXd> BuildSamples(Oscillator *osc = 0) {};
+		virtual std::map<std::string, Eigen::VectorXd> BuildSamples(Oscillator *osc = 0) { std::cout << "virtual build samples\n"; };
 
 
 		// energy bin scaling routines
@@ -164,22 +208,22 @@ class Sample
 
 		virtual int StartingBin(std::string it, double shift, int n)
 		{
-			n += _limits[it].first - _binpos[it].first;
 			auto im = std::lower_bound(_global[it].begin(),
 					_global[it].end(),
 					_global[it][n] / shift);
-			return std::max(int(std::distance(_global[it].begin(), im)) - 1,
-					_limits[it].first);
+			return int(std::distance(_global[it].begin(), im)) - 1;
+			//return std::max(int(std::distance(_global[it].begin(), im)) - 1,
+			//		_limits[it].first);
 		}
 
 		virtual int EndingBin(std::string it, double shift, int n)
 		{
-			n += _limits[it].first - _binpos[it].first;
 			auto im = std::upper_bound(_global[it].begin(),
 					_global[it].end(),
 					_global[it][n+1] / shift);
-			return std::min(int(std::distance(_global[it].begin(), im)),
-					_limits[it].second);
+			return int(std::distance(_global[it].begin(), im));
+			//return std::min(int(std::distance(_global[it].begin(), im)),
+			//		_limits[it].second);
 		}
 
 
@@ -197,13 +241,14 @@ class Sample
 			std::vector<std::pair<int, int> > allslices;
 
 			// energy shift
-			double shift = 1 + skerr * _scale[it];
+			//double shift = 1 + skerr * _scale[it];
 			// offset between global bin and energy bin
-			int off = _binpos[it].first - _limits[it].first;
+			//int off = _binpos[it].first - _limits[it].first;
 			// absolute systematic error for this scale parameter
 
 			// loop over bins of this sample
-			for (int n = _binpos[it].first; n < _binpos[it].second; ++n)
+			//for (int n = _binpos[it].first; n < _binpos[it].second; ++n)
+			for (int n = _offset[it]; n < _offset[it] + _binpos[it].size(); ++n)
 				allslices.push_back(std::make_pair(n, n+1));
 
 			return allslices;
@@ -214,10 +259,12 @@ class Sample
 				std::string it, double skerr)
 		{
 			std::vector<Eigen::ArrayXd> allfacts;
-			for (int n = _binpos[it].first; n < _binpos[it].second; ++n)
+			//for (int n = _binpos[it].first; n < _binpos[it].second; ++n)
+			for (int n = _offset[it]; n < _offset[it] + _binpos[it].size(); ++n)
 				allfacts.push_back(Eigen::ArrayXd::Constant(1, 1));
 			return allfacts;
 		}
+
 
 		// derivative terms for chi2
 		virtual double Nor(const std::vector<double> &term) {
@@ -240,17 +287,24 @@ class Sample
 
 
 	protected:
-		CardDealer *cd;
+		std::unique_ptr<CardDealer> cd;
 		int kVerbosity;
 		bool zeroEpsilons;
 
-		std::vector<std::string> _type;
+		// matter profile stored here
+		// remember to set it with
+		// 	osc->SetMatterProfile(_lens_dens)
+		Oscillator::Profile _lens_dens;
+
+		std::set<std::string> _type;
 		std::map<std::string, std::pair<Nu::Flavour, Nu::Flavour> > _oscf;
 
 		// for binning information
 		int _nBin, _allBin;
-		std::map<std::string, std::pair<int, int> > _binpos;
-		std::map<std::string, std::pair<int, int> > _limits;
+		//std::map<std::string, std::pair<int, int> > _binpos;
+		//std::map<std::string, std::pair<int, int> > _limits;
+		std::map<std::string, std::vector<int> > _binpos;
+		std::map<std::string, int> _offset;
 		std::map<std::string, std::vector<double> > _global;
 
 		// for systematics

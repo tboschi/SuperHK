@@ -33,13 +33,14 @@
 
 #include "Eigen/Dense"
 
-class BeamSample : Sample
+class BeamSample : public Sample
 {
 	public:
 		BeamSample(CardDealer *card);
+		BeamSample(std::string card);
 		void Init();
 
-		void LoadReconstruction(std::string channel);
+		void LoadReconstruction(std::string reco_file);
 
 		void LoadReconstruction() override;
 		void LoadSystematics() override;
@@ -56,9 +57,9 @@ class BeamSample : Sample
 		//std::map<std::string, std::vector<double> > _binX;
 		//std::map<std::string, std::vector<double> > _binY;
 
-		std::vector<std::string> _mode;
-		std::vector<std::string> _chan;
-		std::vector<std::string> _horn;
+		//std::vector<std::string> _mode;
+		//std::vector<std::string> _chan;
+		//std::vector<std::string> _horn;
 };
 
 #endif

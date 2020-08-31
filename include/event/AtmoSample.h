@@ -49,10 +49,12 @@
 
 #include "Eigen/Dense"
 
-class AtmoSample : Sample
+class AtmoSample : public Sample
 {
 	public:
 		AtmoSample(CardDealer *card);
+		AtmoSample(std::string card);
+		~AtmoSample();
 		void Init();
 
 		void LoadSimulation();
