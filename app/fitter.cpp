@@ -2,7 +2,10 @@
 #include <iostream>
 #include <chrono>
 
+#include "event/Sample.h"
+#include "event/BeamSample.h"
 #include "event/ChiSquared.h"
+
 #include "physics/Oscillator.h"
 #include "physics/ParameterSpace.h"
 
@@ -16,7 +19,7 @@ int main(int argc, char** argv)
 {
 	if (argc < 4)
 	{
-		std::cerr << "Need three parameters: id cpu card" << std::endl;
+		std::cerr << "Fitter: need three parameters: id cpu card" << std::endl;
 		return 1;
 	}
 
@@ -25,14 +28,44 @@ int main(int argc, char** argv)
 
 	if (id >= all)
 	{
-		std::cerr << "requesting process " << id
+		std::cerr << "Fitter: requesting process " << id
 			  << ", but only " << all << " jobs" << std::endl;
 		return 1;
 	}
 
+	// main card
 	std::string cardFile = argv[3];
 	CardDealer *cd = new CardDealer(cardFile);
 
+	std::string fit_card, osc_card, sample_card;
+	if (!cd->Get("oscillation_parameters", osc_card)) {
+		std::cerr << "Fitter: no oscillation options card defined, very bad!" << std::endl;
+		return 1;
+	}
+	Oscillator *osc = new Oscillator(osc_card);
+	ParameterSpace *parms = new ParameterSpace(osc_card);
+
+
+	if (!cd->Get("fit_parameters", fit_card)) {
+		std::cerr << "Fitter: no fit options card defined, very bad!" << std::endl;;
+		return 1;
+	}
+	ChiSquared *fitter = new ChiSquared(fit_card);
+
+
+	if (cd->Get("beam_parameters", sample_card))
+		fitter->Add<BeamSample>(sample_card);
+	if (cd->Get("atmo_parameters", sample_card))
+		fitter->Add<AtmoSample>(sample_card);
+
+	// combining samples
+	if (!fitter->Combine()) {
+		std::cerr << "Fitter: not possible to combine samples. Make sure at least one is defined" << std::endl;
+		return 1;
+	}
+
+
+	// parameters for the main script
 	int kVerbosity, kFast;
 	if (!cd->Get("verbose", kVerbosity))
 		kVerbosity = 0;
@@ -45,14 +78,6 @@ int main(int argc, char** argv)
 	if (!cd->Get("fit_hierarchy", fitOrder))
 		trueOrder = "normal";
 
-	//set up oscillation
-	Oscillator *osc = new Oscillator(cd);
-	ParameterSpace *parms = new ParameterSpace(cd);
-
-	//create chi2 fitter
-	ChiSquared *fitter = new ChiSquared(cd);
-	//fitter->Init();
-	int nsys = fitter->NumSys();
 
 	//open output file
 	std::string outName;
@@ -76,7 +101,8 @@ int main(int argc, char** argv)
 
 	//get first file for True point
 
-	std::cout << "getting true entry " << tPoint << std::endl;
+	if (kVerbosity)
+		std::cout << "Fitter: getting true entry " << tPoint << std::endl;
 	parms->GetEntry(tPoint, tM12, tM23, tS12, tS13, tS23, tdCP);
 
 	//spectra for true point ( On )
@@ -86,7 +112,7 @@ int main(int argc, char** argv)
 	else if (trueOrder == "inverted")
 		osc->SetMasses<Oscillator::inverted>(tM12, tM23);
 	osc->SetPMNS<Oscillator::sin2>(tS12, tS13, tS23, tdCP);
-	Eigen::VectorXd trueSpectra = fitter->ConstructSpectrum(osc);
+	Eigen::VectorXd trueSpectra = fitter->ConstructSamples(osc);
 
 	std::string epsilArray = "Epsilons[" +
 				 std::to_string(fitter->NumSys()) + "]/D";
@@ -132,11 +158,13 @@ int main(int argc, char** argv)
 	int nend   = std::min(off + fpp * (id + 1), entries);
 
 	if (kVerbosity)
-		std::cout << "Proc " << id << " / " << all
+		std::cout << "Fitter: proc " << id << " / " << all
 			  << ", opening files from " << nstart << " to " << nend
 			  << " ( " << fpp << " ) " << std::endl;
 
+	auto t_start = std::chrono::high_resolution_clock::now();
 	for (int i = nstart; i < nend; ++i)
+	//for (int i = tPoint-10; i < tPoint + 11; ++i)
 	{
 		Point = i;
 		parms->GetEntry(Point, M12, M23, S12, S13, S23, dCP);
@@ -148,9 +176,10 @@ int main(int argc, char** argv)
 			     std::abs(std::sin(dCP)) > 1e-5)
 			continue;
 
+
 		if (kVerbosity)
 		{
-			std::cout << "\nFitting point " << Point << std::endl;
+			std::cout << "\nFitter: now fitting point " << Point << std::endl;
 			std::cout << "m23 " << M23 << ", s13 " << S13
 				  << ", s23 " << S23 << ", dcp " << dCP << std::endl;
 		}
@@ -163,11 +192,12 @@ int main(int argc, char** argv)
 		else if (fitOrder == "inverted")
 			osc->SetMasses<Oscillator::inverted>(M12, M23);
 		osc->SetPMNS<Oscillator::sin2>(S12, S13, S23, dCP);
-		Eigen::VectorXd fitSpectra = fitter->ConstructSpectrum(osc);
+		Eigen::VectorXd fitSpectra = fitter->ConstructSamples(osc);
 
 		Eigen::VectorXd eps = fitter->FitX2(trueSpectra, fitSpectra);
 		Eigen::VectorXd var = fitter->Variance(trueSpectra, fitSpectra, eps);
 
+		Eigen::ArrayXd x2n = fitter->ObsX2n(trueSpectra, fitSpectra, eps);
 		ObsX2 = fitter->ObsX2(trueSpectra, fitSpectra, eps);
 		SysX2 = fitter->SysX2(eps);
 		X2 = ObsX2 + SysX2 + PenX2;
@@ -177,7 +207,7 @@ int main(int argc, char** argv)
 		Errors = var.data();
 
 		if (kVerbosity)
-			std::cout << "X2 computed " << X2 << " ("
+			std::cout << "Fitter: X2 computed " << X2 << " ("
 				  << ObsX2 << " + " << SysX2 << " + "
 				  << PenX2 << ")\n" << std::endl;
 
@@ -187,9 +217,14 @@ int main(int argc, char** argv)
 		Time = t_duration.count() / 1000.;
 
 		stepX2->Fill();
+
+		if ((t_end - t_start).count() / 1000 > 1000) {	// 1000 s
+			stepX2->Write();
+			t_start = std::chrono::high_resolution_clock::now();
+		}
 	}
 
-	std::cout << "Finished and out" << std::endl;
+	std::cout << "Fitter: Finished and out" << std::endl;
 
 	outf->cd();
 	stepX2->Write();

@@ -54,8 +54,7 @@ include:
 
 
 clean:
-	-find $(SRCDIR) -name "*.o" -delete
-	-find $(INCDIR) -name "*~"  -delete
+	-find $(INCDIR) -name "*.o"  -delete
 	-find $(LIBDIR) -mindepth 1 -name "*"   -delete
 	-find $(APPDIR) -mindepth 1 -name "*~"  -delete
 	-find $(BINDIR) -mindepth 1 -name "*"   -delete

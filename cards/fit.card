@@ -7,11 +7,11 @@ max_iterations	10
 fit_error	1e-9
 #################################
 
+
+
 # verbosity on (1) or off (0)
 verbose	2
 fast	0
-
-
 
 
 
@@ -71,11 +71,12 @@ penalty_S13	0.0218,	0.0007
 # they must contain a mcTree object
 # *output* is the output path with file and extension
 #input	"/data/tboschi/HKsens/OscAna/SuperHK/.tmp_moms"
-output	"/data/tboschi/HKsens/errorstudy/0/asim/NH_NH/sensitivity/moms/SpaghettiSens.root"
+output	"/data/tboschi/HKsens/errorstudy/test/asim/NH_NH/sensitivity/moms/SpaghettiSens.root"
 # ____________________________________________________
 
 # need a version of CardDelaer which can handle string arrays
-sample	"E_FHC"	"E_RHC"	"M_FHC"	"M_RHC"
+sample_beam	"E_FHC", "E_RHC", "M_FHC", "M_RHC"
+sample_atmo	"all"
 #energy scale error for E or M
 scale	0.024	#if just one
 #scale_E	0.024
@@ -90,11 +91,16 @@ scale	0.024	#if just one
 density_profile	"data/DensityProfileTochibora.dat"
 true_hierarchy	"normal"
 fit_hierarchy	"normal"
-LUT	1
+LUT	0
 
 #proportion of statistics
 stats	1.00
 
+
+# stuff for beam stuff
+#
+#
+#
 #restrict systematics
 #flux  from [0, 50)
 #xsec  from [50, 74)
@@ -132,3 +138,8 @@ reco_nuM0_nuE0_RHC	"global/reconstruction/syst_nuM0_nuE0_RHC.card"
 reco_nuEB_nuEB_RHC	"global/reconstruction/syst_nuEB_nuEB_RHC.card"
 reco_nuMB_nuMB_RHC	"global/reconstruction/syst_nuMB_nuMB_RHC.card"
 reco_nuMB_nuEB_RHC	"global/reconstruction/syst_nuMB_nuEB_RHC.card"
+
+# stuff for atmo stuff
+#
+#
+#

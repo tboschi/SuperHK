@@ -12,16 +12,13 @@ int main(int argc, char** argv)
 	}
 
 	std::string cardFile = argv[1], output = argv[2];
-	CardDealer *cd = new CardDealer(cardFile);
-
-	ParameterSpace *parms = new ParameterSpace(cd);
+	ParameterSpace *parms = new ParameterSpace(cardFile);
 
 	std::ofstream out(output);
 	out << parms->GetNominalEntry() << std::endl;
 	out.close();
 
 	delete parms;
-	delete cd;
 
 	return 0;
 }

@@ -3,7 +3,6 @@
 #include <iomanip>
 
 #include "tools/CardDealer.h"
-#include "event/Reco.h"
 #include "physics/Oscillator.h"
 
 #include "TF1.h"
