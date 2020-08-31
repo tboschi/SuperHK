@@ -40,9 +40,23 @@ class Oscillator
 			angles,
 		};
 
-	public:
 		typedef std::vector<std::tuple<double, double, double> > Profile;
+		// anyone can access this without object
+		static Oscillator::Profile GetMatterProfile(const std::string &densityFile);
 
+		static double Length(const Oscillator::Profile &ld);	// return total baseline
+		static double Density(const Oscillator::Profile &ld);	// return average density
+		static double ElectronDensity(const Oscillator::Profile &ld); // return average electron density
+
+
+		double Length();	// return total baseline
+		double Density();	// return average density
+		double ElectronDensity(); // return average electron density
+
+		void SetMatterProfile(const Oscillator::Profile &l_d);
+
+
+	public:
 		Oscillator(const std::vector<double> &lengths,
 			   const std::vector<double> &densities,
 			   int neutrinos = 3, bool lut = false,
@@ -52,13 +66,14 @@ class Oscillator
 			   const std::vector<double> &electrons,
 			   int neutrinos = 3, bool lut = false,
 			   double threshold = 1e-9);
+
 		Oscillator(const std::string &densityFile,
-			   int neutrinos = 3, bool lut = false,
-			   double threshold = 1e-9);
+			   int neutrinos, bool lut,
+			   double threshold);
+		Oscillator(std::string cd);
 		Oscillator(CardDealer *cd);
 
-		void SetMatterProfile(const std::string &densityFile);
-		void SetMatterProfile(const Oscillator::Profile &l_d);
+		void FromCard(CardDealer *cd);
 
 		double Probability(Nu::Flavour in, Nu::Flavour out,
 				double energy, bool force = false);
@@ -67,12 +82,6 @@ class Oscillator
 				const std::vector<double> &bins);
 		void Reset();
 		std::map<double, Eigen::MatrixXd>::iterator FindEnergy(double energy);
-
-		double Length();	// return total baseline
-		double Density();	// return average density
-		double ElectronDensity(); // return average electron density
-
-
 
 		Eigen::MatrixXcd TransitionMatrix(double energy);
 		Eigen::MatrixXcd TransitionMatrix(double ff, double l2e);
@@ -86,8 +95,6 @@ class Oscillator
 		template<masses type>
 		void SetMasses(double m1, double m2)
 		{
-			Reset();
-
 			switch (type)
 			{
 				case masses::normal:

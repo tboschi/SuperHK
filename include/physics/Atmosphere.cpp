@@ -1,7 +1,26 @@
 #include "Atmosphere.h"
 
 Atmosphere::Atmosphere(CardDealer *card) :
-	cd(card),
+	cd(std::unique_ptr<CardDealer>(card)),
+	gen(std::random_device()())
+{
+	LoadDensityProfile();
+	LoadProductionHeights();
+
+	if (!cd->Get("verbosity", kVerbosity))
+		kVerbosity = 0;
+
+	// initialise Earth densities
+	//_density = { std::make_pair(Const::Rearth,  3.3),	//6371
+	//	     std::make_pair(5701.0,  5.0),
+	//	     std::make_pair(3480.0, 11.3),
+	//	     std::make_pair(1220.0, 13.0),
+	//	     std::make_pair(0 ,     13.0) };
+	//_profile load from file;
+}
+
+Atmosphere::Atmosphere(std::string card) :
+	cd(std::unique_ptr<CardDealer>(new CardDealer(card))),
 	gen(std::random_device()())
 {
 	LoadDensityProfile();
@@ -33,14 +52,18 @@ Atmosphere::Atmosphere(CardDealer *card) :
 void Atmosphere::LoadProductionHeights()
 {
 	// calling system ls such that table_file can contain wildcards
-	std::string prod_file, file;
-	cd->Get("production_heights", prod_file);
-	std::string cmd = "ls " + prod_file + " > .production_files";
-	system(cmd.c_str());
-
 	std::ifstream it(".production_files");
-	if (!it.good())
-		throw std::invalid_argument("missing .production_files! odd..");
+	if (!it || it.peek() == std::ifstream::traits_type::eof()) {
+		std::string prod_file;
+		if (!cd->Get("production_heights", prod_file)) {
+			std::cout << "Atmosphere: no production heights in card, please specify production height yourself" << std::endl;
+			return;
+		}
+
+		std::string cmd = "ls " + prod_file + " > .production_files";
+		system(cmd.c_str());
+		it.open(".production_files");
+	}
 
 	// vector with the discretised probabilities
 	_problibs.clear();
@@ -54,6 +77,7 @@ void Atmosphere::LoadProductionHeights()
 			[](double b) { return -0.1 * b; }); 
 	// now zenith_bin is 0.9, 0.8, ... -0.9, -1.0	according to Honda binning
 
+	std::string file;
 	std::map<int, std::vector<double> > *table;	// "reference"
 	while (std::getline(it, file)) {
 		std::ifstream ip(file.c_str());
@@ -120,8 +144,8 @@ void Atmosphere::LoadProductionHeights()
 	}
 	it.close();
 
-	cmd = "rm .production_files";
-	system(cmd.c_str());
+	//cmd = "rm .production_files";
+	//system(cmd.c_str());
 }
 
 // generate a random production height given
@@ -217,20 +241,22 @@ double Atmosphere::GenerateRandomHeight(Nu::Flavour flv, double cosz, double ene
 // 	radius, which can be normalised
 // 	density 
 // 	electron density (optional, default 0.5)
-void Atmosphere::LoadDensityProfile()
+void Atmosphere::LoadDensityProfile(std::string table_file)
 {
 	_profile.clear();
 
-	std::string table_file, line;
-	cd->Get("matter_profile", table_file);
+	if (table_file.empty())
+		if (!cd->Get("density_profile", table_file))
+			throw std::invalid_argument("Atmosphere: you have not defined any density profile. Too bad!");
 
 	std::ifstream it(table_file.c_str());
 	if (!it.good()) {
-		std::cerr << "Error" << std::endl;
+		std::cerr << "Density profile " << table_file << " cannot be read" << std::endl;
 		return;
 	}
 
 	// read first line
+	std::string line;
 	double first_rad, last_rad;
 	while (std::getline(it, line)) {
 		// remove hash comments

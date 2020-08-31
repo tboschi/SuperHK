@@ -11,6 +11,7 @@
 #include <string>
 #include <iterator>
 #include <cmath>
+#include <memory>
 
 #include "tools/CardDealer.h"
 
@@ -21,6 +22,7 @@ class ParameterSpace
 		typedef std::map<std::string, std::vector<double> > Binning;
 
 		ParameterSpace(CardDealer *card);
+		ParameterSpace(std::string card);
 
 		void Init();
 
@@ -39,7 +41,7 @@ class ParameterSpace
 		int GetNominalEntry();
 
 	private:
-		CardDealer *cd;
+		std::unique_ptr<CardDealer> cd;
 
 		//std::map<std::string, double*> varmap;	//map to address of variables
 		//std::map<std::string, double*>::iterator iv;

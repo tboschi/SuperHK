@@ -1,7 +1,13 @@
 #include "ParameterSpace.h"
 
 ParameterSpace::ParameterSpace(CardDealer *card) :
-	cd(card)
+	cd(std::unique_ptr<CardDealer>(card))
+{
+	Init();
+}
+
+ParameterSpace::ParameterSpace(std::string card) :
+	cd(std::unique_ptr<CardDealer>(new CardDealer(card)))
 {
 	Init();
 }

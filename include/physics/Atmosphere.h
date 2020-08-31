@@ -19,6 +19,7 @@
 
 #include <numeric>
 #include <algorithm>
+#include <memory>
 
 #include "tools/CardDealer.h"
 
@@ -30,10 +31,11 @@ class Atmosphere
 {
 	public:
 		Atmosphere(CardDealer *cd);
+		Atmosphere(std::string cd);
 
 		void LoadProductionHeights();
 		double GenerateRandomHeight(Nu::Flavour flv, double cosz, double energy);
-		void LoadDensityProfile();
+		void LoadDensityProfile(std::string table_file = "");
 		Oscillator::Profile MatterProfile(double cosz, double atm = 15); // 15 km default
 
 		//std::map<std::string, Eigen::VectorXd>
@@ -41,7 +43,7 @@ class Atmosphere
 		//	const std::map<std::string, std::pair<Nu::Flavour, Nu::Flavour> > &oscf, Oscillator *osc = 0);
 
 	private:
-		CardDealer *cd;
+		std::unique_ptr<CardDealer> cd;
 		Oscillator::Profile _profile;
 		int kVerbosity;
 
