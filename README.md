@@ -1,25 +1,30 @@
-# Easy Osc3++ - v2.0
+# Easy Osc3++ - v3.0
 
-The core of this simplified version of osc3++ is given by the ```event/ChiSquared``` class.
-The main code in ```app/fitter.cpp``` uses the class to load systematics, build distributions and minimise the chi-squared.
-It fits only the beam sample.  The ```app/atmofitter.cpp``` processes the atmospheric sample, but it is under development.
+The core of this simplified version of osc3++ is given by the classes in the ```event``` folder.
+The main code in ```app/fitter.cpp``` uses derived classes inheriting from ```Sample.h``` to load systematics and build distributions, whereas the ChiSquared class computes and and minimises the chi-squared.
+Support to beam sample and atmospheric sample is available.
 The oscillation space is scanned over and it is defined/managed by the ```physics/ParameterSpace``` class.
-Other important classes are ```physics/Oscillation``` to deal with oscillation physics (it relies on Eigen)
+Other important classes are ```physics/Oscillation``` to deal with oscillation physics and ```physics/Atmosphere```
+to compute the Earth density profile seen by an atmospheric neutrino.
 
-The space is specified by combinations of oscillation parameters defined inside ```cards/fit.card```.
-For each point of the oscillation parameter space, a set of histograms is created and oscillated with those oscillation parameters.
-The main set available is *Asimov A*, labelled as `asim`.
-The true point is defined by the *Point* variable: in the default space, point 49773 is Asimov A.
+The space is specified by combinations of oscillation parameters defined inside ```cards/oscillation.card```.
+For each point of the oscillation parameter space, the observables are created and oscillated with those oscillation parameters.
+The default set is build around the T2K *Asimov A* point.
+The true point is defined by the *Point* variable; if not defined, the default point is used and it is computed as explained in the card.
+The cards ```cards/beam_sample.card``` and ```cards/atmo_sample.card``` defines the input files to build beam and amtospheric samples.
+The ```cards/fit_options.card``` regulates fitting parameters.
 
 A set of script is used to facilitate the execution of the code and extraction of results.
 In executing the following scripts, the structure of the folder is important.
-We will refer to paths where input files to be fitted are created as ```global``` (data only for atmospheric sample, but configuration files for beam sample too), and as ```root``` to where the outputs of the fitted file will be.
+We will refer to where the systematic files, outputs of the fit, and plots files will be as the ```root``` folder.
 
 ## Differences with previous version
 
-Version v2.0 handles the energy scaling error more exactly as it is implemented as an anlaytic function.
-Hence, the exact Jacobian and Hessians are used during minimisation.
-Oscillator and Reco classes have been remodelled to improve optimization and maximise use of vector instructions.
+* Since version v2.0 the energy scaling error is handeled more exactly because it is implemented as an anlaytic function.  Hence, the mathematical exact Jacobian and Hessians are used during minimisation.
+* The Oscillator and ChiSquared classes have been remodelled to improve optimization and maximise use of vector instructions.
+* The chi-squared penalisation term is automatically added and it can be specified in the ```cards/oscillation.card```.
+* The atmospheric sample is now supported.
+* The CardDealer class, to import parameters dynamically from text files, has been rewritten as a template class to support as many data types as possible.
 
 ## Requirements
 
@@ -46,50 +51,15 @@ After building the executables, run
 ./setup.sh
 ```
 to build the folder structure required by the framework.
-The script also downloads the input files from http://hep.lancs.ac.uk/~tdealtry/oa/.
+The script also downloads the input files from http://hep.lancs.ac.uk/~tdealtry/oa/ and https://pprc.qmul.ac.uk/~tboschi/HK/atmo.
 
 You can specify a specific path with the ```-p prefix``` option, as specified in the usage. The default value is the folder ```errorstudy/``` in the current working directory 
 
-
-Let's say the main path for the studies is the ```errorstudy/``` folder.
-The script creates a folder for the global inputs and parameter set (e.g. asim)
-```
-mkdir -p errorstudy/global/asim
-mkdir -p errorstudy/global/reconstruction
-```
-When dealing with atmospheric samples, ```asim``` will contain subfolders with oscillated files to be fitted.
-The folder ```reconstruction``` keeps configuration files and root files used to build the beam observables. From VALOR.
-
-Create also folder for each set to be studied
-```
-mkdir errorstudy/root/systematics/
-```
-and the sub-directory ```systematics``` contains spline root files and the correlation matrix.
-
-The idea is that there is a single global folder with common parameters and multiple root folders, one for each systematic set.
+The subfolders ```errorstudy/reconstruction_beam``` and ```errorstudy/reconstruction_atmo``` are created to contain reconsturction files to build the data samples.
 
 
 
-## Creating the fitting space for atmospheric sample
-
-**WARNING** It is not supported in v2.0 of the fitter.
-
-**WARNING** *it uses ```GlobalOsc``` part of the original Osc3++ package. Skip if not interested in atmospheric stuff or do not have GlobalOsc installed.*
-
-The first step is to create the fitting space, by running ```GlobalOsc```.
-This can be done with the following script:
-```
-./global.sh [-i | -n] -f nFiles -g /path/to/global
-```
-where ```-i``` or ```-n``` select inverted or normal hierarchy for the oscillation.
-
-If using batch jobs, the following script works with HTCondor.
-```
-./global_c.sh [-i | -n] -f nFiles -g /path/to/global
-```
-
-
-## Prepare the systematics
+## Prepare the beam systematics
 Creates correlation matrix of systematic parameters by combining matrices found in files of matrixN.root.
 The script expects to find the systematics folder under root with the spline files to be processed (renaming of files and histograms).
 It uses ```app/purifysystematics.cpp``` and ```app/addmatrix.cpp```.
@@ -99,36 +69,39 @@ It uses ```app/purifysystematics.cpp``` and ```app/addmatrix.cpp```.
 
 **N.B** this is done automatically by the ```setup.py``` script!
 
+
 # Run the fit
 
 The syntax is
 ```
-./bin/fitter id all $output/this_sensitivity.card$1 $2 $3
+./bin/fitter id all $output/this_sensitivity.card
 ```
 The fitter is meant to be used with some parallel computing, like a batch system.
-For this reason, the first two inputs are telling the process which set of files (or points) to study ```id``` and how many processes are running ```all```.
-This maximises the effort from the different CPU running. 
-The last parameter is the configuration file which specifies oscillation, samples, fitter, ecc.
+For this reason, the first two inputs are telling the process which set of files (or points) to study ```id``` and how many processes are running ```all``` in total; this helps the executable to know which points study.
+The last parameter is a configuration file which specifies links to cards for oscillation, samples, fitter, ecc.
 
 The easiest way to run the fit is using the following script, which handles parallel computing, folder structure, and configuration files.
-It work with HTCondor, but can be easily adapted to any other manager.
+If your manager is HTCondor
 ```
-./trisens_c.sh -g errorstudy/global -r errorstudy/root/asim -1 [NH | IH] -2 [NH | IH] [-f] [-s]
+./trisens_c.sh -r errorstudy/root/asim -1 [NH | IH] -2 [NH | IH] [-f] [-s] [-v <verbosity>]
+```
+or if your manager is SLURM
+```
+./trisens_s.sh -r errorstudy/root/asim -1 [NH | IH] -2 [NH | IH] [-f] [-s] [-v <verbosity>]
 ```
 where options 1 and 2 specify the mass hierarchies of respectively the observed and expected event samples.
-The script uses the point specified in ```global/asim/point.info``` for the fit.
-The option -s does a stats only fit (no systematics). The option -f performs the scan of multiple true points, using the ones specified in ```global/asim/scan.info```
+The script uses the ```card/oscillation.card``` to determine what is the point to fit.
+The option -s does a stats only fit (no systematics). The option -f performs the scan of multiple true points *WARNING: this feature has not been tested yet*
 
-
-The study multiple sets at the same time, the scheduler ```launch_trisens_c.sh``` working with HTCondor was devised.
+The study multiple sets at the same time, the scheduler ```launch_trisens_c.sh``` working with HTCondor or ```launch_trisens_s.sh``` was devised.
 Manually modify the model array and the point variable.
 
 Assuming for example, a fit on the asimov A point 49773 with normal hierarchy for both the observed and expected samples,
 the fit result will be organised under the following folder
 ```
-errorstudy/asim/NH_NH/sensitivity/point_49773/
+errorstudy/root/NH_NH/sensitivity/point_49773/
 ```
-The folder will contain also log files of the fitter, the card used, and the batch jobs scripts, besides the output root files.
+The folder will contain also log files of the fitter, the cards used, and the batch jobs scripts, besides the output root files.
 There will be a root file per job, each containing a tree with the computed chi-squared.
 The default output name will be *SpaghettiSens.T2HK.XXX.root*, where XXX is a serial file number.
 
@@ -136,24 +109,10 @@ The default output name will be *SpaghettiSens.T2HK.XXX.root*, where XXX is a se
 
 ## Extract results
 
-Once the fit is finished, chi-square penalty terms can be optionally added and the profiles created.
-In the case of a scanning fit, the CP exclusion is also computed.
 
-To penalise for instance the result of an asim NH vs NH fit, run the script
+To build the contour for point 49773 of a NH vs NH fit, run the script
 ```
-./penalise.sh -r errorstudy/root/asim/NH_NH/
-```
-The options are specified in the cards/penalty_asim.card.  The executable ```app/addpenalty.cpp``` is used.
-The penalised files are stored under 
-```
-errorstudy/asim/NH_NH/sensitivity/point_49773/
-```
-and they are just the same as the fitter output files, but with a different name: *SpaghettiSens_penalised*.
-
-
-To build the contour for point 49773 of an asim NH vs NH fit, run the script
-```
-./contours.sh -p -r errorstudy/root/asim/NH_NH point_49773
+./contours.sh -p -r errorstudy/root/NH_NH point_49773
 ```
 the name ```point_49773``` is the name of a folder (automatically generated), it is not a string.
 The -p option specifies to use penalised files.
