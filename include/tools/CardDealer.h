@@ -156,7 +156,7 @@ class CardDealer
 			auto id = _entries.find(key);
 			if (id != _entries.end()) {
 				std::stringstream st(id->second.front());
-				return st >> ret;	// successful casting
+				return static_cast<bool>(st >> ret);	// successful casting
 			}
 			else
 				return false;

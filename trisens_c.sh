@@ -55,6 +55,8 @@ done
 if [[ "$root" != /* ]]
 then
 	root=$PWD/${root%/}
+else
+	root=${root%/}
 fi
 
 

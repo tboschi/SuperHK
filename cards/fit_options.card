@@ -1,0 +1,14 @@
+# fit parameters DON'T CHANGE so easily!!!!!!!!
+lm_0	1
+lm_up	5
+lm_down	10
+
+max_iterations	10
+fit_error	1e-9
+
+#################################
+
+
+
+# verbosity level is integer, (0) = off
+verbose	2

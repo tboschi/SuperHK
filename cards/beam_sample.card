@@ -1,0 +1,66 @@
+# card for beam sample
+
+verbose	1
+
+# scale statistics
+stats	1.00
+
+# specify which samples to fit
+# if not specified the default 
+# "E_FHC", "E_RHC", "M_FHC", "M_RHC"
+# will be used
+
+#sample	"E_FHC", "E_RHC", "M_FHC", "M_RHC"
+
+
+#energy scale error for E or M
+scale_error	0.024	#if just one
+#scale_error_E	0.024
+#scale_error_M	0.024
+
+
+#restrict systematics
+#flux  from [0, 50)
+#xsec  from [50, 74)
+#skdet from [74, 119)
+syst_first	0
+syst_last	110
+skip		73	# Eb error
+
+#systematic informations
+corr_file	"/data/tboschi/HKsens/errorstudy/0/systematics/combinedmatrix.root"
+corr_name	"correlation"
+
+systematic_E_FHC "/data/tboschi/HKsens/errorstudy/0/systematics/FHC1Re.fij.t2k_spline.root"
+systematic_E_RHC "/data/tboschi/HKsens/errorstudy/0/systematics/RHC1Re.fij.t2k_spline.root"
+systematic_M_FHC "/data/tboschi/HKsens/errorstudy/0/systematics/FHC1Rmu.fij.t2k_spline.root"
+systematic_M_RHC "/data/tboschi/HKsens/errorstudy/0/systematics/RHC1Rmu.fij.t2k_spline.root"
+
+
+
+reco_input	"/somewhere/in/reconstruction_atmo"
+
+# OOOOOO LLLLLL DDDDDD
+# these are needed to build observables
+#
+#reconstruction file cards - neutrino mode
+#reco_nuE0_nuE0_FHC	"global/reconstruction/syst_nuE0_nuE0_FHC.card"
+#reco_nuM0_nuM0_FHC	"global/reconstruction/syst_nuM0_nuM0_FHC.card"
+#reco_nuM0_nuE0_FHC	"global/reconstruction/syst_nuM0_nuE0_FHC.card"
+#reco_nuEB_nuEB_FHC	"global/reconstruction/syst_nuEB_nuEB_FHC.card"
+#reco_nuMB_nuMB_FHC	"global/reconstruction/syst_nuMB_nuMB_FHC.card"
+#reco_nuMB_nuEB_FHC	"global/reconstruction/syst_nuMB_nuEB_FHC.card"
+#
+#reconstruction file cards - antineutrino mode
+#reco_nuE0_nuE0_RHC	"global/reconstruction/syst_nuE0_nuE0_RHC.card"
+#reco_nuM0_nuM0_RHC	"global/reconstruction/syst_nuM0_nuM0_RHC.card"
+#reco_nuM0_nuE0_RHC	"global/reconstruction/syst_nuM0_nuE0_RHC.card"
+#reco_nuEB_nuEB_RHC	"global/reconstruction/syst_nuEB_nuEB_RHC.card"
+#reco_nuMB_nuMB_RHC	"global/reconstruction/syst_nuMB_nuMB_RHC.card"
+#reco_nuMB_nuEB_RHC	"global/reconstruction/syst_nuMB_nuEB_RHC.card"
+
+
+
+
+# density profile for beamline
+density_profile	"data/DensityProfileTochibora.dat"

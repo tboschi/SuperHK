@@ -1,0 +1,149 @@
+# card for the atmospheric sample
+
+verbose	1
+
+# scale statistics
+stats	1.00
+
+density_profile		"/a/path"
+production_heights	"make/a/path"
+
+# systematic information for atmospheric sample
+
+# if you want to exclude any systematic error
+# specify it here as a string
+skip		"t2k_m23_error_fij" "t2k_s23_error_fij"
+
+
+# systematics are stored in root file
+# and TTree object with description information
+systematic_file	"/path/to/systematic.root"
+systematic_tree	"sigmatree"
+
+
+# specify which sample to use for observables
+# if commented, all of them are used
+#sample		"all"
+
+# MC information for buidling samples
+# they are root file with the same structure
+# so they can be chained by the same tree name
+MC_input	"/montecarlo/path/*.root"
+MC_tree_name	"mcStuff"
+
+# MC scaling from SK to HK
+MC_scale	8.37333333334
+
+
+#
+#tree_input	"/data/tboschi/HKsens/errorstudy/sk/sk4osct/*mc*.root"
+#tree_name	"osc_tuple"
+#friend_input	"/data/tboschi/HKsens/errorstudy/sk/sk4eave/*mc*.root"
+#friend_name	"eaveFriend"
+#
+#output_path	"recotest/"
+#card_path	"recotest/atmo_"
+#true_bins_energy	50
+#true_bins_cosz		20
+
+
+
+##################################
+#
+#  	SK - IV 	binning
+#
+##################################
+
+bintype_SubGeVElike0Decay		57
+binaxis_SubGeVElike0Decay_0		2.0 , 2.25 , 2.4 , 2.47,  2.53 , 2.6 , 2.67, 2.73,  2.8 , 2.87, 2.93,  3.0 , 3.07, 3.2
+binaxis_SubGeVElike0Decay_1		-1.0, -0.9 , -0.8 , -0.7 , -0.6 , -0.5 , -0.4 , -0.3 , -0.2 , -0.1 , 0.0 , 0.1 , 0.2 , 0.3 , 0.4 , 0.5 , 0.6 , 0.7 , 0.8 , 0.9 , 1.0
+
+bintype_SubGeVElike1Decay		58
+binaxis_SubGeVElike1Decay_0		2.0 , 2.25 , 2.4 , 2.47,  2.53 , 2.6 , 2.67, 2.73,  2.8 , 2.87, 2.93,  3.0 , 3.07, 3.2
+binaxis_SubGeVElike1Decay_1		-1.0, 1.0
+
+bintype_SingleRingPi0		59
+binaxis_SingleRingPi0_0		2.0 , 2.25 , 2.4 , 2.47,  2.53 , 2.6 , 2.67, 2.73,  2.8 , 2.87, 2.93,  3.0 , 3.07, 3.2
+binaxis_SingleRingPi0_1		-1.0, 1.0
+
+
+bintype_SubGeVMulike0Decay		60
+binaxis_SubGeVMulike0Decay_0	2.0 , 2.25 , 2.4 , 2.47,  2.53 , 2.6 , 2.67, 2.73,  2.8 , 2.87, 2.93,  3.0 , 3.07, 3.2
+binaxis_SubGeVMulike0Decay_1	-1.0, -0.9 , -0.8 , -0.7 , -0.6 , -0.5 , -0.4 , -0.3 , -0.2 , -0.1 , 0.0 , 0.1 , 0.2 , 0.3 , 0.4 , 0.5 , 0.6 , 0.7 , 0.8 , 0.9 , 1.0
+
+
+bintype_SubGeVMulike1Decay		61
+binaxis_SubGeVMulike1Decay_0	2.0 , 2.25 , 2.4 , 2.47,  2.53 , 2.6 , 2.67, 2.73,  2.8 , 2.87, 2.93,  3.0 , 3.07, 3.2
+binaxis_SubGeVMulike1Decay_1	-1.0, -0.9 , -0.8 , -0.7 , -0.6 , -0.5 , -0.4 , -0.3 , -0.2 , -0.1 , 0.0 , 0.1 , 0.2 , 0.3 , 0.4 , 0.5 , 0.6 , 0.7 , 0.8 , 0.9 , 1.0
+
+
+bintype_SubGeVMulike2Decay		62
+binaxis_SubGeVMulike2Decay_0	2.0 , 2.25 , 2.4 , 2.47,  2.53 , 2.6 , 2.67, 2.73,  2.8 , 2.87, 2.93,  3.0 , 3.07, 3.2
+binaxis_SubGeVMulike2Decay_1	-1.0, 1.0
+
+
+
+bintype_TwoRingPi0			63
+binaxis_TwoRingPi0_0		2.0 ,  2.2, 2.4 ,  2.6 ,  2.8 , 3.2
+binaxis_TwoRingPi0_1		-1.0, 1.0
+
+bintype_MultiGeV_elike_nue		64
+binaxis_MultiGeV_elike_nue_0	3.0 , 3.27, 3.4 , 3.5 , 3.6, 3.7 , 3.8 , 3.9, 4.0 , 4.2, 5.0
+binaxis_MultiGeV_elike_nue_1	-1.0, -0.9 , -0.8 , -0.7 , -0.6 , -0.5 , -0.4 , -0.3 , -0.2 , -0.1 , 0.0 , 0.1 , 0.2 , 0.3 , 0.4 , 0.5 , 0.6 , 0.7 , 0.8 , 0.9 , 1.0
+
+bintype_MultiGeV_elike_barnue	65
+binaxis_MultiGeV_elike_barnue_0	3.0 , 3.27, 3.4 , 3.5 , 3.6, 3.7 , 3.8 , 3.9, 4.0 , 4.2, 5.0
+binaxis_MultiGeV_elike_barnue_1	-1.0, -0.9 , -0.8 , -0.7 , -0.6 , -0.5 , -0.4 , -0.3 , -0.2 , -0.1 , 0.0 , 0.1 , 0.2 , 0.3 , 0.4 , 0.5 , 0.6 , 0.7 , 0.8 , 0.9 , 1.0
+
+bintype_MultiGeV_mulike		66
+binaxis_MultiGeV_mulike_0		3.0 , 3.4 , 3.6 , 3.8 , 4.0, 5.0
+binaxis_MultiGeV_mulike_1		-1.0, -0.9 , -0.8 , -0.7 , -0.6 , -0.5 , -0.4 , -0.3 , -0.2 , -0.1 , 0.0 , 0.1 , 0.2 , 0.3 , 0.4 , 0.5 , 0.6 , 0.7 , 0.8 , 0.9 , 1.0
+
+
+bintype_MultiRing_elike_nue		67
+binaxis_MultiRing_elike_nue_0	3.0 , 3.4 , 3.5 , 3.6, 3.7 , 3.8, 3.9 , 4.0 , 5.0
+binaxis_MultiRing_elike_nue_1	-1.0, -0.9 , -0.8 , -0.7 , -0.6 , -0.5 , -0.4 , -0.3 , -0.2 , -0.1 , 0.0 , 0.1 , 0.2 , 0.3 , 0.4 , 0.5 , 0.6 , 0.7 , 0.8 , 0.9 , 1.0
+
+bintype_MultiRing_elike_barnue	68
+binaxis_MultiRing_elike_barnue_0	3.0 , 3.4 , 3.5 , 3.6, 3.7 , 3.8, 3.9 , 4.0 , 5.0
+binaxis_MultiRing_elike_barnue_1	-1.0, -0.9 , -0.8 , -0.7 , -0.6 , -0.5 , -0.4 , -0.3 , -0.2 , -0.1 , 0.0 , 0.1 , 0.2 , 0.3 , 0.4 , 0.5 , 0.6 , 0.7 , 0.8 , 0.9 , 1.0
+
+
+bintype_MultiRing_mulike		69
+binaxis_MultiRing_mulike_0		2.0 , 3.1238516 , 3.4 , 3.7 , 5.0
+binaxis_MultiRing_mulike_1		-1.0, -0.9 , -0.8 , -0.7 , -0.6 , -0.5 , -0.4 , -0.3 , -0.2 , -0.1 , 0.0 , 0.1 , 0.2 , 0.3 , 0.4 , 0.5 , 0.6 , 0.7 , 0.8 , 0.9 , 1.0
+
+bintype_MultiRingOther		70
+binaxis_MultiRingOther_0		3.0 , 3.27, 3.4 , 3.5 , 3.6, 3.7 , 3.8 , 3.9, 4.0 , 4.2, 5.0
+binaxis_MultiRingOther_1		-1.0, -0.9 , -0.8 , -0.7 , -0.6 , -0.5 , -0.4 , -0.3 , -0.2 , -0.1 , 0.0 , 0.1 , 0.2 , 0.3 , 0.4 , 0.5 , 0.6 , 0.7 , 0.8 , 0.9 , 1.0
+
+##
+##  PC events
+##
+bintype_PCStop			71
+binaxis_PCStop_0			2.0 , 3.4 , 3.7, 4.0,  5.0
+binaxis_PCStop_1			-1.0, -0.9 , -0.8 , -0.7 , -0.6 , -0.5 , -0.4 , -0.3 , -0.2 , -0.1 , 0.0 , 0.1 , 0.2 , 0.3 , 0.4 , 0.5 , 0.6 , 0.7 , 0.8 , 0.9 , 1.0
+
+
+
+bintype_PCThru			72
+binaxis_PCThru_0			2.0 , 3.123 , 3.4 , 3.7 , 4.0 , 5.0
+binaxis_PCThru_1			-1.0, -0.9 , -0.8 , -0.7 , -0.6 , -0.5 , -0.4 , -0.3 , -0.2 , -0.1 , 0.0 , 0.1 , 0.2 , 0.3 , 0.4 , 0.5 , 0.6 , 0.7 , 0.8 , 0.9 , 1.0
+
+
+#
+#  upmus 
+#
+
+bintype_UpStopMu			73
+binaxis_UpStopMu_0			3.2 , 3.397, 3.698, 4.0, 8.0
+binaxis_UpStopMu_1			-1.0,-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6,-0.55,-0.5,-0.45,-0.4,-0.35,-0.3,-0.25,-0.2,-0.15,-0.1,-0.05,0.0
+
+bintype_UpThruMuNonShowering	74
+binaxis_UpThruMuNonShowering_0	2.0, 8.0
+binaxis_UpThruMuNonShowering_1	-1.0,-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6,-0.55,-0.5,-0.45,-0.4,-0.35,-0.3,-0.25,-0.2,-0.15,-0.1,-0.05,0.0
+
+bintype_UpThruMuShowering		75
+binaxis_UpThruMuShowering_0		2.0, 8.0
+binaxis_UpThruMuShowering_1		-1.0,-0.95,-0.9,-0.85,-0.8,-0.75,-0.7,-0.65,-0.6,-0.55,-0.5,-0.45,-0.4,-0.35,-0.3,-0.25,-0.2,-0.15,-0.1,-0.05,0.0
+
