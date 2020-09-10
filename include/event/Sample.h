@@ -261,7 +261,7 @@ class Sample
 			std::vector<Eigen::ArrayXd> allfacts;
 			//for (int n = _binpos[it].first; n < _binpos[it].second; ++n)
 			for (int n = _offset[it]; n < _offset[it] + _binpos[it].size(); ++n)
-				allfacts.push_back(Eigen::ArrayXd::Constant(1, 1));
+				allfacts.push_back(Eigen::ArrayXd::Ones(1));
 			return allfacts;
 		}
 

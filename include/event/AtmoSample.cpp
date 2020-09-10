@@ -139,9 +139,13 @@ void AtmoSample::LoadSystematics()
 		for (const std::string &it : _type) {
 			int i = _offset[it];
 			for (int n : _binpos[it]) {
+				if (std::abs(hsys->GetBinContent(n+1)) > 1)
+					std::cout << k_err << ", " << n << " out of scale\n";
 				for (double sigma = -3; sigma < 4; sigma += 2)
 					_sysMatrix[sigma](i, k_err)
-						= sigma * hsys->GetBinContent(n+1);
+						//= sigma * hsys->GetBinContent(n+1);
+						= sigma * std::min(1., std::max(-1., 
+							   hsys->GetBinContent(n+1)));
 				++i;
 			}
 		}

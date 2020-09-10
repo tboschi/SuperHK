@@ -266,7 +266,7 @@ std::map<std::string, Eigen::VectorXd> BeamSample::BuildSamples(Oscillator *osc)
 		// this hould be 'E_FHC' like
 		hname.erase(hname.find_first_of('_'), len);
 		
-		Eigen::VectorXd probs = Eigen::VectorXd::Constant(ir.second.cols(), 1);
+		Eigen::VectorXd probs = Eigen::VectorXd::Ones(ir.second.cols());
 		if (osc && hname.find("NC") == std::string::npos) {
 			// not a NC channel
 			if (kVerbosity > 4)
@@ -450,13 +450,19 @@ void BeamSample::LoadSystematics()
 
 			int i = _offset[it];
 			for (int n : _binpos[it]) {
+				if (std::abs(hsys->GetBinContent(n+1) - 1) > 1)
+					std::cout << k_err << ", " << n << " out of scale\n";
 				if (sigma)	// it is a spline file, i.e. sigma != 0
 					_sysMatrix[sigma](i, k_err - sysA)
-						= sigma * (hsys->GetBinContent(n+1) - 1);
+						//= sigma * (hsys->GetBinContent(n+1) - 1);
+						= sigma * std::min(1., std::max(-1., 
+							   hsys->GetBinContent(n+1) - 1));
 				else		// not a spline, fill manually
 					for (int s = -3; s < 4; s += 2)
 						_sysMatrix[s](i, k_err - sysA)
-							= s * (hsys->GetBinContent(n+1) - 1);
+							//= s * (hsys->GetBinContent(n+1) - 1);
+						= s * std::min(1., std::max(-1., 
+							   hsys->GetBinContent(n+1) - 1));
 				++i;
 			}
 		}
@@ -530,6 +536,9 @@ std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it
 		// this is just relative bin position
 		int m0 = std::max(StartingBin(it, shift, n), _binpos[it].front());
 		int m1 = std::min(EndingBin(it, shift, n), _binpos[it].back()+1);
+		//std::cout << "nonzero bin " << n << " is " << global[n]
+		//	  << " - " << global[n+1]
+		//	  << ", between " << m0 << " and " << m1 << std::endl;
 
 		// unscaled/original bins
 		//double b0_n = global[n - off];
@@ -542,9 +551,10 @@ std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it
 		std::vector<double> thisfact;
 		for (int m = m0; m < m1; ++m) {
 
-			// scaled bins
 			double b0_m = global[m];
 			double b1_m = std::min(global[m + 1], 30 / shift);
+			//std::cout << "\tshift " << shift * b0_m << " - " << shift * b1_m << std::endl;
+			// scaled bins
 			//continue/break computation because there is no overlap
 			if (shift * b0_m > b1_n) {
 				//std::cout << "stopping at " << m
