@@ -66,6 +66,9 @@ int main(int argc, char** argv)
 				aout << "\t" << vh[i]->GetBinContent(j);
 				dout << "\t" << vh[0]->GetBinContent(j) - vh[i]->GetBinContent(j);
 			}
+			if (vh.size() == 1)
+				dout << "\t" << 0;
+
 			aout << std::endl;
 			dout << std::endl;
 		}

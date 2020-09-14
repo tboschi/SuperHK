@@ -17,6 +17,7 @@ while getopts 'pf:r:n:' flag; do
 	esac
 done
 
+echo $root, $name
 shift $((OPTIND-1))
 
 root=${root%/}

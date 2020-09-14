@@ -15,12 +15,7 @@
 int main(int argc, char** argv)
 {
 	std::string cardFile = argv[3];
-	CardDealer *cd = new CardDealer(cardFile);
-	ParameterSpace *parms = new ParameterSpace(cd);
-
-	int kVerbosity;
-	if (!cd->Get("verbose", kVerbosity))
-		kVerbosity = false;
+	ParameterSpace *parms = new ParameterSpace(cardFile);
 
 	//std::map<std::string, std::vector<double> > parms;
 	//cd->Get("parm_", parms);
@@ -249,8 +244,6 @@ int main(int argc, char** argv)
 
 	outf->Close();
 	inf->Close();
-
-	delete cd;
 
 	std::map<std::string, double*>::iterator iv;
 	for (iv = varmap.begin(); iv != varmap.end(); ++iv)

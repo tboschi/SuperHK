@@ -72,7 +72,7 @@ for ll in "${list[@]}" ; do
 		hadd -f $cont/$dir/all.root $sens/$dir/$name.*.root
 	fi
 	echo "Creating" $outp "contour for" $dir
-	$Contour $cont/$dir/all.root $cont/$dir/$outp.root $sens/$dir/this_sensitivity.card
+	$Contour $cont/$dir/all.root $cont/$dir/$outp.root $sens/oscillation.card
 		#mv ChiSquared.root 
 
 		#if [ "$tr" = true ] ; then
