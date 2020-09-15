@@ -454,15 +454,15 @@ void BeamSample::LoadSystematics()
 					std::cout << k_err << ", " << n << " out of scale\n";
 				if (sigma)	// it is a spline file, i.e. sigma != 0
 					_sysMatrix[sigma](i, k_err - sysA)
-						//= sigma * (hsys->GetBinContent(n+1) - 1);
-						= sigma * std::min(1., std::max(-1., 
-							   hsys->GetBinContent(n+1) - 1));
+						= sigma * (hsys->GetBinContent(n+1) - 1);
+						//= sigma * std::min(1., std::max(-1., 
+							   //hsys->GetBinContent(n+1) - 1));
 				else		// not a spline, fill manually
 					for (int s = -3; s < 4; s += 2)
 						_sysMatrix[s](i, k_err - sysA)
-							//= s * (hsys->GetBinContent(n+1) - 1);
-						= s * std::min(1., std::max(-1., 
-							   hsys->GetBinContent(n+1) - 1));
+							= s * (hsys->GetBinContent(n+1) - 1);
+						//= s * std::min(1., std::max(-1., 
+							   //hsys->GetBinContent(n+1) - 1));
 				++i;
 			}
 		}
