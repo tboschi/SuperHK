@@ -44,6 +44,8 @@ while getopts '1:2:r:g:m:N:t:sfv:' flag; do
 	esac
 done
 
+rm .reconstruction_files
+rm .production_files
 
 #global contains specific set, as in global/asim
 #root contains specific set, as in root/asim
@@ -226,10 +228,11 @@ for t in "${point[@]}" ; do
 # sumbit with --
 #	sbatch $scriptname
 
-#SBATCH --array=0-$NJOBS
+#SBATCH --array=0-$((NJOBS - 1))
 #SBATCH --job-name=$nameExec
 #SBATCH -o $output/L$nameExec.%a.log
 #SBATCH -p nms_research  
+#SBATCH --time=3-0
 
 srun $Sens \$SLURM_ARRAY_TASK_ID $NJOBS $output/this_sensitivity.card
 

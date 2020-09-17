@@ -45,6 +45,8 @@ while getopts '1:2:r:g:m:N:t:sfv:' flag; do
 	esac
 done
 
+rm .reconstruction_files
+rm .production_files
 
 #global contains specific set, as in global/asim
 #root contains specific set, as in root/asim
