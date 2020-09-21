@@ -65,8 +65,8 @@ while getopts 'r:1:2:N:t:m:sf:v:h' flag; do
 	esac
 done
 
-rm .reconstruction_files
-rm .production_files
+rm -f .reconstruction_files
+rm -f .production_files
 
 #global contains specific set, as in global/asim
 #root contains specific set, as in root/asim
@@ -121,13 +121,14 @@ if [ -n "$ff" ] ; then
 	pinfo=$ff"_scan.info"
 	tname=$ff"_scan_"
 	parm="CP"
-	sed -i "/^#scan/s:^#::" $beam
-	sed -i "s:^scan*:scan\t$ff:" $card
+	sed -i "/^#scan/s:^#::" $card
+	sed -i "s:^scan.*:scan\t$ff:" $card
+	sed -i "/^#point/s:^#::" $card
 else
 	pinfo="point.info"
 	tname="point_"
 	parm=""
-	sed -i "/^scan/s:^:#:" $beam
+	sed -i "/^scan/s:^:#:" $card
 fi
 
 
@@ -191,13 +192,14 @@ sed -i "s:density_profile.*:density_profile\t\"$dens\":"	$beam
 #atmo systematics
 
 sys_atmo=$root/../systematics/atmo_fij.root
+sed -i "s:^systematic_file.*:systematic_file\t\"$sys_atmo\":" $atmo
+sed -i "s:^systematic_tree.*:systematic_tree\t\"sigmatree\":" $atmo
 #Atmo systematics
 if [ "$ss" = true ] ; then
 	echo "statistics only fit"
-	sed -i "/^systematic_file/s:^:#:" $beam
+	sed -i "/^#stats_only/s:^#::" $atmo
 else # update systematics
-	sed -i "s:^systematic_file.*:systematic_file\t\"$sys_atmo\":" $atmo
-	sed -i "s:^systematic_tree.*:systematic_tree\t\"sigmatree\":" $atmo
+	sed -i "/^stats_only/s:^:#:" $atmo
 fi
 
 reco_atmo=$root'/../../reconstruction_atmo/*mc.sk4.*.root'
@@ -232,7 +234,7 @@ for t in "${point[@]}" ; do
 
 	output=$root/sensitivity/$tname$t
 	mkdir -p $output
-	sed -i "s:^Point.*:Point\t$t:" $card
+	sed -i "s:^point.*:point\t$t:" $card
 	sed -i "s:^output.*:output\t\"$output/SpaghettiSens.T2HK.root\":" $card
 
 	rm -f $output/L*log

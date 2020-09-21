@@ -187,7 +187,7 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 		else if (code == 1) {
 			std::cout << "no convergence, dx2 " << best_x2-x2;
 			if (best_x2 > x2) {
-				step = (best_eps - epsil).norm();
+				step = 1;
 				//step /= lm_down;
 				//step = std::min(1.0, std::abs(best_x2 - x2));
 				best_x2 = x2;
@@ -208,7 +208,7 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 		//if (step < fitErr)
 		//	step = 0.1;
 		epsil.setRandom();
-		std::cout << "new step is " << step  << " from best\n";
+		std::cout << "new step is " << step << " from best\n";
 		epsil = best_eps + step * epsil / epsil.norm();
 		//epsil = step * epsil;
 
@@ -303,7 +303,9 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 		}
 	}
 
-	if (lambda <= 1./lm_0)	//convergence was reached
+	if (std::abs(diff / DOF()) < 10*fitErr
+	      && delta.norm() / _nSys < 10*fitErr) 	//convergence was reached
+	//if (lambda <= 1./lm_0)
 		return 0;
 	else	// no convergence, change starting point
 		return 1;

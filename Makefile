@@ -17,7 +17,7 @@ OSC3INC = /data/tboschi/HKsens/OscAna/Osc3++/src
 
 LDFLAGS  := -Wl,--no-as-needed $(LDFLAGS) $(ROOTLIB) -L$(LIBDIR) -L$(OSC3LIB)
 #LDLIBS   := -losc3pp
-CXXFLAGS := $(CXXFLAGS) $(DEBUG) -fPIC -std=c++11 -O3 -ffast-math $(ROOTCXX) -I$(INCDIR) -I$(OSC3INC) -I$(EIGEN)
+CXXFLAGS := $(CXXFLAGS) $(DEBUG) -fPIC -std=c++11 -O3 -march=native -ffast-math $(ROOTCXX) -I$(INCDIR) -I$(OSC3INC) -I$(EIGEN)
 
 
 

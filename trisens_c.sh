@@ -192,13 +192,14 @@ sed -i "s:density_profile.*:density_profile\t\"$dens\":"	$beam
 #atmo systematics
 
 sys_atmo=$root/../systematics/atmo_fij.root
+sed -i "s:^systematic_file.*:systematic_file\t\"$sys_atmo\":" $atmo
+sed -i "s:^systematic_tree.*:systematic_tree\t\"sigmatree\":" $atmo
 #Atmo systematics
 if [ "$ss" = true ] ; then
 	echo "statistics only fit"
-	sed -i "/^systematic_file/s:^:#:" $beam
+	sed -i "/^#stats_only/s:^#::" $atmo
 else # update systematics
-	sed -i "s:^systematic_file.*:systematic_file\t\"$sys_atmo\":" $atmo
-	sed -i "s:^systematic_tree.*:systematic_tree\t\"sigmatree\":" $atmo
+	sed -i "/^stats_only/s:^:#:" $atmo
 fi
 
 reco_atmo=$root'/../../reconstruction_atmo/*mc.sk4.*.root'
@@ -268,7 +269,7 @@ EOF
 #environment		= "LD_LIBRARY_PATH=$LD_LIBRARY_PATH PATH=$PATH HOME=$HOME"
 
 	echo Submitting for point $tname$t
-	echo $csub $scriptname
+	$csub $scriptname
 	exit 0
 
 	#wait until jobs are finished before moving to next point
