@@ -167,38 +167,52 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 	//initialize epsil with zeroes
 
 	Eigen::VectorXd epsil = Eigen::VectorXd::Zero(_nSys);
-	//Eigen::VectorXd epsil = Eigen::VectorXd::Constant(_nSys, 0);
 	Eigen::VectorXd best_eps = epsil;
-	double best_x2 = X2(On, En, best_eps);
 
-	int tries = 1;
-	// if _nSys == 0 there is no fit, good for stats only
-	while (!zeroEpsilons > 0 && !FindMinimum(On, En, epsil) && tries < maxIteration) {
-		++tries;
-		double x2 = X2(On, En, epsil);
+	double x2 = X2(On, En, best_eps);
+	double best_x2 = x2;
 
-		if (kVerbosity > 1)
-			std::cout << "~~~~~~ No convergence reached ~~~~~~~";
+	int tries = 0;
+	double step = 1;
+	bool first = true;
+	while (!zeroEpsilons && tries < maxIteration) {
+		unsigned int code = MinimumX2(On, En, epsil, x2);
+		std::cout << "Try (" << tries << ") : ";
 
-		double dist = (best_eps - epsil).norm();
-		double step = std::abs(best_x2 - x2);
-		if (best_x2 > x2) {
+		if (code == 0) {
 			best_x2 = x2;
 			best_eps = epsil;
-			std::cout << " but new best!";
+			break;
 		}
-
-		epsil.setRandom();
-		epsil = best_eps + std::min(step, 1.) * epsil;
-
-		if (kVerbosity > 1) {
-			std::cout << " X2 " << best_x2 << std::endl;
-			std::cout << "distance from previour best " << dist
-				<< " with dx2 " << step << std::endl;
-			std::cout << "trying new point (" << tries
-				  << ") at " << epsil.norm() << std::endl;
+		else if (code == 1) {
+			std::cout << "no convergence, dx2 " << best_x2-x2;
+			if (best_x2 > x2) {
+				step = 1;
+				//step /= lm_down;
+				//step = std::min(1.0, std::abs(best_x2 - x2));
+				best_x2 = x2;
+				best_eps = epsil;
+				std::cout << "-> new best! X2 = " << best_x2;
+			}
+			else
+				step += 0.1;
 			std::cout << std::endl;
 		}
+		else if (code == 2) {
+			std::cout << "bad point\n";
+			step = 1;
+			//step *= lm_up;
+			//step = 1;
+		}
+
+		//if (step < fitErr)
+		//	step = 0.1;
+		epsil.setRandom();
+		std::cout << "new step is " << step << " from best\n";
+		epsil = best_eps + step * epsil / epsil.norm();
+		//epsil = step * epsil;
+
+		++tries;
 	}
 	if (kVerbosity > 1)
 		std::cout << "Number of attempts: " << tries << std::endl;
@@ -216,9 +230,10 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 //uses Levenberg-Marquardt algorithm
 //quites when x2 variation falls below sens and if lambda < 1
 //which means it iconvergin
-bool ChiSquared::FindMinimum(const Eigen::VectorXd &On,
-			     const Eigen::VectorXd &En, 
-			     Eigen::VectorXd &epsil)
+unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
+			  const Eigen::VectorXd &En, 
+			  Eigen::VectorXd &epsil,
+			  double &x2)
 			     //double alpha)
 {
 	int c = 0;	//counter
@@ -226,7 +241,9 @@ bool ChiSquared::FindMinimum(const Eigen::VectorXd &On,
 
 	Eigen::VectorXd delta = Eigen::VectorXd::Ones(_nSys);
 
-	double x2 = X2(On, En, epsil);
+	//x2 is initial x2 value
+	//x2 = X2(On, En, epsil);
+	
 	double diff = 1;
 	//double minj = 1;
 	//while (diff > err && minj > NumSys() * err && minj > 1e-6 &&
@@ -251,10 +268,7 @@ bool ChiSquared::FindMinimum(const Eigen::VectorXd &On,
 		hes.diagonal() += Eigen::VectorXd::Constant(_nSys, maxd * lambda);
 		delta = hes.ldlt().solve(jac);
 		if (delta.norm() > 100) {
-			if (kVerbosity)
-				std::cout << "Taking a too big step (" << delta.norm()
-					  << ")" << std::endl;
-			return false;
+			return 2;	// change step
 		}
 
 		//cos for uphill moves
@@ -262,14 +276,17 @@ bool ChiSquared::FindMinimum(const Eigen::VectorXd &On,
 
 		Eigen::VectorXd nextp = epsil - delta;	//next step
 		//check if this step is good
-		double x2_ = X2(On, En, nextp);
-		diff = x2 - x2_;
+		double _x2 = X2(On, En, nextp);
+		if (std::isnan(_x2))
+			return 2;	//X2 cannot be computed
 
-		//if (x2_ < x2 || (1-cosb) * x2_ < x2)
+		diff = x2 - _x2;
+
+		//if (_x2 < x2 || (1-cosb) * _x2 < x2)
 		if (diff > 0) {	//next x2 is better, update lambda and epsilons
 			lambda /= lm_down;
 			epsil = nextp;
-			x2 = x2_;
+			x2 = _x2;
 		}
 		else if (std::abs(delta.norm()) > 0)	//next x2 is worse
 			lambda *= lm_up;	//nothing changes but lambda
@@ -286,9 +303,12 @@ bool ChiSquared::FindMinimum(const Eigen::VectorXd &On,
 		}
 	}
 
-
-	return (lambda <= 1./lm_0);	//convergence was reached
-					// else	no convergence, change starting point
+	if (std::abs(diff / DOF()) < 10*fitErr
+	      && delta.norm() / _nSys < 10*fitErr) 	//convergence was reached
+	//if (lambda <= 1./lm_0)
+		return 0;
+	else	// no convergence, change starting point
+		return 1;
 }
 
 

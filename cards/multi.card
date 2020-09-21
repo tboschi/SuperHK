@@ -27,10 +27,10 @@ fit_hierarchy	"normal"
 # specify point to fit
 # if not set, default of oscillation space will be used
 # (check oscillation card)
-#Point	12345
+#point	12345
 
-# fast fit for CPV sensitivity
-fast	0
+# special scan types
+scan	0
 
 # output result of fit will be saved here
 output	"/data/tboschi/HKsens/errorstudy/test/asim/NH_NH/sensitivity/moms/SpaghettiSens.root"

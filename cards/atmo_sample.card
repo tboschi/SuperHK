@@ -19,6 +19,7 @@ skip		"t2k_m23_error_fij" "t2k_s23_error_fij"
 # and TTree object with description information
 systematic_file	"/path/to/systematic.root"
 systematic_tree	"sigmatree"
+#stats_only	1
 
 
 # specify which sample to use for observables

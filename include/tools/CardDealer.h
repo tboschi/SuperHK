@@ -221,6 +221,10 @@ class CardDealer
 				return false;
 		}
 
+		bool Get(const std::string &key) {
+			return (_entries.find(key) != _entries.end());
+		}
+
 
 		std::vector<std::string> ListKeys() {
 			std::vector<std::string> keys;

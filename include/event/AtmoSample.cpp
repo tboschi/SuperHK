@@ -100,11 +100,12 @@ void AtmoSample::LoadSystematics()
 	TString * name_ptr = new TString;
 	TTree * syst = static_cast<TTree*>(mf->Get(tree_name.c_str()));
 	syst->SetBranchAddress("FijName", &name_ptr);
+	int nsyst = syst->GetEntries();
 	//double error;
 	//syst->SetBranchAddress("Sigma", &error);
 
 	_nSys = 0;
-	for (int i = 0; i < syst->GetEntries(); ++i) {
+	for (int i = 0; i < nsyst; ++i) {
 		syst->GetEntry(i);
 		std::string name_err = name_ptr->Data();
 		if (skip_sys.find(name_err) == skip_sys.end())
@@ -122,8 +123,16 @@ void AtmoSample::LoadSystematics()
 	for (int sigma = -3; sigma < 4; sigma += 2)
 		_sysMatrix[sigma] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
 
+
+	// if only stats fit, this function is done here
+	if (cd->Get("stats_only")) {
+		std::cout << "AtmoSample: systematic errors for atmo sample will not be fitted" << std::endl;
+		nsyst = 0;	// with this, the following loop won't work
+	}
+
+
 	int k_err = 0;
-	for (int i = 0; i < syst->GetEntries(); ++i) {
+	for (int i = 0; i < nsyst; ++i) {
 		int off = 0;	// offset for global bin
 		syst->GetEntry(i);
 		std::string name_err = name_ptr->Data();

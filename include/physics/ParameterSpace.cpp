@@ -178,9 +178,60 @@ int ParameterSpace::GetNominalEntry()
 	int n = 0, q = 1;
 	Binning::reverse_iterator ir;
 	for (ir = binning.rbegin(); ir != binning.rend(); ++ir) {
+		std::cout << ir->first << "\t" << ir->second.size() << "\t" << nominal[ir->first] << std::endl;
 		n += nominal[ir->first] * q;
 		q *= ir->second.size();
 	}
 
 	return n;
+}
+
+std::vector<int> ParameterSpace::GetScanEntries(const std::vector<std::string> &p)
+{
+	std::vector<int> entries;
+	std::set<std::string> parms(p.begin(), p.end());
+
+	int reps = 1;
+	std::map<std::string, int> index;
+	std::map<std::string, int> maxes;
+	for (const auto &in : nominal) {
+		if (parms.find(in.first) == parms.end())
+			index[in.first] = in.second;
+		else {
+			index[in.first] = 0;
+			maxes[in.first] = binning[in.first].size();
+		}
+	}
+
+	int reset = 0;
+	do {
+		int n = 0, q = 1;
+		Binning::reverse_iterator ir;
+		for (ir = binning.rbegin(); ir != binning.rend(); ++ir) {
+			n += index[ir->first] * q;
+			q *= ir->second.size();
+		}
+		entries.push_back(n);
+
+		reset = 0;
+		auto ii = index.rbegin();
+		for ( ; ii != index.rend(); ++ii) {
+			if (parms.find(ii->first) == parms.end())
+				continue;
+
+			// index can be incremented
+			if (ii->second < binning[ii->first].size() - 1) {
+				++(ii->second);
+				break;
+			}
+			// reset it to zero and move to next
+			else {
+				ii->second = 0;
+				++reset;
+			}
+		}
+
+	} while (reset < parms.size());
+
+	return entries;
 }

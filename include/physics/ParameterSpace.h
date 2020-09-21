@@ -39,6 +39,7 @@ class ParameterSpace
 			      double &S12, double &S13, double &S23, double &dCP);
 		std::map<std::string, double> GetNominal();
 		int GetNominalEntry();
+		std::vector<int> GetScanEntries(const std::vector<std::string> &p);
 
 	private:
 		std::unique_ptr<CardDealer> cd;

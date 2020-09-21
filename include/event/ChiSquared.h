@@ -56,9 +56,9 @@ class ChiSquared
 
 		Eigen::VectorXd FitX2(const Eigen::VectorXd &On,
 				      const Eigen::VectorXd &En);
-		bool FindMinimum(const Eigen::VectorXd &On,
-				 const Eigen::VectorXd &En,
-				 Eigen::VectorXd &epsil);
+		unsigned int MinimumX2(const Eigen::VectorXd &On,
+				const Eigen::VectorXd &En,
+				Eigen::VectorXd &epsil, double &x2);
 
 
 

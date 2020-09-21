@@ -1,10 +1,28 @@
 #! /bin/bash
 
-#Osc=/home/tboschi/OscAna/hk.atm+beam/submitOsc.sh
+usage="$0 -r root_folder -1 [NH | IH] -2 [NH | IH] [-N num_jobs] [-s] 
+              [-t fraction] [-f scan_mode] [-m matrix] [-v verbosity] [-h]
+
+Submit fitter jobs to the scheduler.
+
+  parameters
+    -r root_folder  main working folder, must have a \"systematics\" sub folder
+    -1 [NH | IH]    mass hierarchy of the observed/true data (NH or IH)
+    -2 [NH | IH]    mass hierarchy of the expected/to fit data (NH or IH)
+
+  optional parameters
+    -N num_jobs     number of jobs to submit, default 360
+    -s		    does not fit systematic parameters, only statistics
+    -t fraction	    specify fraction of data to fit as value [0,1], default 1 (full data)
+    -f scan_mode    special scan mode, (CPV or octant)
+    -m matrix	    specify matrix type for beam sample, default correlation
+    -v verbosity    specify a verbosity value
+    -h		    Show usage"
 
 Sens=$PWD/bin/fitter
 #Sens=/data/tboschi/HKsens/OscAna/SuperHK/special.sh
 nameExec=${Sens##*/}
+csub=condor_submit
 
 card=$PWD/cards/multi.card
 fitc=$PWD/cards/fit_options.card
@@ -24,28 +42,31 @@ root=$PWD/errorstudy
 MH_1=""
 MH_2=""
 ss=false	#false if systematic fit, true if only stat fit
-ff=false	#false if systematic fit, true if fast fit for dCP scan
+ff=""	#empty if systematic fit, CPV if fast fit for dCP scan
 mtype="correlation"
-verb=""
+verb="1"
 
-while getopts '1:2:r:g:m:N:t:sfv:' flag; do
+while getopts 'r:1:2:N:t:m:sf:v:h' flag; do
 	case "${flag}" in
 		1) MH_1="${OPTARG}" ;;
 		2) MH_2="${OPTARG}" ;;
 		r) root="${OPTARG}" ;;
-		#g) global="${OPTARG}" ;;
 		m) mtype="${OPTARG}" ;;
 		N) NJOBS="${OPTARG}" ;;
 		t) stats="${OPTARG}" ;;
 		s) ss=true ;;
-		f) ff=true ;;
+		f) ff="${OPTARG}" ;;
 		v) verb="${OPTARG}" ;;
-		*) exit 1 ;;
+		h) echo "$usage" >&2
+		   exit 0 ;;
+		*) printf "illegal option -%s\n" "$OPTARG" >&2
+		   echo "$usage" >&2
+		   exit 1 ;;
 	esac
 done
 
-rm .reconstruction_files
-rm .production_files
+rm -f .reconstruction_files
+rm -f .production_files
 
 #global contains specific set, as in global/asim
 #root contains specific set, as in root/asim
@@ -56,6 +77,8 @@ rm .production_files
 if [[ "$root" != /* ]]
 then
 	root=$PWD/${root%/}
+else
+	root=${root%/}
 fi
 
 
@@ -71,8 +94,7 @@ oscc=$root/sensitivity/${oscc##*/}
 beam=$root/sensitivity/${beam##*/}
 atmo=$root/sensitivity/${atmo##*/}
 
-if [ ! -z $verb ] ; then
-	echo changing verbosity to $verb
+if [ -n $verb ] ; then
 	sed -i "s:verbose.*:verbose\t$verb:" $card $fitc $oscc $beam $atmo
 fi
 
@@ -95,15 +117,18 @@ echo Launching $NJOBS jobs
 
 
 # decide if normal fit or fast fit for sensitivity
-if [ "$ff" = true ] ; then
-	pinfo="scan.info"
-	#pinfo="temp.scan.info"
-	tname="scan_"
-	sed -i "s:^fast.*:fast\t1:" $card
+if [ -n "$ff" ] ; then
+	pinfo=$ff"_scan.info"
+	tname=$ff"_scan_"
+	parm="CP"
+	sed -i "/^#scan/s:^#::" $card
+	sed -i "s:^scan.*:scan\t$ff:" $card
+	sed -i "/^#point/s:^#::" $card
 else
 	pinfo="point.info"
 	tname="point_"
-	sed -i "s:^fast.*:fast\t0:" $card
+	parm=""
+	sed -i "/^scan/s:^:#:" $card
 fi
 
 
@@ -167,13 +192,14 @@ sed -i "s:density_profile.*:density_profile\t\"$dens\":"	$beam
 #atmo systematics
 
 sys_atmo=$root/../systematics/atmo_fij.root
+sed -i "s:^systematic_file.*:systematic_file\t\"$sys_atmo\":" $atmo
+sed -i "s:^systematic_tree.*:systematic_tree\t\"sigmatree\":" $atmo
 #Atmo systematics
 if [ "$ss" = true ] ; then
 	echo "statistics only fit"
-	sed -i "/^systematic_file/s:^:#:" $beam
+	sed -i "/^#stats_only/s:^#::" $atmo
 else # update systematics
-	sed -i "s:^systematic_file.*:systematic_file\t\"$sys_atmo\":" $atmo
-	sed -i "s:^systematic_tree.*:systematic_tree\t\"sigmatree\":" $atmo
+	sed -i "/^stats_only/s:^:#:" $atmo
 fi
 
 reco_atmo=$root'/../../reconstruction_atmo/*mc.sk4.*.root'
@@ -196,7 +222,7 @@ sed -i "s:production_heights.*:production_heights\t\"$prod\":"	$atmo
 
 
 
-./bin/oscillation_point $oscc $root/sensitivity/$pinfo
+./bin/oscillation_point $oscc $parm > $root/sensitivity/$pinfo
 point=$(cat $root/sensitivity/$pinfo)
 point=(${point})
 
@@ -208,7 +234,7 @@ for t in "${point[@]}" ; do
 
 	output=$root/sensitivity/$tname$t
 	mkdir -p $output
-	sed -i "s:^Point.*:Point\t$t:" $card
+	sed -i "s:^point.*:point\t$t:" $card
 	sed -i "s:^output.*:output\t\"$output/SpaghettiSens.T2HK.root\":" $card
 
 	rm -f $output/L*log

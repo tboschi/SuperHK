@@ -66,11 +66,12 @@ int main(int argc, char** argv)
 
 
 	// parameters for the main script
-	int kVerbosity, kFast;
+	int kVerbosity;
 	if (!cd->Get("verbose", kVerbosity))
 		kVerbosity = 0;
-	if (!cd->Get("fast", kFast))
-		kFast = false;
+	std::string scan;
+	if (!cd->Get("scan", scan))
+		scan = "";
 
 	std::string trueOrder, fitOrder;
 	if (!cd->Get("true_hierarchy", trueOrder))
@@ -164,7 +165,7 @@ int main(int argc, char** argv)
 
 	auto t_start = std::chrono::high_resolution_clock::now();
 	for (int i = nstart; i < nend; ++i)
-	//for (int i = tPoint-10; i < tPoint + 11; ++i)
+	//for (int i = 57550; i < 57551; ++i)
 	{
 		Point = i;
 		parms->GetEntry(Point, M12, M23, S12, S13, S23, dCP);
@@ -172,14 +173,14 @@ int main(int argc, char** argv)
 		double PenX2 = parms->GetPenalty(Point);
 
 		//fast fit flag, which means skips unless dCP is 0, ±pi, or tdCP
-		if (kFast && std::abs(dCP - tdCP) > 1e-5 &&
+		if (scan == "CPV" && std::abs(dCP - tdCP) > 1e-5 &&
 			     std::abs(std::sin(dCP)) > 1e-5)
 			continue;
 
 
-		if (kVerbosity)
-		{
-			std::cout << "\nFitter: now fitting point " << Point << std::endl;
+		if (kVerbosity) {
+			std::cout << "\nFitter: now fitting point " << Point
+				  << " (" << i-nstart << "/" << nend-nstart << ")\n";
 			std::cout << "m23 " << M23 << ", s13 " << S13
 				  << ", s23 " << S23 << ", dcp " << dCP << std::endl;
 		}
