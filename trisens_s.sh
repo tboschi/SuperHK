@@ -257,8 +257,10 @@ for t in "${point[@]}" ; do
 #SBATCH --array=0-$((NJOBS - 1))
 #SBATCH --job-name=$nameExec
 #SBATCH -o $output/L$nameExec.%a.log
-#SBATCH -p nms_research  
+#SBATCH -p nms_research,shared
 #SBATCH --time=3-0
+#SBATCH --cpus-per-task=1
+#SBATCH --exclude=node[001-050,052-079],nodea[01-21,23-24],nodeb[01-24],nodec[01-10,12-14,16-19,21,23-24],noded[01-24],smp[01-10]
 
 srun $Sens \$SLURM_ARRAY_TASK_ID $NJOBS $output/this_sensitivity.card
 
