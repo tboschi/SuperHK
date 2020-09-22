@@ -175,6 +175,7 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 	int tries = 0;
 	double step = 1;
 	bool first = true;
+	double stepSize = 1.0/maxIteration;
 	while (!zeroEpsilons && tries < maxIteration) {
 		unsigned int code = MinimumX2(On, En, epsil, x2);
 		std::cout << "Try (" << tries << ") : ";
@@ -186,21 +187,19 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 		}
 		else if (code == 1) {
 			std::cout << "no convergence, dx2 " << best_x2-x2;
-			if (best_x2 > x2) {
-				step = 1;
+			if (best_x2 < 0 || best_x2 > x2) {
+				step = (best_eps - epsil).norm() / 2.0;
 				//step /= lm_down;
 				//step = std::min(1.0, std::abs(best_x2 - x2));
 				best_x2 = x2;
 				best_eps = epsil;
 				std::cout << "-> new best! X2 = " << best_x2;
 			}
-			else
-				step += 0.1;
 			std::cout << std::endl;
 		}
 		else if (code == 2) {
 			std::cout << "bad point\n";
-			step = 1;
+			step -= stepSize;	// reset step size
 			//step *= lm_up;
 			//step = 1;
 		}
@@ -211,6 +210,7 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 		std::cout << "new step is " << step << " from best\n";
 		epsil = best_eps + step * epsil / epsil.norm();
 		//epsil = step * epsil;
+		x2 = X2(On, En, epsil);	//new initial value
 
 		++tries;
 	}
@@ -277,6 +277,7 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 		Eigen::VectorXd nextp = epsil - delta;	//next step
 		//check if this step is good
 		double _x2 = X2(On, En, nextp);
+		std::cout << "X2 -> " << x2 << ", " << _x2 << std::endl;
 		if (std::isnan(_x2))
 			return 2;	//X2 cannot be computed
 
@@ -303,12 +304,9 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 		}
 	}
 
-	if (std::abs(diff / DOF()) < 10*fitErr
-	      && delta.norm() / _nSys < 10*fitErr) 	//convergence was reached
-	//if (lambda <= 1./lm_0)
-		return 0;
-	else	// no convergence, change starting point
-		return 1;
+	//if (std::abs(diff / DOF()) < 10*fitErr
+	      //&& delta.norm() / _nSys < 10*fitErr) 	//convergence was reached
+	return (lambda <= lm_0) ? 0 : 1;
 }
 
 
