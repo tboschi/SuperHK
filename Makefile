@@ -50,9 +50,9 @@ include:
 
 clean:
 	-find $(INCDIR) -name "*.o"  -delete
-	-find $(LIBDIR) -mindepth 1 -name "*"   -delete
-	-find $(APPDIR) -mindepth 1 -name "*~"  -delete
-	-find $(BINDIR) -mindepth 1 -name "*"   -delete
+	-find $(LIBDIR) -maxdepth 1 -type f -name "*"   -delete
+	-find $(APPDIR) -maxdepth 1 -type f -name "*~"  -delete
+	-find $(BINDIR) -maxdepth 1 -type f -name "*"   -delete
 
 
 .PHONY: all clean
