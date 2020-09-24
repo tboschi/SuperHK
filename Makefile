@@ -7,17 +7,12 @@ LIBDIR =	lib
 ROOTLIB		= $(shell root-config --glibs)
 ROOTCXX		= $(shell root-config --cflags)
 
-## for osc3++
-OSC3LIB = /data/tboschi/HKsens/OscAna/Osc3++/lib
-OSC3INC = /data/tboschi/HKsens/OscAna/Osc3++/src
-##
-
 ## Eigen matrix library
-#EIGENINC = $(EIGEN)/Eigen
+EIGENINC = $(EIGEN)
 
-LDFLAGS  := -Wl,--no-as-needed $(LDFLAGS) $(ROOTLIB) -L$(LIBDIR) -L$(OSC3LIB)
+LDFLAGS  := -Wl,--no-as-needed $(LDFLAGS) $(ROOTLIB) -L$(LIBDIR)
 #LDLIBS   := -losc3pp
-CXXFLAGS := $(CXXFLAGS) $(DEBUG) -fPIC -std=c++11 -O2 -march=native $(ROOTCXX) -I$(INCDIR) -I$(OSC3INC) -I$(EIGEN)
+CXXFLAGS := $(CXXFLAGS) $(DEBUG) -fPIC -std=c++11 -O3 -march=native $(ROOTCXX) -I$(INCDIR) -I$(EIGENINC)
 
 
 
