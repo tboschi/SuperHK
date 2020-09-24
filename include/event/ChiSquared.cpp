@@ -167,63 +167,82 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 	//initialize epsil with zeroes
 
 	Eigen::VectorXd epsil = Eigen::VectorXd::Zero(_nSys);
-	Eigen::VectorXd best_eps = epsil;
+	double x2 = X2(On, En, epsil);
 
-	double x2 = X2(On, En, best_eps);
+	if (zeroEpsilons)
+		return epsil;
+
+	Eigen::VectorXd best_eps = epsil, prev_eps = epsil;
 	double best_x2 = x2;
 
 	int tries = 0;
-	double step = 1;
-	bool first = true;
-	double stepSize = 1.0/maxIteration;
-	while (!zeroEpsilons && tries < maxIteration) {
+	double step = 1e-3;
+	//double stepSize = 1.0/maxIteration;
+
+	while (tries < maxIteration) {
 		unsigned int code = MinimumX2(On, En, epsil, x2);
 		std::cout << "Try (" << tries << ") : ";
 
-		if (code == 0) {
-			best_x2 = x2;
-			best_eps = epsil;
-			break;
+		if (code == 0) {	// success!
+			std::cout << "success!\n";
+			return epsil;
 		}
 		else if (code == 1) {
 			std::cout << "no convergence, dx2 " << best_x2-x2;
-			if (best_x2 < 0 || best_x2 > x2) {
-				step = (best_eps - epsil).norm() / 2.0;
+			if (best_x2 > x2) {
+				//step = (best_eps - epsil).norm() / 2.0;
 				//step /= lm_down;
 				//step = std::min(1.0, std::abs(best_x2 - x2));
-				best_x2 = x2;
+				//prev_eps = best_eps;
+				step = std::min(step, std::abs(best_x2 - x2));
 				best_eps = epsil;
+				best_x2 = x2;
 				std::cout << "-> new best! X2 = " << best_x2;
 			}
+			else
+				step /= 10.;	// reset step size
 			std::cout << std::endl;
 		}
 		else if (code == 2) {
 			std::cout << "bad point\n";
-			step -= stepSize;	// reset step size
+			step /= 10.;	// reset step size
 			//step *= lm_up;
 			//step = 1;
 		}
 
+		// find a better point
+		int rands = 0;
+		do {
+			epsil.setRandom();
+			epsil = best_eps + epsil * step;
+			x2 = X2(On, En, epsil);	//new initial value
+			++rands;
+		} while (x2 > best_x2 && rands < 1e4);
+
 		//if (step < fitErr)
 		//	step = 0.1;
-		epsil.setRandom();
-		std::cout << "new step is " << step << " from best\n";
-		epsil = best_eps + step * epsil / epsil.norm();
+		//for (int i = 0; i < 50; ++i) {
+			//std::cout << "* " << (epsil-best_eps).norm() << "\tfrom best "
+				//" X2 is\t" << X2(On, En, epsil) << std::endl;
+		//}
+
+
+		//epsil.normalize();
+
+		//epsil = prev_eps * (1 - step) + step * best_eps; // + epsil.normalized() * stepSize;
+		std::cout << "new step (" << step << ") is " << (epsil-best_eps).norm()
+			  << " from best after " << rands << " trials\n";
+		//epsil = best_eps + step * epsil / epsil.norm();
 		//epsil = step * epsil;
-		x2 = X2(On, En, epsil);	//new initial value
+		//x2 = X2(On, En, epsil);	//new initial value
 
 		++tries;
 	}
+
 	if (kVerbosity > 1)
-		std::cout << "Number of attempts: " << tries << std::endl;
+		std::cout << "\nNumber of attempts: " << tries << std::endl;
 
-	if (zeroEpsilons)	// no need to fit
-		return epsil;
-
-	if (tries < maxIteration)
-		return epsil;
-	else
-		return best_eps;
+	return best_eps;
 }
 
 
@@ -255,6 +274,8 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 
 	while (std::abs(diff / DOF()) > fitErr
 	      && delta.norm() / _nSys > fitErr) {
+	//while (std::abs(diff) > fitErr
+	      //&& delta.norm() > fitErr) {
 		++c;	//counter
 
 		// build hessian and gradient/jacobian together
@@ -277,7 +298,6 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 		Eigen::VectorXd nextp = epsil - delta;	//next step
 		//check if this step is good
 		double _x2 = X2(On, En, nextp);
-		std::cout << "X2 -> " << x2 << ", " << _x2 << std::endl;
 		if (std::isnan(_x2))
 			return 2;	//X2 cannot be computed
 
@@ -297,10 +317,10 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 		//if (false)
 		if (kVerbosity > 2) {
 			std::cout << c << " -> l " << lambda
-				  << ",\tstep: " << delta.norm() / _nSys
+				  << ",\tstep: " << delta.norm() 
 				  << ", X2: " << x2
-				  << " ( " << diff / DOF()
-				  << " ) " << std::endl;
+				  << " ( " << diff
+				  << " ) " << diff / delta.norm() << std::endl;
 		}
 	}
 
