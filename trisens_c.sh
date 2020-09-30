@@ -19,10 +19,10 @@ Submit fitter jobs to the scheduler.
     -v verbosity    specify a verbosity value
     -h		    Show usage"
 
-Sens=$PWD/bin/fitter
-#Sens=/data/tboschi/HKsens/OscAna/SuperHK/special.sh
+Sens=$PWD/cross-fitter.sh
 nameExec=${Sens##*/}
-csub=condor_submit
+nameExec=${nameExec%.*}
+sub=condor_submit
 
 card=$PWD/cards/multi.card
 fitc=$PWD/cards/fit_options.card
@@ -256,7 +256,7 @@ for t in "${point[@]}" ; do
 executable		= $Sens
 arguments		= \$(Process) $NJOBS $output/this_sensitivity.card
 getenv			= True
-requirements		= HasAVXInstructions
+#requirements		= HasAVXInstructions
 should_transfer_files	= IF_NEEDED
 when_to_transfer_output	= ON_EXIT
 initialdir		= $PWD
@@ -269,7 +269,7 @@ EOF
 #environment		= "LD_LIBRARY_PATH=$LD_LIBRARY_PATH PATH=$PATH HOME=$HOME"
 
 	echo Submitting for point $tname$t
-	$csub $scriptname
+	$sub $scriptname
 	exit 0
 
 	#wait until jobs are finished before moving to next point

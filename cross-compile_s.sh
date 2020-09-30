@@ -6,6 +6,7 @@ cat > bin/arch/arch.sh  << EOF
 #! /bin/bash
 hostname
 gcc -march=native -Q --help=target | grep march
+sleep 10
 EOF
 
 cat > bin/arch/arch.sub << EOF
@@ -31,7 +32,7 @@ done
 arches=$(grep -h march bin/arch/arch_list.* | cut -f3 | sort -u)
 arches=(${arches})
 
-echo $arches
+echo Architectures detected in the cluster: $arches
 
 for arch in "${arches[@]}" ; do
 

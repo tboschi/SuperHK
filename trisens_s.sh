@@ -19,10 +19,10 @@ Submit fitter jobs to the scheduler.
     -v verbosity    specify a verbosity value
     -h		    Show usage"
 
-Sens=$PWD/bin/fitter
-#Sens=/data/tboschi/HKsens/OscAna/SuperHK/special.sh
+Sens=$PWD/cross-fitter.sh
 nameExec=${Sens##*/}
-csub=condor_submit
+nameExec=${nameExec%.*}
+sub=sbatch
 
 card=$PWD/cards/multi.card
 fitc=$PWD/cards/fit_options.card
@@ -260,7 +260,6 @@ for t in "${point[@]}" ; do
 #SBATCH -p nms_research,shared
 #SBATCH --time=3-0
 #SBATCH --cpus-per-task=1
-#SBATCH --exclude=node[001-050,052-079],nodea[01-21,23-24],nodeb[01-24],nodec[01-10,12-14,16-19,21,23-24],noded[01-24],smp[01-10]
 
 srun $Sens \$SLURM_ARRAY_TASK_ID $NJOBS $output/this_sensitivity.card
 
@@ -268,7 +267,7 @@ EOF
 #environment		= "LD_LIBRARY_PATH=$LD_LIBRARY_PATH PATH=$PATH HOME=$HOME"
 
 	echo Submitting for point $tname$t
-	sbatch $scriptname
+	$sub $scriptname
 
 	#wait until jobs are finished before moving to next point
 	#but return if last point
