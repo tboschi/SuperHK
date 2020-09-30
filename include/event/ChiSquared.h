@@ -116,6 +116,7 @@ class ChiSquared
 		int kVerbosity;
 		int badFitThreshold;
 		int maxIteration;
+		int maxTrials;
 		double fitErr;
 		bool zeroEpsilons;
 

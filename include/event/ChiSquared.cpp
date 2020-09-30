@@ -44,6 +44,8 @@ void ChiSquared::Init()
 
 	if (!cd->Get("max_iterations", maxIteration))
 		maxIteration = 10;
+	if (!cd->Get("max_random_trials", maxTrials))
+		maxTrials = 1e4;
 	if (!cd->Get("fit_error", fitErr))
 		fitErr = 1e-9;
 
@@ -204,10 +206,20 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 			std::cout << std::endl;
 		}
 		else if (code == 2) {
-			std::cout << "bad point\n";
+			std::cout << "bad point ";
+			if (best_x2 > x2) {
+				//step = (best_eps - epsil).norm() / 2.0;
+				//step /= lm_down;
+				//step = std::min(1.0, std::abs(best_x2 - x2));
+				//prev_eps = best_eps;
+				best_eps = epsil;
+				best_x2 = x2;
+				std::cout << "-> new best! X2 = " << best_x2;
+			}
 			step /= 10.;	// reset step size
 			//step *= lm_up;
 			//step = 1;
+			std::cout << std::endl;
 		}
 
 		// find a better point
@@ -217,7 +229,7 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 			epsil = best_eps + epsil * step;
 			x2 = X2(On, En, epsil);	//new initial value
 			++rands;
-		} while (x2 > best_x2 && rands < 1e4);
+		} while (x2 > best_x2 && rands < maxTrials);
 
 		//if (step < fitErr)
 		//	step = 0.1;
