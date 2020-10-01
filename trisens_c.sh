@@ -240,12 +240,12 @@ for t in "${point[@]}" ; do
 	rm -f $output/L*log
 	scriptname=$output/R$nameExec.$t.sub
 
-	mv $card $output/this_sensitivity.card
-	card=$output/this_sensitivity.card
-	sed -i "s:^fit_parameters.*:fit_parameters\t\"$fitc\":" $card
-	sed -i "s:^oscillation_parameters.*:oscillation_parameters\t\"$oscc\":" $card
-	sed -i "s:^beam_parameters.*:beam_parameters\t\"$beam\":" $card
-	sed -i "s:^atmo_parameters.*:atmo_parameters\t\"$atmo\":" $card
+	this=$output/this_sensitivity.card
+	cp $card $this
+	sed -i "s:^fit_parameters.*:fit_parameters\t\"$fitc\":" $this
+	sed -i "s:^oscillation_parameters.*:oscillation_parameters\t\"$oscc\":" $this
+	sed -i "s:^beam_parameters.*:beam_parameters\t\"$beam\":" $this
+	sed -i "s:^atmo_parameters.*:atmo_parameters\t\"$atmo\":" $this
 
 	## send as many jobs as files
 	cat > $scriptname << EOF
@@ -254,7 +254,7 @@ for t in "${point[@]}" ; do
 #	condor_submit $scriptname
 
 executable		= $Sens
-arguments		= \$(Process) $NJOBS $output/this_sensitivity.card
+arguments		= \$(Process) $NJOBS $this
 getenv			= True
 #requirements		= HasAVXInstructions
 should_transfer_files	= IF_NEEDED

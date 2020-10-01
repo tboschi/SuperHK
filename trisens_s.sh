@@ -226,8 +226,8 @@ sed -i "s:production_heights.*:production_heights\t\"$prod\":"	$atmo
 point=$(cat $root/sensitivity/$pinfo)
 point=(${point})
 
-MAX_JOBS=360
-MAX_QUEUE=360
+MAX_JOBS=500
+MAX_QUEUE=500
 
 #ready to loop over points
 for t in "${point[@]}" ; do
@@ -240,12 +240,12 @@ for t in "${point[@]}" ; do
 	rm -f $output/L*log
 	scriptname=$output/R$nameExec.$t.sub
 
-	mv $card $output/this_sensitivity.card
-	card=$output/this_sensitivity.card
-	sed -i "s:^fit_parameters.*:fit_parameters\t\"$fitc\":" $card
-	sed -i "s:^oscillation_parameters.*:oscillation_parameters\t\"$oscc\":" $card
-	sed -i "s:^beam_parameters.*:beam_parameters\t\"$beam\":" $card
-	sed -i "s:^atmo_parameters.*:atmo_parameters\t\"$atmo\":" $card
+	cp $card $output/this_sensitivity.card
+	this=$output/this_sensitivity.card
+	sed -i "s:^fit_parameters.*:fit_parameters\t\"$fitc\":" $this
+	sed -i "s:^oscillation_parameters.*:oscillation_parameters\t\"$oscc\":" $this
+	sed -i "s:^beam_parameters.*:beam_parameters\t\"$beam\":" $this
+	sed -i "s:^atmo_parameters.*:atmo_parameters\t\"$atmo\":" $this
 
 	## send as many jobs as files
 	cat > $scriptname << EOF
@@ -261,7 +261,7 @@ for t in "${point[@]}" ; do
 #SBATCH --time=3-0
 #SBATCH --cpus-per-task=1
 
-srun $Sens \$SLURM_ARRAY_TASK_ID $NJOBS $output/this_sensitivity.card
+srun $Sens \$SLURM_ARRAY_TASK_ID $NJOBS $this
 
 EOF
 #environment		= "LD_LIBRARY_PATH=$LD_LIBRARY_PATH PATH=$PATH HOME=$HOME"
@@ -271,15 +271,16 @@ EOF
 
 	#wait until jobs are finished before moving to next point
 	#but return if last point
-	running=$(squeue -p nms_shared -u $USER | grep $nameExec | wc -l)
-	inqueue=$(squeue -p nms_shared -u $USER | grep $nameExec | wc -l)
+	running=$(squeue -u $USER -o "%.${#nameExec}j"| grep $nameExec | wc -l)
+	#inqueue=$(squeue -u $USER | grep $nameExec | wc -l)
 	if [ $t -ne ${point[${#point[@]} - 1]} ] ; then
 		echo not last point.. and running $running and waiting $inqueue
-		while [ $running -gt $MAX_JOBS -a $inqueue -gt $MAX_QUEUE ] ; do
+		while [ $running -gt $MAX_JOBS ] ; do
+			#-a $inqueue -gt $MAX_QUEUE ] ; do
 			echo 'waiting 5min...'
 			sleep 300
-			running=$(squeue -p nms_shared -u $USER | grep $nameExec | wc -l)
-			inqueue=$(squeue -p nms_shared -u $USER | grep $nameExec | wc -l)
+			running=$(squeue -u $USER | grep $nameExec | wc -l)
+			#inqueue=$(squeue -u $USER | grep $nameExec | wc -l)
 		done
 	fi
 done
