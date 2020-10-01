@@ -25,7 +25,7 @@ scale_error	0.024	#if just one
 #skdet from [74, 119)
 syst_first	0
 syst_last	110
-skip		73	# Eb error
+skip		55, 56, 73	# Eb error
 
 #systematic informations
 corr_file	"/data/tboschi/HKsens/errorstudy/0/systematics/combinedmatrix.root"

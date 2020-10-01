@@ -12,7 +12,7 @@ production_heights	"make/a/path"
 
 # if you want to exclude any systematic error
 # specify it here as a string
-skip		"t2k_m23_error_fij" "t2k_s23_error_fij"
+skip		"t2k_m23_error_fij", "t2k_s23_error_fij"
 
 
 # systematics are stored in root file

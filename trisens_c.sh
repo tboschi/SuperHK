@@ -226,8 +226,8 @@ sed -i "s:production_heights.*:production_heights\t\"$prod\":"	$atmo
 point=$(cat $root/sensitivity/$pinfo)
 point=(${point})
 
-MAX_JOBS=360
-MAX_QUEUE=360
+MAX_JOBS=500
+MAX_QUEUE=500
 
 #ready to loop over points
 for t in "${point[@]}" ; do
@@ -270,13 +270,13 @@ EOF
 
 	echo Submitting for point $tname$t
 	$sub $scriptname
-	exit 0
 
 	#wait until jobs are finished before moving to next point
 	#but return if last point
 	running=$(condor_q -run -format "%s\n" cmd | grep $nameExec | wc -l)
 	inqueue=$(condor_q -all -format "%s\n" cmd | grep $nameExec | wc -l)
 	inqueue=$(expr $inqueue - $running)
+	#echo $t, ${point[${#point[@]}-1]}
 	if [ $t -ne ${point[${#point[@]} - 1]} ] ; then
 		echo not last point.. and running $running and waiting $inqueue
 		while [ $running -gt $MAX_JOBS -a $inqueue -gt $MAX_QUEUE ] ; do
