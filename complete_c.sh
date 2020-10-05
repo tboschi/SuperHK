@@ -1,11 +1,11 @@
 #! /bin/bash
 
 Sens=$PWD/cross-fitter.sh
+sub=condor_submit
 
-root=$PWD/errorstudy
-while getopts 'r:' flag; do
+while getopts 'l:' flag; do
 	case "${flag}" in
-		r) root="${OPTARG}" ;;
+		l) list="${OPTARG}" ;;
 		h) echo "$usage" >&2
 		   exit 0 ;;
 		*) printf "illegal option -%s\n" "$OPTARG" >&2
@@ -14,42 +14,48 @@ while getopts 'r:' flag; do
 	esac
 done
 
-# add PWD 
-if [[ "$root" != /* ]]
-then
-	root=$PWD/${root%/}
-else
-	root=${root%/}
-fi
+name=${list%.*}
 
-find $root -name "*.log" > alllogs.list
-
-while read -r log ; do
+while read -r point ; do
 	# if finished is not shown, means something bad happened
-	if ! tail $log | grep -q Finished ; then
-		echo $log not ok
-		#log is #/long/path/to/folder/CPV_scan_point/fitter.proc.log
-		proc=${log##*/}
-		#proc is fitter.proc.log
-		proc=${proc#*.}
-		#proc is proc.log
-		proc=${proc%.*}
-		#proc is proc
+	echo checking point $point
 
-		outdir=${log%/*}
-		#outidr is #/long/path/to/folder/CPV_scan_point/
-		all=$(ls $outdir/*.log | wc -l)
+	outdir=$name'_'$point
 
-		echo $outdir and $proc
-		scriptname=$outdir/Recover.$proc.sub
-		cat > $scriptname << EOF
-# script submission for condor
+	allog=$(find $outdir -name "*.log")
+	allog=(${allog})
+
+	if [ "${#allog[@]}" -eq 0 ]; then
+		echo No log file for point $point, job did not even start
+		if [ -s "$outdir/R"*".$point.sub" ] ; then
+			echo $sub $outdir/R*.$point.sub
+		fi
+	else
+		for log in "${allog[@]}" ; do
+			if ! tail $log | grep -q Finished ; then
+				echo $point not ok
+				#log is #/long/path/to/folder/CPV_scan_point/fitter.proc.log
+				proc=${log##*/}
+				#proc is fitter.proc.log
+				proc=${proc#*.}
+				#proc is proc.log
+				proc=${proc%.*}
+				#proc is proc
+
+				all=${#allog[@]}
+
+				echo $outdir and $proc
+				scriptname=$outdir/Recover.$proc.sub
+				cat > $scriptname << EOF
+#! /bin/bash
+# script submission for SLURM
 # sumbit with --
-#	condor_submit $scriptname
+#	$sub $scriptname
 
 executable		= $Sens
-arguments		= $proc $all $outdir/this_sensitivity.card
+arguments		= $proc $all $outdir
 getenv			= True
+#requirements		= HasAVXInstructions
 should_transfer_files	= IF_NEEDED
 when_to_transfer_output	= ON_EXIT
 initialdir		= $PWD
@@ -58,6 +64,8 @@ error			= $log
 
 queue
 EOF
-		echo condor_submit $scriptname
+				echo $sub $scriptname
+			fi
+		done
 	fi
-done < "alllogs.list"
+done < $list
