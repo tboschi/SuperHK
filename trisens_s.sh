@@ -252,7 +252,7 @@ for t in "${point[@]}" ; do
 #! /bin/bash
 # script submission for SLURM
 # sumbit with --
-#	sbatch $scriptname
+#	$sub $scriptname
 
 #SBATCH --array=0-$((NJOBS - 1))
 #SBATCH --job-name=$nameExec

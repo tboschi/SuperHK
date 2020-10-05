@@ -251,7 +251,7 @@ for t in "${point[@]}" ; do
 	cat > $scriptname << EOF
 # script submission for condor
 # sumbit with --
-#	condor_submit $scriptname
+#	$sub $scriptname
 
 executable		= $Sens
 arguments		= \$(Process) $NJOBS $this
