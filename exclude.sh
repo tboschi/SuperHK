@@ -15,6 +15,6 @@ point=("${point[@]/#/$root}")
 
 mkdir -p $cont/$name
 
-$Exclude $cont/$name/exclusion.root "${point[@]}"
+$Exclude $cont/$name/exclusion.dat "${point[@]}"
 
 echo DONE

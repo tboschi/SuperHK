@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 	double X2, ObsX2, SysX2;
 	double Time;
 	int Point, tPoint;
-	if (!cd->Get("Point", tPoint))
+	if (!cd->Get("point", tPoint))
 		tPoint = parms->GetNominalEntry();
 
 	double M12, tM12;

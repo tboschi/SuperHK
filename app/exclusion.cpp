@@ -44,7 +44,6 @@ int main(int argc, char** argv)
 		std::string file;
 		std::ifstream listExclusion(".tmp_exclusion");
 		while (std::getline(listExclusion, file)) {
-			std::cout << "opening " << file << std::endl;
 			TFile inf(file.c_str(), "READ");
 			TTree *t = static_cast<TTree*>(inf.Get("stepX2Tree"));
 			double X2, sysX2, dCP, tdCP;
@@ -68,22 +67,28 @@ int main(int argc, char** argv)
 			double comp_X2 = -1;
 			double comp_CP = -1;
 
-			std::cout << "\tlooping on " << t->GetEntries() << std::endl;
+			if (t->GetEntries() > 0)
+				std::cout << "opening " << file
+					  << "\twith " << t->GetEntries()
+					  << " entries" << std::endl;
 			for (int i = 0; i < t->GetEntries(); ++i) {
 				t->GetEntry(i);
 
+
+				// true value of dCP
 				if (std::abs(dCP - tdCP) < 1e-5) {
 					if (!trueX2.count(tdCP))
 						trueX2[tdCP] = X2;
-					else if (X2 < trueX2[tdCP]) {
+					else if (X2 < trueX2[tdCP])
 						trueX2[tdCP] = X2;
-					}
 				}
 
+				// skip away from test points
 				if (S13 != TS13 || S23 != TS23 || M23 != M23)
 					continue;
 
-				if (1 - std::abs(std::cos(dCP)) < 1e-5) {
+				// CP conserving angles
+				if (std::abs(std::sin(dCP)) < 1e-5) {
 					if (!compX2.count(tdCP))
 					{
 						compX2[tdCP] = X2;
