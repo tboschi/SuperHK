@@ -274,13 +274,14 @@ EOF
 	running=$(squeue -u $USER -o "%.${#nameExec}j"| grep $nameExec | wc -l)
 	#inqueue=$(squeue -u $USER | grep $nameExec | wc -l)
 	if [ $t -ne ${point[${#point[@]} - 1]} ] ; then
-		echo not last point.. and running $running and waiting $inqueue
+		echo not last point.. and running $running
 		while [ $running -gt $MAX_JOBS ] ; do
 			#-a $inqueue -gt $MAX_QUEUE ] ; do
 			echo 'waiting 5min...'
 			sleep 300
-			running=$(squeue -u $USER | grep $nameExec | wc -l)
+			running=$(squeue -u $USER -o "%.${#nameExec}j"| grep $nameExec | wc -l)
 			#inqueue=$(squeue -u $USER | grep $nameExec | wc -l)
 		done
 	fi
+	sleep 10
 done
