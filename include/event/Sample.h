@@ -79,7 +79,7 @@ class Sample
 			std::map<std::string, Eigen::VectorXd> samples = BuildSamples();
 
 			if (kVerbosity > 1)
-				std::cout << "Sampe: number of samples " << samples.size() << std::endl;
+				std::cout << "Sample: number of samples " << samples.size() << std::endl;
 			for (const auto &is : samples) {
 				// find first and last non empty bins
 				//int b0 = 0, b1 = is.second.size();
