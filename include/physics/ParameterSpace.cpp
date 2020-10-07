@@ -37,9 +37,9 @@ void ParameterSpace::Init()
 		}
 		else
 		{
-			if (ip.second.size() > 3)	//log
+			if (ip.second.size() > 3)	//nominal point
 				nominal[ip.first] = int(ip.second[3]);
-			else
+			else				// take middle point
 				nominal[ip.first] = int(ip.second[2]-1) / 2;
 
 			//create array with bins
