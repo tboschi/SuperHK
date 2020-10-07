@@ -20,7 +20,12 @@ begin=$(date +%s)
 
 for host in "${hpc[@]}"
 do
-	ssh -o PasswordAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $host /bin/bash << EOF
+	ssh -o UserKnownHostsFile=/dev/null \
+	    -o LogLevel=ERROR \
+	    -o PasswordAuthentication=no \
+	    -o UserKnownHostsFile=/dev/null \
+	    -o StrictHostKeyChecking=no \
+	    $host /bin/bash << EOF
 echo on \$(hostname)
 source .profile
 cd $PWD
