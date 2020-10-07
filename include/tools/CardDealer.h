@@ -15,9 +15,10 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <string>
 #include <algorithm>
 #include <type_traits>
+
+#include "tools/ic.h"
 
 //// trim from start (in place)
 //static inline void ltrim(std::string &s)
@@ -123,7 +124,7 @@ class CardDealer
 						ssl.ignore();
 				}
 				//make key lower case
-				_entries[Lower(key)] = words;
+				_entries[key] = words;
 
 				if (kVerbosity)
 					std::cout << "CardDealer: obtained key " << key << std::endl;
@@ -131,7 +132,7 @@ class CardDealer
 		}
 
 		bool Find(const std::string &key) {
-			return _entries.find(Lower(key)) != _entries.end();
+			return _entries.find(key) != _entries.end();
 		}
 
 
@@ -162,7 +163,7 @@ class CardDealer
 		// good for fundamental type
 		template <typename T, typename std::enable_if<std::is_fundamental<T>::value>::type* = nullptr>
 		bool Get(const std::string &key, T &ret) {
-			auto id = _entries.find(Lower(key));
+			auto id = _entries.find(key);
 			if (id != _entries.end()) {
 				std::stringstream st(id->second.front());
 				return static_cast<bool>(st >> ret);	// successful casting
@@ -174,7 +175,7 @@ class CardDealer
 		// good for insert types
 		template <typename C, typename std::enable_if<is_sequence<C>::value>::type* = nullptr>
 		bool Get(const std::string &key, C &ret) {
-			auto id = _entries.find(Lower(key));
+			auto id = _entries.find(key);
 			if (id != _entries.end()) {
 				ret.clear();
 				for (const std::string &it : id->second) {
@@ -195,10 +196,10 @@ class CardDealer
 		bool Get(const std::string &key, std::map<std::string, T> &ret) {
 			ret.clear();
 			for (const auto &id : _entries) {
-				if (id.first.find(Lower(key)) != std::string::npos) {
+				if (id.first.find(key) != std::string::npos) {
 					T ty;
  					if (Get(id.first, ty))
-						ret[id.first.substr(id.first.find(Lower(key))
+						ret[id.first.substr(id.first.find(key)
 								  + key.length())] = ty;
 				}
 			}
@@ -209,7 +210,7 @@ class CardDealer
 		// for strings, there is no need to cast
 
 		bool Get(const std::string &key, std::string &ret) {
-			auto id = _entries.find(Lower(key));
+			auto id = _entries.find(key);
 			if (id != _entries.end()) {
 				ret = id->second.front();
 				return true;
@@ -221,7 +222,7 @@ class CardDealer
 		// for vectors of strings, there is no need to cast
 
 		bool Get(const std::string &key, std::vector<std::string> &ret) {
-			auto id = _entries.find(Lower(key));
+			auto id = _entries.find(key);
 			if (id != _entries.end()) {
 				ret = id->second;
 				return bool(ret.size());
@@ -231,7 +232,7 @@ class CardDealer
 		}
 
 		bool Get(const std::string &key) {
-			return (_entries.find(Lower(key)) != _entries.end());
+			return (_entries.find(key) != _entries.end());
 		}
 
 
@@ -246,7 +247,8 @@ class CardDealer
 
 
 	private:
-		std::map<std::string, std::vector<std::string> > _entries;
+		std::map<std::string, int, ic> st;
+		std::map<std::string, std::vector<std::string>, ic> _entries;
 
 		bool kVerbosity;
 		std::string _cardFile;
