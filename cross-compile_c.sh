@@ -1,6 +1,7 @@
 #! /bin/bash
 
 
+# tool to determine arch
 mkdir -p bin/arch
 cat > bin/arch/arch.sh  << EOF
 #! /bin/bash
@@ -9,38 +10,33 @@ gcc -march=native -Q --help=target | grep march
 sleep 10
 EOF
 
-cat > bin/arch/arch.sub << EOF
-executable		= bin/arch/arch.sh
-output			= bin/arch/arch_list.\$(Process)
-getenv			= True
-initialdir		= $PWD
-queue 1000
-EOF
+info=condor_status
+hpc=$($info | awk -v m=$tag '/ph\.qmul\.ac\.uk/ {sub(/.*@/, ""); print $1} ' | sort -u)
+hpc=(${hpc})
 
-chmod u+x bin/arch/arch.sh bin/arch/arch.sub
+echo Hosts found in cluster:
+echo "    " "${hpc[@]}"
+begin=$(date +%s)
 
-condor_submit bin/arch/arch.sub
-
-while [ $(condor_q -all -format "%d\n" ProcId |  wc -l) -gt 0 ]; do
-	sleep 1
-	echo waiting...
-done
-
-arches=$(grep -h march bin/arch/arch_list.* | cut -f3 | sort -u)
-arches=(${arches})
-
-echo Architectures detected in the cluster: ${arches[@]}
-
-for arch in "${arches[@]}" ; do
-
-	host=$(grep -h $arch -B1 bin/arch/arch_list.* | head -n1)
-	echo compiling for $arch on $host
-
-	ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $host /bin/bash << EOF
-source .bash_profile
+for host in "${hpc[@]}"
+do
+	ssh -o PasswordAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $host /bin/bash << EOF
+echo on \$(hostname)
+source .profile
 cd $PWD
+arch=\$(gcc -march=native -Q --help=target | grep march | cut -f3)
+tgt=bin/arch/fitter_\$arch
+edit=$(date +%s)
+if [ -s \$tgt ] && [ \$(date +%s -r \$tgt) -gt $begin ] ; then
+	exit
+fi
+echo compiling for \$arch
 make clean
 make APP=fitter
-mv bin/fitter bin/arch/fitter_$arch
+mv bin/fitter \$tgt
 EOF
 done
+
+echo on localhost
+make clean
+make
