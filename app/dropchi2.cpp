@@ -33,6 +33,7 @@ int main(int argc, char** argv)
 		std::vector<TH1I*> vp;
 		std::string file;
 		for (const std::string k : allkeys) {
+			std::string file;
 			if (!cd.Get(k, file)) {
 				std::cout << "key " << k << " missing file\n";
 				continue;
@@ -40,7 +41,7 @@ int main(int argc, char** argv)
 			
 			TFile inf(file.c_str(), "READ");
 			if (inf.IsZombie()) {
-				std::cout << "file " << argv[f] << " cannot be opened\n";
+				std::cout << "file " << file << " cannot be opened\n";
 				continue;
 			}
 
@@ -94,6 +95,7 @@ int main(int argc, char** argv)
 
 		std::vector<TH2D*> vhh;
 		for (const std::string k : allkeys) {
+			std::string file;
 			if (!cd.Get(k, file)) {
 				std::cout << "key " << k << " missing file\n";
 				continue;
@@ -101,7 +103,7 @@ int main(int argc, char** argv)
 			
 			TFile inf(file.c_str(), "READ");
 			if (inf.IsZombie()) {
-				std::cout << "file " << argv[f] << " cannot be opened\n";
+				std::cout << "file " << file << " cannot be opened\n";
 				continue;
 			}
 

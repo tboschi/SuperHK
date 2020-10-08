@@ -4,7 +4,7 @@
 #include <fstream>
 #include <vector>
 
-#include "tool/CardDealer.h"
+#include "tools/CardDealer.h"
 
 int main(int argc, char** argv)
 {
@@ -55,10 +55,12 @@ int main(int argc, char** argv)
 	std::ofstream dout("exclusion_diff.dat");
 	aout << "#";
 	dout << "#";
+	bool add = false;
 	for (const std::string &k : names) {
 		aout << "\t" << k;
-		if (f > 1)
+		if (add)
 			dout << "\t" << k;
+		add = true;
 	}
 	aout << std::endl;
 	dout << std::endl;
@@ -68,11 +70,12 @@ int main(int argc, char** argv)
 		aout << xaxis[i];
 		dout << xaxis[i];
 
+		bool add = false;
 		for (const auto &yl : ylines) {
-		{
 			aout << "\t" << yl[i];
-			if (f > 1)
-				dout << "\t" << yline.front()[i] - yl[i];
+			if (add)
+				dout << "\t" << ylines.front()[i] - yl[i];
+			add = true;
 		}
 
 		aout << std::endl;
