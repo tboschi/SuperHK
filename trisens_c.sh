@@ -23,6 +23,7 @@ Sens=$PWD/cross-fitter.sh
 nameExec=${Sens##*/}
 nameExec=${nameExec%.*}
 sub=condor_submit
+que=condor_q
 
 card=$PWD/cards/multi.card
 fitc=$PWD/cards/fit_options.card
@@ -30,27 +31,25 @@ oscc=$PWD/cards/oscillation.card
 beam=$PWD/cards/beam_sample.card
 atmo=$PWD/cards/atmo_sample.card
 
-#Stat=/data/tboschi/HKsens/OscAna/hk.atm+beam/bin/GlobalSpaghettiSensitivityStatOnly
-#Fast=/data/tboschi/HKsens/OscAna/hk.atm+beam/bin/GlobalSpaghettiSensitivityFast
-#Fstt=/data/tboschi/HKsens/OscAna/hk.atm+beam/bin/GlobalSpaghettiSensitivityStatFast
+MAX_JOBS=500
+MAX_QUEUE=500
 
-## for fast change point.info
-## for stat, comment sys_ lines
-
-root=$PWD/errorstudy
+root=""
+data=""
 #global=/data/tboschi
 MH_1=""
 MH_2=""
 ss=false	#false if systematic fit, true if only stat fit
-ff=""	#empty if systematic fit, CPV if fast fit for dCP scan
+ff=""		#empty if systematic fit, CPV if fast fit for dCP scan
 mtype="correlation"
 verb="1"
 
-while getopts 'r:1:2:N:t:m:sf:v:h' flag; do
+while getopts 'r:d:1:2:N:t:m:sf:v:h' flag; do
 	case "${flag}" in
 		1) MH_1="${OPTARG}" ;;
 		2) MH_2="${OPTARG}" ;;
 		r) root="${OPTARG}" ;;
+		d) data="${OPTARG}" ;;
 		m) mtype="${OPTARG}" ;;
 		N) NJOBS="${OPTARG}" ;;
 		t) stats="${OPTARG}" ;;
@@ -68,14 +67,25 @@ done
 rm -f .reconstruction_files
 rm -f .production_files
 
-#global contains specific set, as in global/asim
-#root contains specific set, as in root/asim
+#first create output folders
 
-#global=${global%/}
+if [ -z $root ] ; then
+	echo You must specify a root folder with -r
+	exit
+fi
+
+if [ -z $MH_1 ] || [ -z $MH_2 ] ; then
+	echo You must define mass hirerachy for true and fitted samples with -1 and -2
+	exit
+fi
+
+if [ -z $data ] ; then
+	echo You must define a sample to fit with -d
+	exit
+fi
 
 # add PWD 
-if [[ "$root" != /* ]]
-then
+if [[ "$root" != /* ]] ; then
 	root=$PWD/${root%/}
 else
 	root=${root%/}
@@ -87,6 +97,8 @@ mhfit=$MH_1"_"$MH_2
 root=$root/$mhfit
 
 mkdir -p $root/sensitivity/
+
+# copy cards to output folder
 cp $card $fitc $oscc $beam $atmo $root/sensitivity/
 card=$root/sensitivity/${card##*/}
 fitc=$root/sensitivity/${fitc##*/}
@@ -95,8 +107,27 @@ beam=$root/sensitivity/${beam##*/}
 atmo=$root/sensitivity/${atmo##*/}
 
 if [ -n $verb ] ; then
+	echo Setting verbosity to $verb
 	sed -i "s:verbose.*:verbose\t$verb:" $card $fitc $oscc $beam $atmo
 fi
+
+case "$data" in
+	"beam")
+		echo beam
+		sed -i "/^#beam_parameters/s:^#::" $card
+		sed -i "/^atmo_parameters/s:^:#:" $card
+		;;
+	"atmo")
+		echo atmo
+		sed -i "/^#atmo_parameters/s:^#::" $card
+		sed -i "/^beam_parameters/s:^:#:" $card
+		;;
+	"comb")
+		echo comb
+		sed -i "/^#beam_parameters/s:^#::" $card
+		sed -i "/^#atmo_parameters/s:^#::" $card
+		;;
+esac
 
 ##defines input list
 #input=$root/sensitivity/fit.list
@@ -112,8 +143,6 @@ fi
 if [ -z $NJOBS ] ; then
 	NJOBS=360
 fi
-
-echo Launching $NJOBS jobs
 
 
 # decide if normal fit or fast fit for sensitivity
@@ -226,8 +255,7 @@ sed -i "s:production_heights.*:production_heights\t\"$prod\":"	$atmo
 point=$(cat $root/sensitivity/$pinfo)
 point=(${point})
 
-MAX_JOBS=500
-MAX_QUEUE=500
+echo Launching $NJOBS jobs
 
 #ready to loop over points
 for t in "${point[@]}" ; do
@@ -266,25 +294,22 @@ error			= $output/L$nameExec.\$(Process).log
 queue $NJOBS
 
 EOF
-#environment		= "LD_LIBRARY_PATH=$LD_LIBRARY_PATH PATH=$PATH HOME=$HOME"
 
 	echo Submitting for point $tname$t
 	$sub $scriptname
 
 	#wait until jobs are finished before moving to next point
 	#but return if last point
-	running=$(condor_q -run -format "%s\n" cmd | grep $nameExec | wc -l)
-	inqueue=$(condor_q -all -format "%s\n" cmd | grep $nameExec | wc -l)
-	inqueue=$(expr $inqueue - $running)
-	#echo $t, ${point[${#point[@]}-1]}
+	running=$($que -autoformat owner jobstatus | grep 2 | wc -l)
+	inqueue=$($que -autoformat owner jobstatus | grep 1 | wc -l)
 	if [ $t -ne ${point[${#point[@]} - 1]} ] ; then
 		echo not last point.. and running $running and waiting $inqueue
-		while [ $running -gt $MAX_JOBS -a $inqueue -gt $MAX_QUEUE ] ; do
+		while [ $running -gt $MAX_JOBS ] || [ $inqueue -gt $MAX_QUEUE] ; do
 			echo 'waiting 5min...'
 			sleep 300
-			running=$(condor_q -run -format "%s\n" cmd | grep $nameExec | wc -l)
-			inqueue=$(condor_q -all -format "%s\n" cmd | grep $nameExec | wc -l)
-			inqueue=$(expr $inqueue - $running)
+			running=$($que -autoformat owner jobstatus | grep 2 | wc -l)
+			inqueue=$($que -autoformat owner jobstatus | grep 1 | wc -l)
 		done
 	fi
+	sleep 10
 done
