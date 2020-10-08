@@ -13,8 +13,8 @@ root=$root"_"
 
 point=("${point[@]/#/$root}")
 
-mkdir -p $cont/$name
+mkdir -p $cont/
 
-$Exclude $cont/$name/exclusion.dat "${point[@]}"
+$Exclude $cont/$name.dat "${point[@]}"
 
 echo DONE

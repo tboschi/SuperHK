@@ -7,19 +7,21 @@
 #include "TH2.h"
 #include "TFile.h"
 
+#include "tools/CardDealer.h"
+
 int main(int argc, char** argv)
 {
-	std::cout << "Reading " << argc-1 << " files" << std::endl;
+	CardDealer cd(argv[1]);
 
-	TH1D *h0 = 0;
-	std::string chi2[4] = {"X2minCP", "X2minM23", "X2minS13", "X2minS23"};
-	std::string pnt2[4] = {"X2minCP", "X2minM23", "X2minS13", "X2minS23"};
-	for (int x = 0; x < 4; ++x)
+	std::vector<std::string> allkeys = cd.ListKeys();
+
+	std::vector<std::string> chi2 = {"X2minCP", "X2minM23", "X2minS13", "X2minS23"};
+	for (const std::string &x2 : chi2)
 	{	
-		std::cout << "doing " << chi2[x] << std::endl;
+		std::cout << "doing " << x2 << std::endl;
 
-		std::string outAll = chi2[x] + "_all.dat";
-		std::string outDif = chi2[x] + "_diff.dat";
+		std::string outAll = x2 + "_all.dat";
+		std::string outDif = x2 + "_diff.dat";
 
 		std::ofstream aout(outAll.c_str());
 		std::ofstream dout(outDif.c_str());
@@ -29,30 +31,28 @@ int main(int argc, char** argv)
 
 		std::vector<TH1D*> vh;
 		std::vector<TH1I*> vp;
-		for (int f = 1; f < argc; ++f)
-		{
-			TFile inf(argv[f], "OPEN");
-			if (inf.IsZombie())
+		std::string file;
+		for (const std::string k : allkeys) {
+			if (!cd.Get(k, file)) {
+				std::cout << "key " << k << " missing file\n";
 				continue;
+			}
+			
+			TFile inf(file.c_str(), "READ");
+			if (inf.IsZombie()) {
+				std::cout << "file " << argv[f] << " cannot be opened\n";
+				continue;
+			}
 
-			if (inf.Get(chi2[x].c_str()))
+			if (inf.Get(x2.c_str()))
 			{
-				TH1D *h = static_cast<TH1D*>(inf.Get(chi2[x].c_str()));
+				TH1D *h = static_cast<TH1D*>(inf.Get(x2.c_str()));
 				h->SetDirectory(0);
 				vh.push_back(h);
 			}
-			//if (inf.Get(pnt2[x].c_str()))
-			//{
-			//	TH1I *p = static_cast<TH1I*>(inf.Get(chi2[x].c_str()));
-			//	p->SetDirectory(0);
-			//	vp.push_back(p);
-			//}
 
-			std::string name(argv[f]);
-			name.erase(0, name.find("errorstudy/")+11);
-			name.erase(name.find_first_of('/'));
-			aout << "\t" << name;
-			dout << "\t" << name;
+			aout << "\t" << k;
+			dout << "\t" << k;
 		}
 		aout << std::endl;
 		dout << std::endl;
@@ -81,32 +81,38 @@ int main(int argc, char** argv)
 	}
 
 
-	//std::string cont[6] = {"X2CPM23", "X2CPS13", "X2CPS23", "X2M23S13", "X2M23S23", "X2S13S23"};
-	std::string cont[6] = {"X2CPM23", "X2S13CP", "X2S23CP", "X2S13M23", "X2S23M23", "X2S13S23"};
-	for (int x = 0; x < 6; ++x)
+	std::vector<std::string> cont = {"X2CPM23", "X2S13CP", "X2S23CP",
+					 "X2S13M23", "X2S23M23", "X2S13S23"};
+	for (const std::string bd : cont)
 	{	
-		std::cout << "doing " << cont[x] << std::endl;
-		std::string outfile = cont[x] + ".dat";
+		std::cout << "doing " << bd << std::endl;
+		std::string outfile = bd + ".dat";
 
 		std::ofstream out(outfile.c_str());
 		
 		out << "#x\ty";
 
 		std::vector<TH2D*> vhh;
-		for (int f = 1; f < argc; ++f)
-		{
-			TFile inf(argv[f], "OPEN");
-			if (inf.IsZombie())
+		for (const std::string k : allkeys) {
+			if (!cd.Get(k, file)) {
+				std::cout << "key " << k << " missing file\n";
 				continue;
-			TH2D* hh = static_cast<TH2D*>(inf.Get(cont[x].c_str()));
-			hh->SetDirectory(0);
+			}
+			
+			TFile inf(file.c_str(), "READ");
+			if (inf.IsZombie()) {
+				std::cout << "file " << argv[f] << " cannot be opened\n";
+				continue;
+			}
 
-			vhh.push_back(hh);
-		
-			std::string name(argv[f]);
-			name.erase(0, name.find("errorstudy/")+11);
-			name.erase(name.find_first_of('/'));
-			out << "\t" << name;
+			if (inf.Get(bd.c_str()))
+			{
+				TH2D* hh = static_cast<TH2D*>(inf.Get(bd.c_str()));
+				hh->SetDirectory(0);
+				vhh.push_back(hh);
+			}
+
+			out << "\t" << k;
 		}
 		out << std::endl;
 
