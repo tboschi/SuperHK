@@ -2,17 +2,12 @@
 
 Chi2=/data/tboschi/HKsens/OscAna/SuperHK/bin/dropchi2
 Sens=/data/tboschi/HKsens/OscAna/SuperHK/bin/dropsens
-root=/data/tboschi/HKsenHK
 
-#samples=(T2HK)
-
-pp=false
 while getopts 'pf:r:n:' flag; do
 	case "${flag}" in
 		r) root="${OPTARG}" ;;
 		f) point="${OPTARG}" ;;
 		n) name="${OPTARG}" ;;
-		p) pp=true ;;
 		*) exit 1 ;;
 	esac
 done
@@ -21,13 +16,6 @@ echo $root, $name
 shift $((OPTIND-1))
 
 root=${root%/}
-
-if [ "$pp" = true ] ; then
-	tgt="gaussian"
-else
-	tgt="uniform"
-fi
-
 
 for ss in "$@"
 do
