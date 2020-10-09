@@ -7,7 +7,7 @@ name=${1%.*}
 
 while read -r point ; do
 	# if finished is not shown, means something bad happened
-	echo checking point $point
+	echo Checking point $point
 
 	outdir=$name'_'$point
 
@@ -15,8 +15,8 @@ while read -r point ; do
 	allog=(${allog})
 	all=${#allog[@]}
 
-	if [ "${#allog[@]}" -eq 0 ]; then
-		echo No log file for point $point, job did not even start
+	if [ "$all" -eq 0 ]; then
+		echo No log files for point $point, job did not even start. Restarting
 		if [ -s "$outdir/R"*".$point.sub" ] ; then
 			$sub $outdir/R*.$point.sub
 		fi
