@@ -59,17 +59,14 @@ class Oscillator
 	public:
 		Oscillator(const std::vector<double> &lengths,
 			   const std::vector<double> &densities,
-			   int neutrinos = 3, bool lut = false,
-			   double threshold = 1e-9);
+			   bool lut = false, double threshold = 1e-9);
 		Oscillator(const std::vector<double> &lengths,
 			   const std::vector<double> &densities,
 			   const std::vector<double> &electrons,
-			   int neutrinos = 3, bool lut = false,
-			   double threshold = 1e-9);
+			   bool lut = false, double threshold = 1e-9);
 
 		Oscillator(const std::string &densityFile,
-			   int neutrinos, bool lut,
-			   double threshold);
+			   bool lut = false, double threshold = 1e-9);
 		Oscillator(std::string cd);
 		Oscillator(CardDealer *cd);
 

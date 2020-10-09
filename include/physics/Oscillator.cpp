@@ -4,7 +4,7 @@ Oscillator::Oscillator(const std::vector<double> &lengths,
 		       const std::vector<double> &densities,
 		       int neutrino, bool lut, double threshold) :
 	fG(Const::GF * Const::Na * pow(Const::hBarC * 1e8, 3)),
-	_dim(neutrino),
+	_dim(3),
 	_thr(threshold),
 	kLUT(lut)
 {
@@ -19,7 +19,7 @@ Oscillator::Oscillator(const std::vector<double> &lengths,
 		       const std::vector<double> &electrons,
 		       int neutrino, bool lut, double threshold) :
 	fG(Const::GF * Const::Na * pow(Const::hBarC * 1e8, 3)),
-	_dim(neutrino),
+	_dim(3),
 	_thr(threshold),
 	kLUT(lut)
 {
@@ -34,7 +34,7 @@ Oscillator::Oscillator(const std::vector<double> &lengths,
 Oscillator::Oscillator(const std::string &densityFile, 
 		       int neutrino, bool lut, double threshold) :
 	fG(Const::GF * Const::Na * pow(Const::hBarC * 1e8, 3)),
-	_dim(neutrino),
+	_dim(3),
 	_thr(threshold),
 	kLUT(lut)
 {
@@ -66,7 +66,7 @@ void Oscillator::FromCard(CardDealer *cd)
 		_lens_dens.push_back(std::make_tuple(295., 0, 0.5));
 	}
 
-	if (!cd->Get("neutrinos", _dim))//look up table stores matrices
+	if (!cd->Get("neutrinos", _dim))
 		_dim = 3;		// default neutrinos
 
 	if (!cd->Get("threshold", _thr))
