@@ -55,14 +55,6 @@ class CardDealer
 			return _cardFile;
 		}
 
-		// returns lower case copy of mix
-		std::string Lower(const std::string &mix) {
-			std::string low;
-			std::transform(mix.begin(), mix.end(), std::inserter(low, low.end()),
-					[](unsigned char c) { return std::tolower(c); });
-			return low;
-		}
-
 		bool Parse(const std::string &cardFile) {
 			_entries.clear();
 
@@ -130,13 +122,6 @@ class CardDealer
 					std::cout << "CardDealer: obtained key " << key << std::endl;
 			}
 		}
-
-		bool Find(const std::string &key) {
-			return _entries.find(key) != _entries.end();
-		}
-
-
-		// templated function that returns default if key is not found
 
 		
 		// empty template
