@@ -1,7 +1,39 @@
 #! /bin/bash
 
+usage="Usage: $0 info_file
+
+Check if jobs were completed and repair if needed
+Works with HTCondor or Slurm.
+
+  parameters
+    info_file    path to file with .info extension in output folder"
+
+if [ "$#" -ne 1 ] ; then
+	echo This script requires one argument. Check usage with
+	echo $0 -h
+	exit 1
+elif [ "$1" == "-h" ] ; then
+	echo "$usage" >&2
+elif [ ! -s "$1" ] ; then
+	echo Argument \"$1\" is not valid. Check usage with
+	echo $0 -h
+	exit 1
+fi
+
+SCHED=""
+if condor_q &> /dev/null ; then
+	SCHED="HTCONDOR"
+	sub=condor_submit
+elif squeue &> /dev/null ; then
+	SCHED="SLURM"
+	sub=sbatch
+else
+	echo There is neither HTCondor nor Slurm on this machine. I am sorry, I cannot help you
+	exit 1
+fi
+
+
 Sens=$PWD/cross-fitter.sh
-sub=condor_submit
 
 name=${1%.*}
 
@@ -34,9 +66,10 @@ while read -r point ; do
 				echo process $point : $proc did not complete
 
 				scriptname=$outdir/Recover.$proc.sub
-				cat > $scriptname << EOF
+				if [ "$SCHED" == "HTCONDOR" ] ; then
+					cat > $scriptname << EOF
 #! /bin/bash
-# script submission for HTCondor
+# script submission for SLURM
 # sumbit with --
 #	$sub $scriptname
 
@@ -52,6 +85,23 @@ error			= $log
 
 queue
 EOF
+				elif [ "$SCHED" == "SLURM" ] ; then
+					cat > $scriptname << EOF
+#! /bin/bash
+# script submission for Slurm
+# sumbit with --
+#	$sub $scriptname
+
+#SBATCH --job-name=fixing
+#SBATCH -o $log
+#SBATCH -p nms_research,shared
+#SBATCH --time=3-0
+#SBATCH --cpus-per-task=1
+
+srun $Sens $proc $all $outdir/this_sensitivity.card
+
+EOF
+				fi
 				$sub $scriptname
 			fi
 		done

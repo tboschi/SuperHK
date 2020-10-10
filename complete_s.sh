@@ -10,6 +10,7 @@ while read -r point ; do
 	echo Checking point $point
 
 	outdir=$name'_'$point
+	outdir=$(realpath $outdir)
 
 	allog=$(find $outdir -name "*.log")
 	allog=(${allog})
@@ -35,7 +36,7 @@ while read -r point ; do
 				scriptname=$outdir/Recover.$proc.sub
 				cat > $scriptname << EOF
 #! /bin/bash
-# script submission for SLURM
+# script submission for Slurm
 # sumbit with --
 #	$sub $scriptname
 
