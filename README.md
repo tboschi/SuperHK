@@ -35,11 +35,11 @@ The user is advised to look at the documentation first.
 ## Requirements
 
 The requirements for the code to be compiled and run are
-* *make*;
-* *gcc-c++* version 4.8 or higher (for C++11);
-* *ROOT* version 5.34/38 or higher;
-* *Eigen* version 3.3 or higher;
-* *HTCondor* or *SLURM* as workload managers, for distributed computing.
+* **make**;
+* **gcc-c++** version 4.8 or higher (for C++11);
+* **ROOT** version 5.34/38 or higher;
+* **Eigen** version 3.3 or higher;
+* for running on the cluster **HTCondor** or *SLURM* as workload managers, for distributed computing.
 
 [ROOT][https://root.cern.ch/] should be installed and properly linked. To test if true, simply run
 ```
@@ -65,8 +65,7 @@ where main any main file under the local app folder. The .cpp extensions must be
 If using a distributed computing  cluster, its nodes could have all different architectures.
 Specific compilation on each node can be achieved by using
 ```
-./cross-compile_c . sh # if HTCondor is the manager
-./cross-compile_s . sh # if Slurm is the manager
+./cross-compile.sh 
 ```
 It is not a cross-compilation properly speaking, as both scripts first determine the nodes on the
 cluster, then ssh into each node and only if a new architecture is found a new, optimized binary
@@ -121,12 +120,9 @@ directory. The nominal T2K 2018 systematic model is found under ```errorstudy/0`
 cp -r errorstudy /0/systematics errorstudy/first_run
 ```
 Finally, the fitter can be launched on the distributed computing system with the trisens_c.sh
-(HTCondor) or the trisens_s.sh (Slurm) utilities. For example,
+(HTCondor) or the trisens_s.sh (Slurm) utilities, with
 ```
-# with HTCondor
-./trisens_c.sh -r errorstudy/first_run -d comb -1 NH -2 NH -N 500
-# with Slurm
-./trisens_s.sh -r errorstudy/first_run -d comb -1 NH -2 NH -N 500
+./trisens.sh -r errorstudy/first_run -d comb -1 NH -2 NH -N 500
 ```
 will launch 500 jobs (```-N 500```) on the cluster, fitting both the beam and atmospheric samples (```-d comb```) with true and fitted normal mass hierarchies (```-1 NH -2 NH```).
 Other important options are
@@ -135,6 +131,5 @@ Other important options are
 * ```-v <verbosity>``` to change the verbosity of the log files.
 The full list of options can be shown with
 ```
-./trisens_c.sh -h # for HTCondor
-./trisens_s.sh -h # for Slurm
+./trisens.sh -h
 ```
