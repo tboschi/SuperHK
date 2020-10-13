@@ -2,7 +2,7 @@
 
 Oscillator::Oscillator(const std::vector<double> &lengths,
 		       const std::vector<double> &densities,
-		       int neutrino, bool lut, double threshold) :
+		       bool lut, double threshold) :
 	fG(Const::GF * Const::Na * pow(Const::hBarC * 1e8, 3)),
 	_dim(3),
 	_thr(threshold),
@@ -17,7 +17,7 @@ Oscillator::Oscillator(const std::vector<double> &lengths,
 Oscillator::Oscillator(const std::vector<double> &lengths,
 		       const std::vector<double> &densities,
 		       const std::vector<double> &electrons,
-		       int neutrino, bool lut, double threshold) :
+		       bool lut, double threshold) :
 	fG(Const::GF * Const::Na * pow(Const::hBarC * 1e8, 3)),
 	_dim(3),
 	_thr(threshold),
@@ -32,7 +32,7 @@ Oscillator::Oscillator(const std::vector<double> &lengths,
 }
 
 Oscillator::Oscillator(const std::string &densityFile, 
-		       int neutrino, bool lut, double threshold) :
+		       bool lut, double threshold) :
 	fG(Const::GF * Const::Na * pow(Const::hBarC * 1e8, 3)),
 	_dim(3),
 	_thr(threshold),
@@ -42,7 +42,7 @@ Oscillator::Oscillator(const std::string &densityFile,
 }
 
 
-Oscillator::Oscillator(std::string card) :
+Oscillator::Oscillator(const std::string &card) :
 	fG(Const::GF * Const::Na * pow(Const::hBarC * 1e8, 3))
 {
 	CardDealer *cd = new CardDealer(card);

@@ -66,8 +66,8 @@ class Oscillator
 			   bool lut = false, double threshold = 1e-9);
 
 		Oscillator(const std::string &densityFile,
-			   bool lut = false, double threshold = 1e-9);
-		Oscillator(std::string cd);
+			   bool lut, double threshold);
+		Oscillator(const std::string &cd);
 		Oscillator(CardDealer *cd);
 
 		void FromCard(CardDealer *cd);
