@@ -246,7 +246,7 @@ reco_atmo=$root'/../../reconstruction_atmo/*mc.sk4.*.root'
 sed -i "s:^MC_input.*:MC_input\t\"$reco_atmo\":"	$atmo
 sed -i "s:^MC_tree_name.*:MC_tree_name\t\"osc_tuple\":"	$atmo
 
-dens=$PWD'/data/PREM_20pts.dat'
+dens=$PWD'/data/PREM_25pts.dat'
 prod=$PWD'/data/prod_honda/kam-ally-aa-*.d'
 sed -i "s:density_profile.*:density_profile\t\"$dens\":"	$atmo
 sed -i "s:production_heights.*:production_heights\t\"$prod\":"	$atmo
