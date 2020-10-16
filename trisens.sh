@@ -7,6 +7,7 @@ Submit fitter jobs to a scheduler, HTCondor or Slurm.
 
   parameters
     -r root_folder  main working folder, must have a \"systematics\" sub folder
+    -d data_sample  sample to include in the fit (beam, data, comb)
     -1 [NH | IH]    mass hierarchy of the observed/true data (NH or IH)
     -2 [NH | IH]    mass hierarchy of the expected/to fit data (NH or IH)
 

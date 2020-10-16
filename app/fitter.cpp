@@ -113,7 +113,9 @@ int main(int argc, char** argv)
 	else if (trueOrder == "inverted")
 		osc->SetMasses<Oscillator::inverted>(tM12, tM23);
 	osc->SetPMNS<Oscillator::sin2>(tS12, tS13, tS23, tdCP);
-	Eigen::VectorXd trueSpectra = fitter->ConstructSamples(osc);
+	//Eigen::VectorXd trueSpectra = fitter->ConstructSamples(osc);
+	Eigen::VectorXd trueSpectra;	// don't compute just now
+	bool trueLoad = true;
 
 	std::string epsilArray = "Epsilons[" +
 				 std::to_string(fitter->NumSys()) + "]/D";
@@ -176,6 +178,11 @@ int main(int argc, char** argv)
 			     std::abs(std::sin(dCP)) > 1e-5)
 			continue;
 
+		// load trueSpectra now, osc has not changed yet
+		if (trueLoad) {
+			trueSpectra = fitter->ConstructSamples(osc);
+			trueLoad = false;
+		}
 
 		if (kVerbosity) {
 			std::cout << "\nFitter: now fitting point " << Point
