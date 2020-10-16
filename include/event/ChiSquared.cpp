@@ -150,6 +150,15 @@ void ChiSquared::CombineSystematics()
 	}
 }
 
+std::map<std::string, Eigen::VectorXd> ChiSquared::BuildSamples(Oscillator *osc) {
+	std::map<std::string, Eigen::VectorXd> samples;
+	for (const auto &is : _sample) {
+		std::map<std::string, Eigen::VectorXd> sample = is->BuildSamples(osc);
+		samples.insert(sample.begin(), sample.end());
+	}
+
+	return samples;
+}
 
 Eigen::VectorXd ChiSquared::ConstructSamples(Oscillator *osc) {
 	Eigen::VectorXd vect(_nBin);
@@ -586,6 +595,25 @@ Eigen::ArrayXd ChiSquared::ObsX2n(const Eigen::VectorXd &On,
 	return chi2;
 }
 
+double ChiSquared::RawX2(const Eigen::VectorXd &On,
+				 const Eigen::VectorXd &En)
+{
+	// modified expected events with systematics
+	return RawX2n(On, En).sum();
+}
+
+
+Eigen::ArrayXd ChiSquared::RawX2n(const Eigen::VectorXd &On,
+				  const Eigen::VectorXd &En)
+{
+	Eigen::ArrayXd chi2 = Eigen::ArrayXd::Zero(std::min(On.size(), En.size()));
+
+	int err_off = 0, bin_off = 0;
+	for (int n = 0; n < chi2.size(); ++n)
+		if (On(n) > 0)
+			chi2(n) = 2 * En(n) - 2 * On(n) * (1 + log(En(n) / On(n)));
+	return chi2;
+}
 
 // return systematic X2
 double ChiSquared::SysX2(const Eigen::VectorXd &epsil) {

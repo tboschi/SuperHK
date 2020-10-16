@@ -345,8 +345,8 @@ EOF
 	if [ $t -ne ${point[${#point[@]} - 1]} ] ; then
 		echo not last point.. and running $jobs_run and waiting $jobs_que
 		while [ $jobs_run -gt $MAX_JOBS ] || [ $jobs_que -gt $MAX_QUEUE ] ; do
-			echo 'waiting 5min...'
-			sleep 300
+			echo 'waiting 30s...'
+			sleep 30
 			jobs_run=$(eval $running)
 			jobs_que=$(eval $inqueue)
 		done

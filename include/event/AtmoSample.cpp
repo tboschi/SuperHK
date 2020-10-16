@@ -346,6 +346,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 		Nu::Flavour nu_out = Nu::fromPDG(ipnu);
 		if (osc) {
 			// LUT is cleared in this step
+			// -1 dirnu[2] ?? ???? ?? ? ? ? ? ? ?
 			osc->SetMatterProfile(atm_path->MatterProfile(dirnu[2], start));
 
 			// but thanks to LUT, probability is computed only once

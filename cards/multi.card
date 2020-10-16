@@ -1,6 +1,9 @@
 # # # # # # # # # # # # # # # # # # # # # # #
 # global card with paths to specific cards  #
+#					    #
+#   PLEASE DO NOT EDIT MANUALLY THIS CARD   #
 # # # # # # # # # # # # # # # # # # # # # # #
+
 
 # fit options such as LV parameters and output result
 fit_parameters	"cards/fit_options.card"
@@ -16,7 +19,7 @@ beam_parameters	"cards/beam_sample.card"
 
 # atmo contains path to systematics, reconstruction binning
 # and also files for atmospheric oscillation 
-atmo_parameters	"cards/atmo_sample.card"
+#atmo_parameters	"cards/atmo_sample.card"
 
 
 

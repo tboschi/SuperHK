@@ -48,6 +48,7 @@ class ChiSquared
 		void CombineBinning();
 		void CombineCorrelation();
 		void CombineSystematics();
+		std::map<std::string, Eigen::VectorXd> BuildSamples(Oscillator *osc = 0);
 		Eigen::VectorXd ConstructSamples(Oscillator *osc = 0);
 
 		int NumSys();
@@ -91,6 +92,11 @@ class ChiSquared
 		Eigen::ArrayXd ObsX2n(const Eigen::VectorXd &On,
 				      const Eigen::VectorXd &En,
 			     const Eigen::VectorXd &epsil);
+
+		double RawX2(const Eigen::VectorXd &On,
+			     const Eigen::VectorXd &En);
+		Eigen::ArrayXd RawX2n(const Eigen::VectorXd &On,
+				      const Eigen::VectorXd &En);
 
 		Eigen::ArrayXd Gamma(const Eigen::VectorXd &En,
 				      const Eigen::VectorXd &epsil);

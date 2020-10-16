@@ -198,7 +198,6 @@ int main(int argc, char** argv)
 		Eigen::VectorXd eps = fitter->FitX2(trueSpectra, fitSpectra);
 		Eigen::VectorXd var = fitter->Variance(trueSpectra, fitSpectra, eps);
 
-		Eigen::ArrayXd x2n = fitter->ObsX2n(trueSpectra, fitSpectra, eps);
 		ObsX2 = fitter->ObsX2(trueSpectra, fitSpectra, eps);
 		SysX2 = fitter->SysX2(eps);
 		X2 = ObsX2 + SysX2 + PenX2;
