@@ -165,7 +165,6 @@ int main(int argc, char** argv)
 
 	auto t_start = std::chrono::high_resolution_clock::now();
 	for (int i = nstart; i < nend; ++i)
-	//for (int i = 57550; i < 57551; ++i)
 	{
 		Point = i;
 		parms->GetEntry(Point, M12, M23, S12, S13, S23, dCP);
@@ -180,7 +179,8 @@ int main(int argc, char** argv)
 
 		if (kVerbosity) {
 			std::cout << "\nFitter: now fitting point " << Point
-				  << " (" << i-nstart << "/" << nend-nstart << ")\n";
+				  << " (" << i-nstart << "/" << nend-nstart
+				  << ") vs " << tPoint << "\n";
 			std::cout << "m23 " << M23 << ", s13 " << S13
 				  << ", s23 " << S23 << ", dcp " << dCP << std::endl;
 		}

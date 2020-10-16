@@ -133,8 +133,8 @@ double Oscillator::Probability(Nu::Flavour in, Nu::Flavour out, double energy, b
 			  << std::endl;
 	}
 
+
 	if (!kLUT)
-		//return TransitionMatrix(energy).cwiseAbs2()(ofl, ifl);
 		return TransitionMatrix(energy).cwiseAbs2()(out, in);
 
 	auto ilut = FindEnergy(energy);
@@ -155,8 +155,6 @@ Eigen::VectorXd Oscillator::Oscillate(Nu::Flavour in, Nu::Flavour out,
 	Eigen::VectorXd vb(bins.size() - 1);
 	for (int i = 0; i < vb.size(); ++i)
 		vb(i) = Probability(in, out, (bins[i+1] + bins[i]) / 2.);
-	std::cout << "Prob for " << Nu::toString(in) << " -> " << Nu::toString(out)
-		  << " = " << vb(10) << std::endl;
 	//Eigen::VectorXd vb(bins.size());
 	//for (int i = 0; i < vb.size(); ++i)
 	//	vb(i) = Probability(in, out, bins[i]);

@@ -255,8 +255,10 @@ std::map<std::string, Eigen::VectorXd> BeamSample::BuildSamples(Oscillator *osc)
 			std::cout << "BeamSample: using " << ir.first << std::endl;
 		if (ir.first.find("NC") != std::string::npos &&
 		     ( ir.first.find("nuM0_nuE0") != std::string::npos
-		    || ir.first.find("nuMB_nuEB") != std::string::npos ) )
+		    || ir.first.find("nuMB_nuEB") != std::string::npos ) ) {
+			std::cout << "skip " << ir.first << std::endl;
 			continue;	// this shouldn't exist, but just in case...
+		}
 
 		std::string hname = ir.first;
 		size_t len = hname.find_last_of('_') - hname.find_first_of('_');
@@ -265,24 +267,29 @@ std::map<std::string, Eigen::VectorXd> BeamSample::BuildSamples(Oscillator *osc)
 		std::string cname = hname.substr(hname.find("nu"), 9);
 		// this hould be 'E_FHC' like
 		hname.erase(hname.find_first_of('_'), len);
-		
+
 		Eigen::VectorXd probs = Eigen::VectorXd::Ones(ir.second.cols());
-		if (osc && hname.find("NC") == std::string::npos) {
+		if (osc && ir.first.find("NC") == std::string::npos) {
 			// not a NC channel
 			if (kVerbosity > 4)
-				std::cout << "Oscillating spectrum for " << cname << "\n";
+				std::cout << "Oscillating spectrum for " << ir.first
+					  << " (" << hname << ") with "
+					  << cname << "\n";
 			const auto &chan = _oscf[cname];
 			const auto &bins = _global[hname]; //type?
 
 			Eigen::VectorXd vb(bins.size() - 1);
-			for (int i = 0; i < vb.size(); ++i)
+			for (int i = 0; i < vb.size(); ++i) {
 				probs(i) = osc->Probability(chan.first, chan.second,
 						(bins[i] + bins[i+1]) / 2.);
+			}
 
 			//probs = osc->Oscillate(chan.first, chan.second, _global[ir.first]);
 		}
-		else if (kVerbosity > 3)
-			std::cout << "Not oscillating\n";
+		else if (kVerbosity > 4)
+			std::cout << "Not oscillating spectrum for " << ir.first
+				<< " (" << hname << ") with "
+				<< cname << "\n";
 
 
 		if (samples.count(hname))
