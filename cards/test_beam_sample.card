@@ -10,7 +10,7 @@ verbose	2
 # "E_FHC", "E_RHC", "M_FHC", "M_RHC"
 # will be used
 
-sample	"E_FHC", "E_RHC", "M_FHC", "M_RHC"
+sample	"E_FHC", "E_RHC" #, "M_FHC", "M_RHC"
 
 
 #energy scale error for E or M
@@ -23,9 +23,9 @@ sample	"E_FHC", "E_RHC", "M_FHC", "M_RHC"
 #flux  from [0, 50)
 #xsec  from [50, 74)
 #skdet from [74, 119)
-syst_first	0
-syst_last	110
-skip		55, 56, 73	# Eb error
+#syst_first	0
+#syst_last	110
+#skip		55, 56, 73	# Eb error
 
 #systematic informations
 corr_file	"/.data/tboschi/HKsens/OscAna/SuperHK/errorstudy/0/systematics/combinedmatrix.root"
