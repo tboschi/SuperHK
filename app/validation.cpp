@@ -86,16 +86,13 @@ int main(int argc, char** argv)
 
 	//get True point
 	parms->GetEntry(truePoint, tM12, tM23, tS12, tS13, tS23, tdCP);
-	tS12 = 0.304; tS13 = 0.0217; tS23 = 0.528;
 
 	if (trueOrder == "normal")
 		osc->SetMasses<Oscillator::normal>(tM12, tM23);
 	else if (trueOrder == "inverted")
 		osc->SetMasses<Oscillator::inverted>(tM12, tM23);
 	osc->SetPMNS<Oscillator::sin2>(tS12, tS13, tS23, tdCP);
-	std::map<std::string, Eigen::VectorXd> trueSpectra = fitter->BuildSamples(0);
-	Eigen::VectorXd trueSpectraFull = fitter->ConstructSamples(0);
-	std::cout << "true " << trueSpectraFull.head(25).transpose() << std::endl;
+	std::map<std::string, Eigen::VectorXd> trueSpectra = fitter->BuildSamples(osc);
 
 	//get Fit point
 	parms->GetEntry(fitPoint, fM12, fM23, fS12, fS13, fS23, fdCP);
@@ -106,8 +103,6 @@ int main(int argc, char** argv)
 		osc->SetMasses<Oscillator::inverted>(fM12, fM23);
 	osc->SetPMNS<Oscillator::sin2>(fS12, fS13, fS23, fdCP);
 	std::map<std::string, Eigen::VectorXd> fitSpectra = fitter->BuildSamples(osc);
-	Eigen::VectorXd fitSpectraFull = fitter->ConstructSamples(osc);
-	std::cout << "fit  " << fitSpectraFull.head(25).transpose() << std::endl;
 
 	for (const auto &is : trueSpectra) {
 		std::string output = outfile;
