@@ -192,4 +192,4 @@ EOF
 fi
 
 echo Submitting jobs
-echo $sub $scriptname
+$sub $scriptname
