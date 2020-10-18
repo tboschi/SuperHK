@@ -8,10 +8,10 @@
 
 #name	"hkdr"
 S12	0.32
-S13	0.0256584
+S13	0.0219
 S23	0.5
 M12	7.6e-5
-M23	2.4e-3
+M23	2.5e-3
 dCP	0
 
 #earth density profile between JPARK and SK
@@ -19,11 +19,11 @@ dCP	0
 #density_profile	"data/DensityProfileVacuum.dat"
 
 #base "baseball_plot_dots.dat"
-output "atmospheric_oscillation.dat"
+output "atmospheric_oscillation_osc0.dat"
 
 mass_hierarchy	"normal"
-LUT	0
+LUT	1
 threshold	1e-9
 
 production_heights	"data/prod_honda/kam-ally-*"
-matter_profile		"data/PREM.dat"
+density_profile		"data/PREM_osc3.dat"

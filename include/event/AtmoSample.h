@@ -54,7 +54,6 @@ class AtmoSample : public Sample
 	public:
 		AtmoSample(CardDealer *card);
 		AtmoSample(std::string card);
-		~AtmoSample();
 		void Init();
 
 		void LoadSimulation();
@@ -67,6 +66,8 @@ class AtmoSample : public Sample
 		std::map<std::string, Eigen::VectorXd> BuildSamples(Oscillator *osc = 0)
 		override;
 
+		Eigen::VectorXd ConstructSamples(Oscillator *osc = 0);
+
 
 	private:
 		// atmospheric oscillation
@@ -78,10 +79,15 @@ class AtmoSample : public Sample
 		std::map<int, std::string> _type_names;
 
 		// For root stuff
-		std::unique_ptr<TChain> dm;
+		std::unique_ptr<TChain> dm, pp;
 		int ipnu, mode, itype;
 		float dirnu[3], dir[3], flxho[3];
 		float pnu, amom, weightx, ErmsHax, nEAveHax;
+		int point, bins;
+		double *data;
+
+		std::map<int, int> pre_point;
+		bool kPreInput;
 };
 
 void CreateTensor(CardDealer *cd);

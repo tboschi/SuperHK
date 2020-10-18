@@ -43,7 +43,7 @@ class Atmosphere
 		//	const std::map<std::string, std::pair<Nu::Flavour, Nu::Flavour> > &oscf, Oscillator *osc = 0);
 
 	private:
-		std::unique_ptr<CardDealer> cd;
+		CardDealer *cd;
 		Oscillator::Profile _profile;
 		int kVerbosity;
 

@@ -285,6 +285,10 @@ class Sample
 		}
 
 
+		void SetPoint(int p) {
+			_point = p;
+		}
+
 
 	protected:
 		std::unique_ptr<CardDealer> cd;
@@ -306,6 +310,8 @@ class Sample
 		std::map<std::string, std::vector<int> > _binpos;
 		std::map<std::string, int> _offset;
 		std::map<std::string, std::vector<double> > _global;
+		// store point for pre computed bins
+		int _point;
 
 		// for systematics
 		int _nSys;

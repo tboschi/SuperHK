@@ -5,7 +5,7 @@ verbose	2
 # scale statistics
 #stats	1.00
 
-density_profile	"/.data/tboschi/HKsens/OscAna/SuperHK/data/PREM_20pts.dat"
+density_profile	"/.data/tboschi/HKsens/OscAna/SuperHK/data/PREM_25pts.dat"
 production_heights	"/.data/tboschi/HKsens/OscAna/SuperHK/data/prod_honda/kam-ally-aa-*.d"
 
 # systematic information for atmospheric sample

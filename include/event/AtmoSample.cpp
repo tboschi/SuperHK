@@ -14,13 +14,6 @@ AtmoSample::AtmoSample(std::string card) :
 	atm_path = std::unique_ptr<Atmosphere>(new Atmosphere(card));
 }
 
-AtmoSample::~AtmoSample()
-{
-	dm->Delete();
-}
-
-
-
 void AtmoSample::Init()
 {
 	_oscf = { {"nuE0_nuE0", std::make_pair(Nu::E_, Nu::E_)},
@@ -70,6 +63,7 @@ void AtmoSample::Init()
 			std::cout << "\t" << it.first << " -> " << it.second << std::endl;
 	}
 
+	kPreInput = false;
 	LoadReconstruction();
 
 	DefineBinning();
@@ -175,6 +169,29 @@ void AtmoSample::LoadSystematics()
 
 // same of BeamSample _-> move into base class
 void AtmoSample::LoadReconstruction() {
+
+	// check first if precomputed files exist
+	std::string chain, tree_name; //, friends, friend_name;
+	if (cd->Get("pre_input", chain)) {
+		kPreInput = true;
+		if (!cd->Get("pre_tree_name", tree_name))
+			tree_name = "atmoTree";
+		pp = std::unique_ptr<TChain>(new TChain(tree_name.c_str()));
+
+		pp->Add(chain.c_str());
+
+		pp->SetBranchAddress("Point", &point);
+		pp->SetBranchAddress("Bins",  &bins);
+		pp->SetBranchAddress("Data",  data);
+
+		pp->SetBranchStatus("*", 0);
+		pp->SetBranchStatus("Point", 1);
+		//linking fitting point to position in tree
+		//as they may not be ordered
+		for (int i = 0; i < pp->GetEntries(); ++i)
+			pre_point[point] = i;
+	}
+
 	// extract bining from recostruction matrices
 	// binning is compressed, such that nonempty bins are not stored
 
@@ -199,7 +216,6 @@ void AtmoSample::LoadReconstruction() {
 		_type_names[ih.second] = ih.first;
 	}
 
-	std::string chain, tree_name; //, friends, friend_name;
 	if (!cd->Get("MC_input", chain))
 		throw std::invalid_argument("AtmoSample: no reconstruction files in card,"
 			       		    "very bad!");
@@ -291,7 +307,6 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 }
 */
 
-
 std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 {
 	std::map<std::string, Eigen::VectorXd> samples;
@@ -324,6 +339,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 			continue;
 
 		// this is real data, which we do not want
+		//
 		if (pnu < 1.0e-7 && ipnu == 0 && mode == 0)
 			continue;
 
@@ -339,27 +355,29 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 
 		double factor_E = 1, factor_M = 1;
 		if (std::abs(ipnu) == 12)	// it is e type
-      			factor_E = flxho[1] / flxho[0];
-		else						// it is mu or tau type
       			factor_M = flxho[0] / flxho[1];
+		else				// it is mu or tau type
+      			factor_E = flxho[1] / flxho[0];
 
 		Nu::Flavour nu_out = Nu::fromPDG(ipnu);
 		if (osc) {
 			// LUT is cleared in this step
 			// -1 dirnu[2] ?? ???? ?? ? ? ? ? ? ?
-			osc->SetMatterProfile(atm_path->MatterProfile(dirnu[2], start));
+			osc->SetMatterProfile(atm_path->MatterProfile(-dirnu[2], start));
 
 			// but thanks to LUT, probability is computed only once
 			if (ipnu > 0)	// neutrino
-				weightx *= factor_E * osc->Probability(Nu::E_, nu_out, pnu * 1e3)
-					+  factor_M * osc->Probability(Nu::M_, nu_out, pnu * 1e3);
+			{
+				weightx *= factor_E * osc->Probability(Nu::E_, nu_out, pnu)
+					+  factor_M * osc->Probability(Nu::M_, nu_out, pnu);
+			}
 			else {		//antineutrino
-				weightx *= factor_E * osc->Probability(Nu::Eb, nu_out, pnu * 1e3)
-					+  factor_M * osc->Probability(Nu::Mb, nu_out, pnu * 1e3);
+				weightx *= factor_E * osc->Probability(Nu::Eb, nu_out, pnu)
+					+  factor_M * osc->Probability(Nu::Mb, nu_out, pnu);
 			}
 		}
 
-		_reco_hist[type]->Fill(log10(amom), dir[2], weightx);
+		_reco_hist[type]->Fill(log10(amom), -dir[2], weightx);
 	}
 
 	for (const auto &ih : _reco_hist) {
@@ -382,6 +400,22 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 
 	return samples;
 }
+
+Eigen::VectorXd AtmoSample::ConstructSamples(Oscillator *osc) {
+	if (kPreInput && pre_point.count(_point)) {
+		double stats;	//for scaling
+		if (!cd->Get("stats", stats))
+			stats = 1.0;
+		pp->SetBranchStatus("*", 1);
+		pp->GetEntry(pre_point[_point]);
+
+		Eigen::VectorXd samples = Eigen::Map<Eigen::VectorXd>(data, bins);
+		return stats * samples;
+	}
+	else	// no precomputation
+		return Sample::ConstructSamples(osc);
+}
+
 
 void AtmoSample::LoadReconstruction(std::string channel)
 {

@@ -72,10 +72,10 @@ int main(int argc, char** argv)
 	double X2, ObsX2, SysX2;
 	double Time;
 	int truePoint, fitPoint;
-	if (!cd->Get("true_point", truePoint))
+	if (!cd->Get("point", truePoint))
 		truePoint = parms->GetNominalEntry();
 	if (!cd->Get("fit_point", fitPoint))
-		fitPoint = parms->GetNominalEntry();
+		fitPoint = -1;
 
 	double tM12, fM12;
 	double tM23, fM23;
@@ -85,7 +85,8 @@ int main(int argc, char** argv)
 	double tdCP, fdCP;
 
 	//get True point
-	parms->GetEntry(truePoint, tM12, tM23, tS12, tS13, tS23, tdCP);
+	//parms->GetEntry(truePoint, tM12, tM23, tS12, tS13, tS23, tdCP);
+	tM12 = 7.49e-5; tM23 = 2.5e-3; tS12 = 0.309; tS13 = 0.021; tS23 = 0.425; tdCP = -2.79252680319;
 
 	if (trueOrder == "normal")
 		osc->SetMasses<Oscillator::normal>(tM12, tM23);
@@ -93,17 +94,22 @@ int main(int argc, char** argv)
 		osc->SetMasses<Oscillator::inverted>(tM12, tM23);
 	osc->SetPMNS<Oscillator::sin2>(tS12, tS13, tS23, tdCP);
 	std::map<std::string, Eigen::VectorXd> trueSpectra = fitter->BuildSamples(osc);
+	std::map<std::string, Eigen::VectorXd> fitSpectra;
 
-	//get Fit point
-	parms->GetEntry(fitPoint, fM12, fM23, fS12, fS13, fS23, fdCP);
+	if (fitPoint >= 0) {
+		//get Fit point
+		//parms->GetEntry(fitPoint, fM12, fM23, fS12, fS13, fS23, fdCP);
+		fM12 = 7.49e-5; fM23 = 2.5e-3; fS12 = 0.309; fS13 = 0.021; fS23 = 0.425; fdCP = 0;
 
-	if (fitOrder == "normal")
-		osc->SetMasses<Oscillator::normal>(fM12, fM23);
-	else if (fitOrder == "inverted")
-		osc->SetMasses<Oscillator::inverted>(fM12, fM23);
-	osc->SetPMNS<Oscillator::sin2>(fS12, fS13, fS23, fdCP);
-	std::map<std::string, Eigen::VectorXd> fitSpectra = fitter->BuildSamples(osc);
+		if (fitOrder == "normal")
+			osc->SetMasses<Oscillator::normal>(fM12, fM23);
+		else if (fitOrder == "inverted")
+			osc->SetMasses<Oscillator::inverted>(fM12, fM23);
+		osc->SetPMNS<Oscillator::sin2>(fS12, fS13, fS23, fdCP);
+		fitSpectra = fitter->BuildSamples(osc);
+	}
 
+	Eigen::ArrayXd x2n;
 	for (const auto &is : trueSpectra) {
 		std::string output = outfile;
 		output.insert(output.find(".dat"), "_" + is.first);
@@ -111,21 +117,25 @@ int main(int argc, char** argv)
 		std::cout << "Comparing " << is.first << " sample and saving to "
 			  << output << "\n";
 
-		// needed...
-		Eigen::ArrayXd x2n = fitter->RawX2n(is.second, fitSpectra[is.first]);
-
 		fout << "# true: m12 " << tM12 << ", m23 " << tM23
 		     << ", s12 " << tS12 << ", s13 " << tS13
 		     << ", s23 " << tS23 << ", dcp " << tdCP << std::endl;
-		fout << "#  fit: m12 " << fM12 << ", m23 " << fM23
-		     << ", s12 " << fS12 << ", s13 " << fS13
-		     << ", s23 " << fS23 << ", dcp " << fdCP << std::endl;
-		fout << "# total x2 = " << x2n.sum() << std::endl;
-		for (int i = 0; i < is.second.size(); ++i)
-			fout << i << "\t" << is.second(i) << "\t"
-			     << fitSpectra[is.first](i) << "\t"
-			     << x2n(i) << std::endl;
+		if (fitPoint >= 0) {
+			x2n = fitter->RawX2n(is.second, fitSpectra[is.first]);
+			fout << "#  fit: m12 " << fM12 << ", m23 " << fM23
+			     << ", s12 " << fS12 << ", s13 " << fS13
+			     << ", s23 " << fS23 << ", dcp " << fdCP << std::endl;
+			fout << "# total x2 = " << x2n.sum() << std::endl;
+		}
 
+		for (int i = 0; i < is.second.size(); ++i) {
+			fout << i << "\t" << is.second(i);
+			if (fitPoint >= 0)
+				fout << "\t" << fitSpectra[is.first](i)
+				     << "\t" << x2n(i) << std::endl;
+			else
+				fout << "\n";
+		}
 	}
 
 	delete cd;

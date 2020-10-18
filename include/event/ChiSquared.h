@@ -42,6 +42,7 @@ class ChiSquared
 		void Add(std::string card) {
 			_sample.push_back(new S(card));
 		}
+		void SetPoint(int p);
 
 		void Init();
 		bool Combine();

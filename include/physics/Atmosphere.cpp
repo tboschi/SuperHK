@@ -1,9 +1,9 @@
 #include "Atmosphere.h"
 
 Atmosphere::Atmosphere(CardDealer *card) :
-	cd(std::unique_ptr<CardDealer>(card)),
 	gen(std::random_device()())
 {
+	cd = card;
 	LoadDensityProfile();
 	LoadProductionHeights();
 
@@ -20,14 +20,16 @@ Atmosphere::Atmosphere(CardDealer *card) :
 }
 
 Atmosphere::Atmosphere(std::string card) :
-	cd(std::unique_ptr<CardDealer>(new CardDealer(card))),
 	gen(std::random_device()())
 {
+	cd = new CardDealer(card),
 	LoadDensityProfile();
 	LoadProductionHeights();
 
 	if (!cd->Get("verbosity", kVerbosity))
 		kVerbosity = 0;
+
+	delete cd;
 
 	// initialise Earth densities
 	//_density = { std::make_pair(Const::Rearth,  3.3),	//6371
@@ -255,9 +257,9 @@ void Atmosphere::LoadDensityProfile(std::string table_file)
 		return;
 	}
 
-	// read first line
+	// read first line and remember last line
 	std::string line;
-	double first_rad, last_rad;
+	double first_rad = -1, last_rad = -1;
 	while (std::getline(it, line)) {
 		// remove hash comments
 		if (line.find('#') != std::string::npos)
@@ -266,27 +268,14 @@ void Atmosphere::LoadDensityProfile(std::string table_file)
 			continue;
 
 		std::stringstream iss(line);
-		iss >> first_rad;
-		break;
-	}
-
-	// jump to last line
-	it.seekg(-1, std::ios::end);
-	while (std::getline(it, line)) {
-		// remove hash comments
-		if (line.find('#') != std::string::npos)
-			line.erase(line.find('#'));
-		if (line.empty())
-			continue;
-
-		std::stringstream iss(line);
+		if (first_rad < 0)
+			iss >> first_rad;
 		iss >> last_rad;
-		break;
 	}
 
 	// last radius is smaller than first one, so it is reversed!
 	bool kReverse = last_rad < first_rad;
-	// last radius is less then one, meaning it is absolute scale
+	// last radius is less than one, meaning it is absolute scale
 	bool kAbsolute = (last_rad > 1);
 
 	// reset!
@@ -334,9 +323,10 @@ Oscillator::Profile Atmosphere::MatterProfile(double cosz, double atm)
 
 	// path travellend in air
 	double x0 = sqrt(pow(Const::EarthR + atm, 2) - pow(Const::EarthR * sinz, 2))
-			- Const::EarthR * cosz;
+			- Const::EarthR * std::abs(cosz);
+			//- Const::EarthR * (cosz);
 
-	Oscillator::Profile lens_dens = {std::make_tuple(x0, Const::rhoAir, 0.5)};
+	Oscillator::Profile lens_dens = {std::make_tuple(x0, 0 /*Const::rhoAir*/, 0.5)};
 	// neutrino from above, so no Earth crossing
 	if (cosz > -1e-9)
 		return lens_dens;
@@ -358,12 +348,14 @@ Oscillator::Profile Atmosphere::MatterProfile(double cosz, double atm)
 		halves.push_back(std::make_tuple(x_n, std::get<1>(*ir), std::get<2>(*ir)));
 		x_prev += x_n;
 	}
-	// double the deepest length
-	std::get<0>(halves[0]) *= 2;
 
-	// halves is 2*xn, xn-1, ... x2, x1
-	lens_dens.insert(lens_dens.end(), halves.rbegin(), halves.rend());
-	lens_dens.insert(lens_dens.end(), halves.begin() + 1, halves.end());
+	if (halves.size()) { // double the deepest length
+		std::get<0>(halves[0]) *= 2;
+
+		// halves is 2*xn, xn-1, ... x2, x1
+		lens_dens.insert(lens_dens.end(), halves.rbegin(), halves.rend());
+		lens_dens.insert(lens_dens.end(), halves.begin() + 1, halves.end());
+	} //else shell passed is very very small
 
 	// lens_dens is now x0, x1, x2, ..., xn-1, xn, xn, 
 	return lens_dens;

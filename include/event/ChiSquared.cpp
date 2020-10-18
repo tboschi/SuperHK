@@ -150,6 +150,12 @@ void ChiSquared::CombineSystematics()
 	}
 }
 
+void ChiSquared::SetPoint(int p) {
+	for (const auto &is : _sample)
+		is->SetPoint(p);
+}
+
+
 std::map<std::string, Eigen::VectorXd> ChiSquared::BuildSamples(Oscillator *osc) {
 	std::map<std::string, Eigen::VectorXd> samples;
 	for (const auto &is : _sample) {
