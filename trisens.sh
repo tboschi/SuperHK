@@ -242,7 +242,7 @@ else # update systematics
 	sed -i "/^stats_only/s:^:#:" $atmo
 fi
 
-reco_atmo=$root'/../../reconstruction_atmo/*mc.sk4.*.root'
+reco_atmo=$root'/../../reconstruction_atmo/*.sk4.*.root'
 #MC inputs
 sed -i "s:^MC_input.*:MC_input\t\"$reco_atmo\":"	$atmo
 sed -i "s:^MC_tree_name.*:MC_tree_name\t\"osc_tuple\":"	$atmo

@@ -135,7 +135,7 @@ sed -i "s:^systematic_tree.*:systematic_tree\t\"sigmatree\":" $atmo
 #Atmo systematics
 sed -i "/^#stats_only/s:^#::" $atmo
 
-reco_atmo=$root'/../../*mc.sk4.*.root'
+reco_atmo=$root'/../../*.sk4.*.root'
 #MC inputs
 sed -i "s:^MC_input.*:MC_input\t\"$reco_atmo\":"	$atmo
 sed -i "s:^MC_tree_name.*:MC_tree_name\t\"osc_tuple\":"	$atmo
