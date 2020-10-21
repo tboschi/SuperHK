@@ -424,7 +424,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 		rm.leftCols(xs) = rm.middleCols(1, xs);
 		rm.conservativeResize(ys, xs);
 
-		std::cout << ih.first << "\n" << rm.rowwise().sum() << "\n" << std::endl;
+		//std::cout << ih.first << "\n" << rm.rowwise().sum() << "\n" << std::endl;
 		samples[ih.first] = Eigen::Map<Eigen::VectorXd>(rm.data(), rm.cols() * rm.rows());
 
 	}
