@@ -53,11 +53,14 @@ Atmosphere::Atmosphere(std::string card) :
 // vector gives the production height
 void Atmosphere::LoadProductionHeights()
 {
+	if (!cd->Get("production_height", _atm))
+		_atm = 15.0;	// default 15 km altitude
+
 	// calling system ls such that table_file can contain wildcards
 	std::ifstream it(".production_files");
 	if (!it || it.peek() == std::ifstream::traits_type::eof()) {
 		std::string prod_file;
-		if (!cd->Get("production_heights", prod_file)) {
+		if (!cd->Get("honda_production", prod_file)) {
 			std::cout << "Atmosphere: no production heights in card, please specify production height yourself" << std::endl;
 			return;
 		}
@@ -319,6 +322,9 @@ void Atmosphere::LoadDensityProfile(std::string table_file)
 // the first entry will be therefore atmospheric propagation
 Oscillator::Profile Atmosphere::MatterProfile(double cosz, double atm)
 {
+	if (atm < 0)
+		atm = _atm;
+
 	double sinz = sqrt(1 - cosz * cosz);
 
 	// path travellend in air
@@ -356,6 +362,11 @@ Oscillator::Profile Atmosphere::MatterProfile(double cosz, double atm)
 		lens_dens.insert(lens_dens.end(), halves.rbegin(), halves.rend());
 		lens_dens.insert(lens_dens.end(), halves.begin() + 1, halves.end());
 	} //else shell passed is very very small
+
+	//std::cout << "profile:";
+	//for (const auto &ip : lens_dens)
+		//std::cout << "\t(" << std::get<0>(ip) << ", " << std::get<1>(ip) << ")";
+	//std::cout << std::endl;
 
 	// lens_dens is now x0, x1, x2, ..., xn-1, xn, xn, 
 	return lens_dens;

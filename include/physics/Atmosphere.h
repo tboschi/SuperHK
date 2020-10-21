@@ -30,13 +30,13 @@
 class Atmosphere
 {
 	public:
-		Atmosphere(CardDealer *cd);
-		Atmosphere(std::string cd);
+		Atmosphere(CardDealer *card);
+		Atmosphere(std::string card);
 
 		void LoadProductionHeights();
 		double GenerateRandomHeight(Nu::Flavour flv, double cosz, double energy);
 		void LoadDensityProfile(std::string table_file = "");
-		Oscillator::Profile MatterProfile(double cosz, double atm = 15); // 15 km default
+		Oscillator::Profile MatterProfile(double cosz, double atm = -1);
 
 		//std::map<std::string, Eigen::VectorXd>
 		//	Oscillate(const std::vector<std::pair<double, double> > &bins, 
@@ -46,6 +46,7 @@ class Atmosphere
 		CardDealer *cd;
 		Oscillator::Profile _profile;
 		int kVerbosity;
+		double _atm;
 
 		std::vector<double> _problibs, _energies, _zenithas;
 		std::mt19937 gen;
