@@ -6,7 +6,8 @@ verbose	1
 stats	1.00
 
 density_profile		"/a/path"
-production_heights	"make/a/path"
+production_height	15
+honda_production	"make/a/path"
 
 # systematic information for atmospheric sample
 
