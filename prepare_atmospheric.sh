@@ -143,7 +143,8 @@ sed -i "s:^MC_tree_name.*:MC_tree_name\t\"osc_tuple\":"	$atmo
 dens=$PWD'/data/PREM_25pts.dat'
 prod=$PWD'/data/prod_honda/kam-ally-aa-*.d'
 sed -i "s:density_profile.*:density_profile\t\"$dens\":"	$atmo
-sed -i "s:production_heights.*:production_heights\t\"$prod\":"	$atmo
+sed -i "s:honda_production.*:honda_production\t\"$prod\":"	$atmo
+sed -i "s:production_height.*:production_height\t15:"		$atmo
 
 
 rm -f $root/L*log
