@@ -317,13 +317,31 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 	double scale, start;
 	if (!cd->Get("MC_scale", scale))
 		scale = 188.4 / 22.5;	// HK to SK ratio
-	if (!cd->Get("height", start))
+	if (!cd->Get("production_height", start))
 		start = 15.0;		// most probable production height
 
 	dm->SetBranchStatus("*", 1);
 	int first_event_type = _type_names.begin()->first;
 	int last_event_type = _type_names.rbegin()->first;
 	// loop through all events and fill histograms
+
+	//std::ostringstream address;
+	//address << "osccalc_" << (void const *)osc << ".root";
+	//TFile oscout(address.str().c_str(), "RECREATE");
+	//double fE, fM, pE, pM, W;
+	//TTree *tt = new TTree("info", "Oscillated info");
+	//tt->Branch("ipnu",    &ipnu, "ipnu/I");	//pdg
+	//tt->Branch("mode",    &mode, "mode/I");
+	//tt->Branch("itype",   &itype, "type/I");
+	//tt->Branch("dir",     &dir[2], "dir/F");
+	//tt->Branch("amom",    &amom, "amom/F");
+	//tt->Branch("W",    &W,  "W/D");
+	//tt->Branch("fE",   &fE, "fE/D");
+	//tt->Branch("fM",   &fM, "fM/D");
+	//tt->Branch("pE",   &pE, "pE/D");
+	//tt->Branch("pM",   &pM, "pM/D");
+	
+
 	std::cout << "AtmoSample: reading " << dm->GetEntries() << " entries" << std::endl;
 	for (int i = 0; i < dm->GetEntries(); ++i) {
 		//std::cout << "entry " << i << std::endl;
@@ -335,11 +353,10 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 			continue;
 
 		// no NC tau's allowed, so skip
-		if (std::abs(mode) > 30 && std::abs(ipnu) == 16)
+		if (std::abs(mode) >= 30 && std::abs(ipnu) == 16)
 			continue;
 
 		// this is real data, which we do not want
-		//
 		if (pnu < 1.0e-7 && ipnu == 0 && mode == 0)
 			continue;
 
@@ -352,15 +369,18 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 		std::string type = _type_names[itype];
 
 		weightx *= scale;
+		//W = weightx;
 
 		double factor_E = 1, factor_M = 1;
 		if (std::abs(ipnu) == 12)	// it is e type
-      			factor_M = flxho[0] / flxho[1];
+      			factor_M = flxho[1] / flxho[0];
 		else				// it is mu or tau type
-      			factor_E = flxho[1] / flxho[0];
+      			factor_E = flxho[0] / flxho[1];
+		//fE = factor_E;
+		//fM = factor_M;
 
 		Nu::Flavour nu_out = Nu::fromPDG(ipnu);
-		if (osc) {
+		if (osc && std::abs(mode) < 30) {	// NCs have mode >= 30
 			// LUT is cleared in this step
 			// -1 dirnu[2] ?? ???? ?? ? ? ? ? ? ?
 			osc->SetMatterProfile(atm_path->MatterProfile(-dirnu[2], start));
@@ -368,34 +388,45 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 			// but thanks to LUT, probability is computed only once
 			if (ipnu > 0)	// neutrino
 			{
+				//pE = osc->Probability(Nu::E_, nu_out, pnu);
+				//pM = osc->Probability(Nu::M_, nu_out, pnu);
+
 				weightx *= factor_E * osc->Probability(Nu::E_, nu_out, pnu)
 					+  factor_M * osc->Probability(Nu::M_, nu_out, pnu);
 			}
 			else {		//antineutrino
+				//pE = osc->Probability(Nu::Eb, nu_out, pnu);
+				//pM = osc->Probability(Nu::Mb, nu_out, pnu);
+
 				weightx *= factor_E * osc->Probability(Nu::Eb, nu_out, pnu)
 					+  factor_M * osc->Probability(Nu::Mb, nu_out, pnu);
 			}
 		}
+		//tt->Fill();
+
+		//std::cout << "osc to " << ipnu << " with " << factor_E << ", " << factor_M
+			  //<< " -> w " << weightx << std::endl;
 
 		_reco_hist[type]->Fill(log10(amom), -dir[2], weightx);
 	}
+
+	//tt->Write();
+	//oscout.Close();
 
 	for (const auto &ih : _reco_hist) {
 		int xs = ih.second->GetNbinsX();	// energy
 		int ys = ih.second->GetNbinsY();	// cosz
 		Eigen::MatrixXd rm = Eigen::Map<Eigen::MatrixXd>
 			(ih.second->GetArray() + xs + 2, xs + 2, ys);
-		//std::cout << "raw\n";
-		//for (int g = 0; g < 801; ++g)
-		//	std::cout << *(h2->GetArray()+g) << "\t";
-		//std::cout << std::endl;
 
 		// remove first and last columns
 		rm.transposeInPlace();
 		rm.leftCols(xs) = rm.middleCols(1, xs);
 		rm.conservativeResize(ys, xs);
 
+		std::cout << ih.first << "\n" << rm.rowwise().sum() << "\n" << std::endl;
 		samples[ih.first] = Eigen::Map<Eigen::VectorXd>(rm.data(), rm.cols() * rm.rows());
+
 	}
 
 	return samples;
