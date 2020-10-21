@@ -26,7 +26,7 @@ else
 fi
 
 
-Atmo=$PWD/bin/atmo_input
+Atmo=$PWD/cross-atmo.sh
 nameExec=${Atmo##*/}
 nameExec=${nameExec%.*}
 
