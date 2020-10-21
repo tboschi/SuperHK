@@ -33,8 +33,10 @@ systematic_tree	"sigmatree"
 MC_input	"/montecarlo/path/*.root"
 MC_tree_name	"mcStuff"
 
-# MC scaling from SK to HK
-MC_scale	8.37333333334
+# MC scaling from 500 years to HK esposure (10y * 188.4t / 22.5t)
+#MC_scale	8.37333333334	# (188.4 / 22.5)
+#MC_scale	0.16746666667	# (10 / 500) * (188.4 / 22.5)
+MC_scale	0.01708739726	# 3118.45 / (500 * 365)
 
 
 #
