@@ -62,7 +62,7 @@ make clean
 make APP=fitter
 mv bin/fitter \$tgt
 make APP=atmo_input
-mv bin/atmo_input bin/atmo_input_\$arch
+mv bin/atmo_input bin/arch/atmo_input_\$arch
 EOF
 done
 
