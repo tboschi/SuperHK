@@ -77,6 +77,8 @@ int main(int argc, char** argv)
 	if (!cd->Get("fit_point", fitPoint))
 		fitPoint = -1;
 
+	std::map<std::string, Eigen::VectorXd> nooscSpectra = fitter->BuildSamples();
+
 	double tM12, fM12;
 	double tM23, fM23;
 	double tS12, fS12;
@@ -110,7 +112,7 @@ int main(int argc, char** argv)
 	}
 
 	Eigen::ArrayXd x2n;
-	for (const auto &is : trueSpectra) {
+	for (const auto &is : nooscSpectra) {
 		std::string output = outfile;
 		output.insert(output.find(".dat"), "_" + is.first);
 		std::ofstream fout(output.c_str());
@@ -121,7 +123,7 @@ int main(int argc, char** argv)
 		     << ", s12 " << tS12 << ", s13 " << tS13
 		     << ", s23 " << tS23 << ", dcp " << tdCP << std::endl;
 		if (fitPoint >= 0) {
-			x2n = fitter->RawX2n(is.second, fitSpectra[is.first]);
+			x2n = fitter->RawX2n(trueSpectra[is.first], fitSpectra[is.first]);
 			fout << "#  fit: m12 " << fM12 << ", m23 " << fM23
 			     << ", s12 " << fS12 << ", s13 " << fS13
 			     << ", s23 " << fS23 << ", dcp " << fdCP << std::endl;
@@ -129,7 +131,7 @@ int main(int argc, char** argv)
 		}
 
 		for (int i = 0; i < is.second.size(); ++i) {
-			fout << i << "\t" << is.second(i);
+			fout << i << "\t" << is.second(i) << "\t" << fitSpectra[is.first](i);
 			if (fitPoint >= 0)
 				fout << "\t" << fitSpectra[is.first](i)
 				     << "\t" << x2n(i) << std::endl;
