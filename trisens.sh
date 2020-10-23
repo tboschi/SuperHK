@@ -319,6 +319,8 @@ when_to_transfer_output	= ON_EXIT
 initialdir		= $PWD
 output			= $output/L$nameExec.\$(Process).log
 error			= $output/L$nameExec.\$(Process).log
+stream_output		= True
+stream_error		= True
 
 queue $NJOBS
 
