@@ -20,7 +20,6 @@ nickn=("one_cpv"
 
 
 
-
 ###################################
 #### do not modify script below ###
 ###################################
@@ -41,19 +40,19 @@ rm $lims $olim
 for i in ${!model[*]}; do 
 	m="${model[$i]}"
 	oscc=${m%/*}
-	oscc=${m/contours/sensitivity}/oscillation.card
+	oscc=${oscc/contours/sensitivity}/oscillation.card
 
 	echo "pi = 4.*atan(1.)" > $olim
 	for p in "${parms[@]}"
 	do
 		echo "" >> $lims
-		cat "$card" | awk -v par=$p '/^parm/ && $0~par {print "x0_" par " = " $2}' >> $olims
-		cat "$card" | awk -v par=$p '/^parm/ && $0~par {print "x1_" par " = " $3}' >> $olims
-		cat "$card" | awk -v par=$p '/^parm/ && $0~par {print "nn_" par " = " $4}' >> $olims
+		cat "$oscc" | awk -v par=$p '/^parm/ && $0~par {gsub('/,/', "", $2); print "x0_" par " = " $2}' >> $olim
+		cat "$oscc" | awk -v par=$p '/^parm/ && $0~par {gsub('/,/', "", $3); print "x1_" par " = " $3}' >> $olim
+		cat "$oscc" | awk -v par=$p '/^parm/ && $0~par {gsub('/,/', "", $4); print "nn_" par " = " $4}' >> $olim
 	done
-	if [ ! -f $lims ] ; then # lims file does not exist
-		cp $olim $lims
-	elif ! diff $lims $olim ; then
+
+	cp $olim $lims
+	if [ -f $lims ] && ! diff $lims $olim; then # lims file does not exist
 		echo oscillation cards are different! Cannot process "$m" with the rest
 		exit 1
 	fi
