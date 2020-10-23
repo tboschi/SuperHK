@@ -247,6 +247,13 @@ reco_atmo=$root'/../../reconstruction_atmo/*.sk4.*.root'
 sed -i "s:^MC_input.*:MC_input\t\"$reco_atmo\":"	$atmo
 sed -i "s:^MC_tree_name.*:MC_tree_name\t\"osc_tuple\":"	$atmo
 
+pre_NH=$root'/../../reconstruction_atmo/pre/NH/atmo.*.root'
+pre_IH=$root'/../../reconstruction_atmo/pre/IH/atmo.*.root'
+#pre computed inputs
+sed -i "s:^pre_input_NH.*:pre_input_NH\t\"$pre_NH\":" $atmo
+sed -i "s:^pre_input_IH.*:pre_input_IH\t\"$pre_NH\":" $atmo
+sed -i "s:^pre_tree_name.*:pre_tree_name\t\"osc_tuple\":" $atmo
+
 dens=$PWD'/data/PREM_25pts.dat'
 prod=$PWD'/data/prod_honda/kam-ally-aa-*.d'
 sed -i "s:density_profile.*:density_profile\t\"$dens\":"	$atmo
