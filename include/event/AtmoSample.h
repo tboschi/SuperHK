@@ -79,15 +79,14 @@ class AtmoSample : public Sample
 		std::map<int, std::string> _type_names;
 
 		// For root stuff
-		std::unique_ptr<TChain> dm, pp;
+		std::unique_ptr<TChain> dm, nh, ih;
 		int ipnu, mode, itype;
 		float dirnu[3], dir[3], flxho[3];
 		float pnu, amom, weightx, ErmsHax, nEAveHax;
 		int point, bins;
 		double *data;
 
-		std::map<int, int> pre_point;
-		bool kPreInput;
+		std::map<int, int> pre_point_NH, pre_point_IH;
 };
 
 void CreateTensor(CardDealer *cd);

@@ -63,7 +63,6 @@ void AtmoSample::Init()
 			std::cout << "\t" << it.first << " -> " << it.second << std::endl;
 	}
 
-	kPreInput = false;
 	LoadReconstruction();
 
 	DefineBinning();
@@ -172,25 +171,44 @@ void AtmoSample::LoadReconstruction() {
 
 	// check first if precomputed files exist
 	std::string chain, tree_name; //, friends, friend_name;
-	if (cd->Get("pre_input", chain)) {
-		kPreInput = true;
+	if (cd->Get("pre_input_NH", chain)) {
 		if (!cd->Get("pre_tree_name", tree_name))
 			tree_name = "atmoTree";
-		pp = std::unique_ptr<TChain>(new TChain(tree_name.c_str()));
+		nh = std::unique_ptr<TChain>(new TChain(tree_name.c_str()));
 
-		pp->Add(chain.c_str());
+		nh->Add(chain.c_str());
 
-		pp->SetBranchAddress("Point", &point);
-		pp->SetBranchAddress("Bins",  &bins);
-		pp->SetBranchAddress("Data",  data);
+		nh->SetBranchAddress("Point", &point);
+		nh->SetBranchAddress("Bins",  &bins);
+		nh->SetBranchAddress("Data",  data);
 
-		pp->SetBranchStatus("*", 0);
-		pp->SetBranchStatus("Point", 1);
+		nh->SetBranchStatus("*", 0);
+		nh->SetBranchStatus("Point", 1);
 		//linking fitting point to position in tree
 		//as they may not be ordered
-		for (int i = 0; i < pp->GetEntries(); ++i)
-			pre_point[point] = i;
+		for (int i = 0; i < nh->GetEntries(); ++i)
+			pre_point_NH[point] = i;
 	}
+
+	if (cd->Get("pre_input_IH", chain)) {
+		if (!cd->Get("pre_tree_name", tree_name))
+			tree_name = "atmoTree";
+		ih = std::unique_ptr<TChain>(new TChain(tree_name.c_str()));
+
+		ih->Add(chain.c_str());
+
+		ih->SetBranchAddress("Point", &point);
+		ih->SetBranchAddress("Bins",  &bins);
+		ih->SetBranchAddress("Data",  data);
+
+		ih->SetBranchStatus("*", 0);
+		ih->SetBranchStatus("Point", 1);
+		//linking fitting point to position in tree
+		//as they may not be ordered
+		for (int i = 0; i < ih->GetEntries(); ++i)
+			pre_point_IH[point] = i;
+	}
+
 
 	// extract bining from recostruction matrices
 	// binning is compressed, such that nonempty bins are not stored
@@ -413,19 +431,19 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 	//tt->Write();
 	//oscout.Close();
 
-	for (const auto &ih : _reco_hist) {
-		int xs = ih.second->GetNbinsX();	// energy
-		int ys = ih.second->GetNbinsY();	// cosz
+	for (const auto &ir : _reco_hist) {
+		int xs = ir.second->GetNbinsX();	// energy
+		int ys = ir.second->GetNbinsY();	// cosz
 		Eigen::MatrixXd rm = Eigen::Map<Eigen::MatrixXd>
-			(ih.second->GetArray() + xs + 2, xs + 2, ys);
+			(ir.second->GetArray() + xs + 2, xs + 2, ys);
 
 		// remove first and last columns
 		rm.transposeInPlace();
 		rm.leftCols(xs) = rm.middleCols(1, xs);
 		rm.conservativeResize(ys, xs);
 
-		//std::cout << ih.first << "\n" << rm.rowwise().sum() << "\n" << std::endl;
-		samples[ih.first] = Eigen::Map<Eigen::VectorXd>(rm.data(), rm.cols() * rm.rows());
+		//std::cout << ir.first << "\n" << rm.rowwise().sum() << "\n" << std::endl;
+		samples[ir.first] = Eigen::Map<Eigen::VectorXd>(rm.data(), rm.cols() * rm.rows());
 
 	}
 
@@ -433,12 +451,28 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 }
 
 Eigen::VectorXd AtmoSample::ConstructSamples(Oscillator *osc) {
-	if (kPreInput && pre_point.count(_point)) {
+	if (osc->GetHierarchy() == Oscillator::normal &&
+	    pre_point_NH.count(_point)) {
+
 		double stats;	//for scaling
 		if (!cd->Get("stats", stats))
 			stats = 1.0;
-		pp->SetBranchStatus("*", 1);
-		pp->GetEntry(pre_point[_point]);
+
+		nh->SetBranchStatus("*", 1);
+		nh->GetEntry(pre_point_NH[_point]);
+
+		Eigen::VectorXd samples = Eigen::Map<Eigen::VectorXd>(data, bins);
+		return stats * samples;
+	}
+	if (osc->GetHierarchy() == Oscillator::inverted &&
+	    pre_point_IH.count(_point)) {
+
+		double stats;	//for scaling
+		if (!cd->Get("stats", stats))
+			stats = 1.0;
+
+		ih->SetBranchStatus("*", 1);
+		ih->GetEntry(pre_point_IH[_point]);
 
 		Eigen::VectorXd samples = Eigen::Map<Eigen::VectorXd>(data, bins);
 		return stats * samples;
