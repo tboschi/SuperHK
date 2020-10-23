@@ -23,8 +23,13 @@ int main(int argc, char** argv)
 	if (!cd.Get("output", output))
 		output = "beam_oscillation.dat";
 
+	if (osc->GetHierarchy() == Oscillator::normal)
+		std::cout << "hierarchy is normal\n";
+	if (osc->GetHierarchy() == Oscillator::inverted)
+		std::cout << "hierarchy is inverted\n";
+
 	std::ofstream out(output.c_str());
-	for (double energy = 0; energy <= 10; lener += 0.002) {
+	for (double energy = 0; energy <= 10; energy += 0.002) {
 		out << energy << "\t";
 		out << osc->Probability(Nu::E_, Nu::E_, energy) << "\t";
 		out << osc->Probability(Nu::M_, Nu::E_, energy) << "\t";
