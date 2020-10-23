@@ -428,6 +428,15 @@ void Oscillator::SetMasses_abs(double ms2, double ms3)
 	dms << 0, ms2, ms3;
 }
 
+Oscillator::masses Oscillator::GetHierarchy()
+{
+	if (dms(2) < 0)
+		return Oscillator::inverted;
+	else
+		return Oscillator::normal;
+}
+
+
 void Oscillator::SetPMNS_sin(double s12, double s13, double s23, double cp) 
 {
 	double c12 = sqrt(1 - s12*s12);

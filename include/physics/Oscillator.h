@@ -111,6 +111,7 @@ class Oscillator
 		void SetMasses_NH(double dms21, double dms23);
 		void SetMasses_IH(double dms21, double dms23);
 		void SetMasses_abs(double ms2, double ms3);
+		masses GetHierarchy();
 
 		template<pmns type>
 		void SetPMNS(double s12, double s13, double s23, double cp)
