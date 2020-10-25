@@ -280,8 +280,8 @@ if [ "$SCHED" == "HTCONDOR" ] ; then
 	echo Launching $NJOBS jobs with HTCondor
 elif [ "$SCHED" == "SLURM" ] ; then
 	sub=sbatch
-	running="squeue -h -r -u $USER -o "%u %t"| grep R  | wc -l"
-	inqueue="squeue -h -r -u $USER -o "%u %t"| grep PD | wc -l"
+	running="squeue -h -r -u $USER -o \"%u %t\" | grep R  | wc -l"
+	inqueue="squeue -h -r -u $USER -o \"%u %t\" | grep PD | wc -l"
 	echo Launching $NJOBS jobs with Slurm
 fi
 
