@@ -5,8 +5,9 @@ verbose	2
 # scale statistics
 #stats	1.00
 
-density_profile	"/.data/tboschi/HKsens/OscAna/SuperHK/data/PREM_25pts.dat"
-production_heights	"/.data/tboschi/HKsens/OscAna/SuperHK/data/prod_honda/kam-ally-aa-*.d"
+density_profile	"/.data/tboschi/HKsens/OscAna/SuperHK/data/PREM_osc3.dat"
+production_height	12.5
+honda_production	"/.data/tboschi/HKsens/OscAna/SuperHK/data/prod_honda/kam-ally-aa-*.d"
 
 # systematic information for atmospheric sample
 
@@ -32,8 +33,10 @@ systematic_tree	"sigmatree"
 MC_input	"/.data/tboschi/HKsens/OscAna/SuperHK/errorstudy/reconstruction_atmo/*mc.sk4.*.root"
 MC_tree_name	"osc_tuple"
 
-# MC scaling from SK to HK
-MC_scale	8.37333333334
+# MC scaling from 500 years to HK esposure (10y * 188.4t / 22.5t)
+#MC_scale	8.37333333334	# (188.4 / 22.5)
+#MC_scale	0.16746666667	# (10 / 500) * (188.4 / 22.5)
+MC_scale	0.01708739726	# 3118.45 / (500 * 365)
 
 
 #

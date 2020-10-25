@@ -7,10 +7,10 @@
 #dCP	-1.5708
 
 #name	"hkdr"
-S12	0.32
+S12	0.304
 S13	0.0219
 S23	0.5
-M12	7.6e-5
+M12	7.53e-5
 M23	2.5e-3
 dCP	0
 
@@ -19,11 +19,13 @@ dCP	0
 #density_profile	"data/DensityProfileVacuum.dat"
 
 #base "baseball_plot_dots.dat"
-output "atmospheric_oscillation_osc0.dat"
+output "beam_oscillation.dat"
 
-mass_hierarchy	"normal"
+mass_hierarchy	"inverted"
+
 LUT	1
 threshold	1e-9
 
-production_heights	"data/prod_honda/kam-ally-*"
-density_profile		"data/PREM_osc3.dat"
+density_profile	"/.data/tboschi/HKsens/OscAna/SuperHK/data/PREM_osc3.dat"
+production_height	20
+honda_production	"/.data/tboschi/HKsens/OscAna/SuperHK/data/prod_honda/kam-ally-aa-*.d"
