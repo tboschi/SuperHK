@@ -84,7 +84,7 @@ class AtmoSample : public Sample
 		float dirnu[3], dir[3], flxho[3];
 		float pnu, amom, weightx, ErmsHax, nEAveHax;
 		int point, bins;
-		double *data;
+		double data[3000];
 
 		std::map<int, int> pre_point_NH, pre_point_IH;
 };

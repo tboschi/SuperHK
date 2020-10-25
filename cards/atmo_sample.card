@@ -33,22 +33,14 @@ systematic_tree	"sigmatree"
 MC_input	"/montecarlo/path/*.root"
 MC_tree_name	"mcStuff"
 
+pre_input_NH	"/path/to/pre/input/NH.root"
+pre_input_IH	"/path/to/pre/input/IH.root"
+pre_tree_name	"oscStuff"
+
 # MC scaling from 500 years to HK esposure (10y * 188.4t / 22.5t)
 #MC_scale	8.37333333334	# (188.4 / 22.5)
 MC_scale	0.16746666667	# (10 / 500) * (188.4 / 22.5)
 #MC_scale	0.01708739726	# 3118.45 / (500 * 365)
-
-
-#
-#tree_input	"/data/tboschi/HKsens/errorstudy/sk/sk4osct/*mc*.root"
-#tree_name	"osc_tuple"
-#friend_input	"/data/tboschi/HKsens/errorstudy/sk/sk4eave/*mc*.root"
-#friend_name	"eaveFriend"
-#
-#output_path	"recotest/"
-#card_path	"recotest/atmo_"
-#true_bins_energy	50
-#true_bins_cosz		20
 
 
 

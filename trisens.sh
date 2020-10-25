@@ -252,7 +252,7 @@ pre_IH=$root'/../../reconstruction_atmo/pre/IH/atmo.*.root'
 #pre computed inputs
 sed -i "s:^pre_input_NH.*:pre_input_NH\t\"$pre_NH\":" $atmo
 sed -i "s:^pre_input_IH.*:pre_input_IH\t\"$pre_NH\":" $atmo
-sed -i "s:^pre_tree_name.*:pre_tree_name\t\"osc_tuple\":" $atmo
+sed -i "s:^pre_tree_name.*:pre_tree_name\t\"atmoTree\":" $atmo
 
 dens=$PWD'/data/PREM_25pts.dat'
 prod=$PWD'/data/prod_honda/kam-ally-aa-*.d'
@@ -280,8 +280,8 @@ if [ "$SCHED" == "HTCONDOR" ] ; then
 	echo Launching $NJOBS jobs with HTCondor
 elif [ "$SCHED" == "SLURM" ] ; then
 	sub=sbatch
-	running="squeue -h -r -u $USER -o "%u %t"| grep R  | wc -l"
-	inqueue="squeue -h -r -u $USER -o "%u %t"| grep PD | wc -l"
+	running="squeue -h -r -u $USER -o \"%u %t\"| grep R  | wc -l"
+	inqueue="squeue -h -r -u $USER -o \"%u %t\"| grep PD | wc -l"
 	echo Launching $NJOBS jobs with Slurm
 fi
 
@@ -355,8 +355,8 @@ EOF
 	if [ $t -ne ${point[${#point[@]} - 1]} ] ; then
 		echo not last point.. and running $jobs_run and waiting $jobs_que
 		while [ $jobs_run -gt $MAX_JOBS ] || [ $jobs_que -gt $MAX_QUEUE ] ; do
-			echo 'waiting 30s...'
-			sleep 30
+			echo 'waiting 60s...'
+			sleep 60
 			jobs_run=$(eval $running)
 			jobs_que=$(eval $inqueue)
 		done

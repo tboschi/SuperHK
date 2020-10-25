@@ -63,6 +63,8 @@ void AtmoSample::Init()
 			std::cout << "\t" << it.first << " -> " << it.second << std::endl;
 	}
 
+	_point = -1;
+
 	LoadReconstruction();
 
 	DefineBinning();
@@ -157,7 +159,7 @@ void AtmoSample::LoadSystematics()
 	mf->Close();
 
 	if (kVerbosity) {
-		std::cout << "Importing " << _nSys
+		std::cout << "AtmoSample: Importing " << _nSys
 			  << " entries from " << file_name
 			  << " ( " << tree_name << " ) " << std::endl;
 		std::cout << "Total number of systematics is "
@@ -174,6 +176,9 @@ void AtmoSample::LoadReconstruction() {
 	if (cd->Get("pre_input_NH", chain)) {
 		if (!cd->Get("pre_tree_name", tree_name))
 			tree_name = "atmoTree";
+
+		if (kVerbosity)
+			std::cout << "AtmoSample: opening NH input\n";
 		nh = std::unique_ptr<TChain>(new TChain(tree_name.c_str()));
 
 		nh->Add(chain.c_str());
@@ -186,8 +191,10 @@ void AtmoSample::LoadReconstruction() {
 		nh->SetBranchStatus("Point", 1);
 		//linking fitting point to position in tree
 		//as they may not be ordered
-		for (int i = 0; i < nh->GetEntries(); ++i)
+		for (int i = 0; i < nh->GetEntries(); ++i) {
+			nh->GetEntry(i);
 			pre_point_NH[point] = i;
+		}
 	}
 
 	if (cd->Get("pre_input_IH", chain)) {
@@ -195,6 +202,9 @@ void AtmoSample::LoadReconstruction() {
 			tree_name = "atmoTree";
 		ih = std::unique_ptr<TChain>(new TChain(tree_name.c_str()));
 
+		if (kVerbosity)
+			std::cout << "AtmoSample: opening IH input\n";
+		
 		ih->Add(chain.c_str());
 
 		ih->SetBranchAddress("Point", &point);
@@ -205,8 +215,10 @@ void AtmoSample::LoadReconstruction() {
 		ih->SetBranchStatus("Point", 1);
 		//linking fitting point to position in tree
 		//as they may not be ordered
-		for (int i = 0; i < ih->GetEntries(); ++i)
+		for (int i = 0; i < ih->GetEntries(); ++i) {
+			ih->GetEntry(i);
 			pre_point_IH[point] = i;
+		}
 	}
 
 
@@ -458,6 +470,9 @@ Eigen::VectorXd AtmoSample::ConstructSamples(Oscillator *osc) {
 		if (!cd->Get("stats", stats))
 			stats = 1.0;
 
+		if (kVerbosity > 1)
+			std::cout << "using precomputed NH at point " << _point << std::endl;
+
 		nh->SetBranchStatus("*", 1);
 		nh->GetEntry(pre_point_NH[_point]);
 
@@ -470,6 +485,9 @@ Eigen::VectorXd AtmoSample::ConstructSamples(Oscillator *osc) {
 		double stats;	//for scaling
 		if (!cd->Get("stats", stats))
 			stats = 1.0;
+
+		if (kVerbosity > 1)
+			std::cout << "using precomputed IH at point " << _point << std::endl;
 
 		ih->SetBranchStatus("*", 1);
 		ih->GetEntry(pre_point_IH[_point]);
