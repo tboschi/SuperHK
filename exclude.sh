@@ -1,6 +1,6 @@
 #! /bin/bash
 
-Exclude=/data/tboschi/HKsens/OscAna/SuperHK/bin/exclusion
+Exclude=$PWD/bin/exclusion
 
 point=$(cat $1)
 point=(${point})
