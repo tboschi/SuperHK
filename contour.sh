@@ -1,6 +1,6 @@
 #! /bin/bash
 
-Contour=/data/tboschi/HKsens/OscAna/SuperHK/bin/buildcontours
+Contour=$PWD/bin/buildcontours
 
 full=${1%/}
 name=${full##*/}
