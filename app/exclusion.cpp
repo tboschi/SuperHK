@@ -45,6 +45,15 @@ int main(int argc, char** argv)
 		std::ifstream listExclusion(".tmp_exclusion");
 		while (std::getline(listExclusion, file)) {
 			TFile inf(file.c_str(), "READ");
+			if (inf.IsZombie()) {
+				std::cerr << file << " does not exist. Skip\n";
+				continue;
+			}
+			if (!inf.Get("stepX2Tree")) {
+				std::cerr << "stepX2Tree not found. Skip\n";
+				continue;
+			}
+
 			TTree *t = static_cast<TTree*>(inf.Get("stepX2Tree"));
 			double X2, sysX2, dCP, tdCP;
 			t->SetBranchAddress("X2",  &X2);
@@ -77,31 +86,21 @@ int main(int argc, char** argv)
 
 				// true value of dCP
 				if (std::abs(dCP - tdCP) < 1e-5) {
-					if (!trueX2.count(tdCP))
-						trueX2[tdCP] = X2;
-					else if (X2 < trueX2[tdCP])
+					// never found before or smaller value
+					if (!trueX2.count(tdCP) || X2 < trueX2[tdCP])
 						trueX2[tdCP] = X2;
 				}
 
 				// skip away from test points
-				if (S13 != TS13 || S23 != TS23 || M23 != M23)
-					continue;
+				//if (S13 != TS13 || S23 != TS23 || M23 != M23)
+					//continue;
 
 				// CP conserving angles
 				if (std::abs(std::sin(dCP)) < 1e-5) {
-					if (!compX2.count(tdCP))
-					{
+					// never found before or smaller value
+					if (!compX2.count(tdCP) || X2 < compX2[tdCP]) {
 						compX2[tdCP] = X2;
-						systX2[tdCP] = sysX2;
-					}
-					else if (X2 < compX2[tdCP])
-					{
-						compX2[tdCP] = X2;
-						systX2[tdCP] = sysX2;
-
-						//minS13[tdCP] = S13;
-						//minS23[tdCP] = S23;
-						//minM23[tdCP] = M23;
+						//systX2[tdCP] = sysX2;
 						minPoint[tdCP] = point;
 					}
 				}
@@ -146,7 +145,7 @@ int main(int argc, char** argv)
 		//	  << minM23[im->first] << ")" << std::endl;
 		out << im.first << "\t"
 		    << std::sqrt(std::abs(im.second - compX2[im.first])) << "\t"
-		    << im.second << "\t" << systX2[im.first] << "\t"
+		    << im.second << "\t" //<< systX2[im.first] << "\t"
 		    << compX2[im.first] << "\t" << minPoint[im.first] << std::endl;
 		   // << "\t" << im->second << "\t" << compX2[im->first] << "\t"
 		   // << minCP[im->first] << "\t" << minX2[im->first] << std::endl;
