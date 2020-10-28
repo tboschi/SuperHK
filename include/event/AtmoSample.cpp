@@ -344,9 +344,11 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 	for (const auto &ih : _reco_hist)
 		ih.second->Reset("ICES");
 
-	double scale, start;
-	if (!cd->Get("MC_scale", scale))
+	double scale, start, reduce;
+	if (!cd->Get("MC_scale", scale))// adjust MC time and exposure
 		scale = 188.4 / 22.5;	// HK to SK ratio
+	if (!cd->Get("reduce", reduce))	// FV reduction
+		reduce = 0.5;
 	if (!cd->Get("production_height", start))
 		start = 15.0;		// most probable production height
 
@@ -399,6 +401,8 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 		std::string type = _type_names[itype];
 
 		weightx *= scale;
+		if (itype > 70)
+			weightx *= reduce;
 		//W = weightx;
 
 		double factor_E = 1, factor_M = 1;
