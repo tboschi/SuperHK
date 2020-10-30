@@ -257,7 +257,7 @@ sed -i "s:^pre_tree_name.*:pre_tree_name\t\"atmoTree\":" $atmo
 dens=$PWD'/data/PREM_25pts.dat'
 prod=$PWD'/data/prod_honda/kam-ally-aa-*.d'
 sed -i "s:density_profile.*:density_profile\t\"$dens\":"	$atmo
-sed -i "s:production_heights.*:production_heights\t\"$prod\":"	$atmo
+sed -i "s:honda_production.*:honda_production\t\"$prod\":"	$atmo
 
 
 #get list of points
