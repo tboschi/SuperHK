@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 
 	//open output file
 	std::string outName;
-	cd->Get("output", outName);	//path for out file with extension
+	cd->Get("output", outName);	
 	
 	//double *Epsilons = new double[fitter->NumSys()];
 	//double *Errors   = new double[fitter->NumSys()];
@@ -128,7 +128,6 @@ int main(int argc, char** argv)
 		spectra = as->ConstructSamples(osc);
 		Bins = spectra.size();
 
-		std::cout << "spectra " << spectra.head(50).transpose() << std::endl;
 		for (int i = 0; i < spectra.size(); ++i)
 			Array[i] = spectra(i);
 
