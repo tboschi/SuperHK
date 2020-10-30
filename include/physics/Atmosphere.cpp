@@ -56,6 +56,11 @@ void Atmosphere::LoadProductionHeights()
 	if (!cd->Get("production_height", _atm))
 		_atm = 15.0;	// default 15 km altitude
 
+	// vector with the discretised probabilities
+	_problibs.clear();
+	// vector with the discretised log energy bins !
+	_energies.clear();
+
 	// calling system ls such that table_file can contain wildcards
 	std::ifstream it(".production_files");
 	if (!it || it.peek() == std::ifstream::traits_type::eof()) {
@@ -70,10 +75,6 @@ void Atmosphere::LoadProductionHeights()
 		it.open(".production_files");
 	}
 
-	// vector with the discretised probabilities
-	_problibs.clear();
-	// vector with the discretised log energy bins !
-	_energies.clear();
 
 	// vector with the discretised cos zenith angles
 	_zenithas.assign(20, 0);
@@ -92,8 +93,8 @@ void Atmosphere::LoadProductionHeights()
 
 		int iz = 0;	// zenith index
 		int ie = 0;	// energy index
-		bool fill_energy = !_energies.size();
 
+		bool fill_energy = false;
 		while (std::getline(ip, line)) {
 			// remove hash comments
 			if (line.find('#') != std::string::npos)
@@ -109,6 +110,7 @@ void Atmosphere::LoadProductionHeights()
 				row.push_back(ent);
 
 			if (row.size() == 25) {	// header
+				fill_energy = !_energies.size();
 				if (int(row[0]) != 1)
 					continue;
 				switch (int(row[1])) {	// nu flavor
@@ -138,8 +140,10 @@ void Atmosphere::LoadProductionHeights()
 				if (fill_energy)	// store energy bin information
 					_energies.push_back(log10(row[0]));
 
-				int global_bin = iz * (row.size() - 1) + ie;
-				(*table)[global_bin].assign(row.begin()+1, row.end());
+				std::transform(row.begin()+1, row.end(), row.begin() + 1,
+						[](double b) { return b / 1.e3; }); // m -> km
+				//int global_bin = iz * (row.size() - 1) + ie;
+				(*table)[ie].assign(row.begin()+1, row.end());
 				++ie;
 			}
 			else
@@ -151,91 +155,6 @@ void Atmosphere::LoadProductionHeights()
 
 	//cmd = "rm .production_files";
 	//system(cmd.c_str());
-}
-
-// generate a random production height given
-// 	flv -> initial neutrino flavour
-// 	cosine zenith
-// 	energy
-double Atmosphere::GenerateRandomHeight(Nu::Flavour flv, double cosz, double energy)
-{
-	energy = log10(energy);
-	if (energy >= _energies.back()) // error energy >~ 1e4
-		return -1;
-	if (cosz < _zenithas.back())	// error cosz < -1
-		return -1;
-
-	// get reference to correct table
-	std::map<int, std::vector<double> > *table;	// "reference"
-	switch (flv) {	// nu flavor
-		case Nu::M_: // nu mu
-			table = &nuM0_table;
-			break;
-		case Nu::Mb: // nu mu bar
-			table = &nuMb_table;
-			break;
-		case Nu::E_: // nu e
-			table = &nuE0_table;
-			break;
-		case Nu::Eb: // nu e bar
-			table = &nuEb_table;
-			break;
-	}
-
-	// define a probability interval first
-	std::uniform_real_distribution<> uniform(0, 1);//uniform distribution between 0 and 1
-	double prob = uniform(gen);
-	auto ip = std::lower_bound(_problibs.begin(), _problibs.end(), prob);
-	
-	// energy is ordered increasing
-	auto ie = std::lower_bound(_energies.begin(), _energies.end(), energy);
-	// zenith is ordered decreasing
-	auto ic = std::lower_bound(_zenithas.begin(), _zenithas.end(), cosz, std::greater<double>());
-
-	// if iterator points past the end, move them to penultimate
-	// as iterator and its next are needed for interpolation
-	if (ip == _problibs.end() || ip == std::prev(_problibs.end()))
-		ip = _problibs.end() - 2;
-	if (ie == _energies.end() || ie == std::prev(_energies.end()))
-		ie = _energies.end() - 2;
-	if (ic == _zenithas.end() || ic == std::prev(_zenithas.end()))
-		ic = _zenithas.end() - 2;
-
-	// index positions
-	int pn = std::distance(_problibs.begin(), ip);
-	int en = std::distance(_energies.begin(), ie);
-	int cn = std::distance(_zenithas.begin(), ic);
-
-	// Trilinear interpolation
-	// https://en.wikipedia.org/wiki/Trilinear_interpolation
-	double pd = (prob   - *ie) / (*std::next(ip) - *ip);
-	double ed = (energy - *ie) / (*std::next(ie) - *ie);
-	double cd = (cosz   - *ic) / (*std::next(ic) - *ic);
-
-	// x direction is prob,
-	// y direction is energy
-	// z direction is cosz
-	// Production height is a function of
-	// 	probability (for PDF), energy, cosz
-	double h000 = (*table)[_energies.size() *  cn    + en  ][pn  ];
-	double h001 = (*table)[_energies.size() *  cn    + en  ][pn+1];
-	double h010 = (*table)[_energies.size() *  cn    + en+1][pn  ];
-	double h011 = (*table)[_energies.size() *  cn    + en+1][pn+1];
-	double h100 = (*table)[_energies.size() * (cn+1) + en  ][pn  ];
-	double h101 = (*table)[_energies.size() * (cn+1) + en  ][pn+1];
-	double h110 = (*table)[_energies.size() * (cn+1) + en+1][pn  ];
-	double h111 = (*table)[_energies.size() * (cn+1) + en+1][pn+1];
-
-	double h00 = h000 * (1 - pd) + h100 * pd;
-	double h01 = h001 * (1 - pd) + h101 * pd;
-	double h10 = h010 * (1 - pd) + h110 * pd;
-	double h11 = h011 * (1 - pd) + h111 * pd;
-
-	double h0 = h00 * (1 - ed) + h10 * ed;
-	double h1 = h01 * (1 - ed) + h11 * ed;
-
-	// this is the interpolated value
-	return h0 * (1 - cd) + h1 * cd;
 }
 
 
@@ -315,15 +234,131 @@ void Atmosphere::LoadDensityProfile(std::string table_file)
 	it.close();
 }
 
+// generate a random production height given
+// 	flv -> initial neutrino flavour
+// 	cosine zenith
+// 	energy
+double Atmosphere::RandomHeight(Nu::Flavour flv, double cosz, double energy)
+{
+	// no random heights file loaded
+	if (!_problibs.size())
+		return -1;
+
+	energy = log10(energy);
+	if (energy >= _energies.back()) // error energy >~ 1e4
+		return -1;
+	if (cosz < _zenithas.back())	// error cosz < -1
+		return -1;
+
+	// get reference to correct table
+	std::map<int, std::vector<double> > *table;	// "reference"
+	switch (flv) {	// nu flavor
+		case Nu::M_: // nu mu
+			table = &nuM0_table;
+			break;
+		case Nu::Mb: // nu mu bar
+			table = &nuMb_table;
+			break;
+		case Nu::E_: // nu e
+			table = &nuE0_table;
+			break;
+		case Nu::Eb: // nu e bar
+			table = &nuEb_table;
+			break;
+	}
+
+	// define a probability interval first
+	std::uniform_real_distribution<> uniform(0, 1);//uniform distribution between 0 and 1
+	double prob = uniform(gen);
+	auto ip = std::lower_bound(_problibs.begin(), _problibs.end(), prob);
+	
+	// energy is ordered increasing
+	auto ie = std::lower_bound(_energies.begin(), _energies.end(), energy);
+	// zenith is ordered decreasing
+	auto ic = std::lower_bound(_zenithas.begin(), _zenithas.end(), cosz, std::greater<double>());
+
+	// iterators are the least elements that compare to input
+	// if iterator points to begin, move to second
+	// if iterator points to end, move them to last valid
+	if (ip == _problibs.begin())
+		++ip;
+	else if (ip == _problibs.end())
+		--ip;
+
+	if (ie == _energies.begin())
+		++ie;
+	else if (ie == _energies.end())
+		--ie;
+
+	if (ic == _zenithas.begin())
+		++ic;
+	else if (ic == _zenithas.end())
+		--ic;
+
+	//if (ip == _problibs.end() || ip == std::prev(_problibs.end()))
+	//	ip = _problibs.end() - 2;
+	//if (ie == _energies.end() || ie == std::prev(_energies.end()))
+	//	ie = _energies.end() - 2;
+	//if (ic == _zenithas.end() || ic == std::prev(_zenithas.end()))
+	//	ic = _zenithas.end() - 2;
+
+	// index positions
+	int pn = std::distance(_problibs.begin(), ip);
+	int en = std::distance(_energies.begin(), ie);
+	int cn = std::distance(_zenithas.begin(), ic);
+
+	// Trilinear interpolation
+	// https://en.wikipedia.org/wiki/Trilinear_interpolation
+	// with respect to following element
+	double pd = (prob   - *ip) / (*std::prev(ip) - *ip);
+	double ed = (energy - *ie) / (*std::prev(ie) - *ie);
+	double cd = (cosz   - *ic) / (*std::prev(ic) - *ic);
+	// meaning of values [0,1] is proximity to following element
+
+	// x direction is prob,
+	// y direction is energy
+	// z direction is cosz
+	// Production height is a function of
+	// 	probability (for PDF), energy, cosz
+
+	double h000 = (*table)[_energies.size() *  cn    + en  ][pn  ];
+	double h001 = (*table)[_energies.size() *  cn    + en  ][pn-1];
+	double h010 = (*table)[_energies.size() *  cn    + en-1][pn  ];
+	double h011 = (*table)[_energies.size() *  cn    + en-1][pn-1];
+	double h100 = (*table)[_energies.size() * (cn-1) + en  ][pn  ];
+	double h101 = (*table)[_energies.size() * (cn-1) + en  ][pn-1];
+	double h110 = (*table)[_energies.size() * (cn-1) + en-1][pn  ];
+	double h111 = (*table)[_energies.size() * (cn-1) + en-1][pn-1];
+
+	double h00 = h000 * (1 - pd) + h100 * pd;
+	double h01 = h001 * (1 - pd) + h101 * pd;
+	double h10 = h010 * (1 - pd) + h110 * pd;
+	double h11 = h011 * (1 - pd) + h111 * pd;
+
+	double h0 = h00 * (1 - ed) + h10 * ed;
+	double h1 = h01 * (1 - ed) + h11 * ed;
+
+	// this is the interpolated value
+	return h0 * (1 - cd) + h1 * cd;
+}
+
 // calculate the matter profile for neutrino passage
 // 	cosz = cosine of zenith angle)
 // 	atm  = production height in atmosphere
 // return a vector of length-density pairs in order of neutrino travel baseline
 // the first entry will be therefore atmospheric propagation
+Oscillator::Profile Atmosphere::MatterProfile(Nu::Flavour flv, double cosz, double energy)
+{
+	return MatterProfile(cosz, RandomHeight(flv, cosz, energy));
+}
+
 Oscillator::Profile Atmosphere::MatterProfile(double cosz, double atm)
 {
 	if (atm < 0)
 		atm = _atm;
+
+	if (kVerbosity > 4)
+		std::cout << "Atmosphere: generating profile for " << cosz << " from " << atm << " km\n";
 
 	double sinz = sqrt(1 - cosz * cosz);
 

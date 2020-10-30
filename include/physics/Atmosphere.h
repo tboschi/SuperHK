@@ -34,8 +34,10 @@ class Atmosphere
 		Atmosphere(std::string card);
 
 		void LoadProductionHeights();
-		double GenerateRandomHeight(Nu::Flavour flv, double cosz, double energy);
 		void LoadDensityProfile(std::string table_file = "");
+
+		double RandomHeight(Nu::Flavour flv, double cosz, double energy);
+		Oscillator::Profile MatterProfile(Nu::Flavour flv, double cosz, double energy);
 		Oscillator::Profile MatterProfile(double cosz, double atm = -1);
 
 		//std::map<std::string, Eigen::VectorXd>

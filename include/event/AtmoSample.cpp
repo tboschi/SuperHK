@@ -32,22 +32,22 @@ void AtmoSample::Init()
 
 	if (!cd->Get("sample", _type))
 		// default value too long..
-		_type = { "MultiGeV_elike_barnue", 
-			  "MultiGeV_elike_nue",
-			  "MultiGeV_mulike", 
-			  "MultiRing_elike_barnue", 
-			  "MultiRing_elike_nue", 
-			  "MultiRing_mulike", 
-			  "MultiRingOther", 
-			  "PCStop", 
-			  "PCThru", 
-			  "SingleRingPi0", 
-			  "SubGeVElike0Decay", 
+		_type = { "SubGeVElike0Decay", 
 			  "SubGeVElike1Decay", 
+			  "SingleRingPi0", 
 			  "SubGeVMulike0Decay", 
 			  "SubGeVMulike1Decay", 
 			  "SubGeVMulike2Decay", 
 			  "TwoRingPi0", 
+			  "MultiGeV_elike_nue",
+			  "MultiGeV_elike_barnue", 
+			  "MultiGeV_mulike", 
+			  "MultiRing_elike_nue", 
+			  "MultiRing_elike_barnue", 
+			  "MultiRing_mulike", 
+			  "MultiRingOther", 
+			  "PCStop", 
+			  "PCThru", 
 			  "UpStopMu", 
 			  "UpThruMuNonShowering", 
 			  "UpThruMuShowering" };
@@ -349,8 +349,6 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 		scale = 188.4 / 22.5;	// HK to SK ratio
 	if (!cd->Get("reduce", reduce))	// FV reduction
 		reduce = 0.5;
-	if (!cd->Get("production_height", start))
-		start = 15.0;		// most probable production height
 
 	dm->SetBranchStatus("*", 1);
 	int first_event_type = _type_names.begin()->first;
@@ -376,6 +374,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 
 	std::cout << "AtmoSample: reading " << dm->GetEntries() << " entries" << std::endl;
 	for (int i = 0; i < dm->GetEntries(); ++i) {
+	//for (int i = 0; i < 1000; ++i) {
 		//std::cout << "entry " << i << std::endl;
 		dm->GetEntry(i);	// all branches
 		itype -= 1;
@@ -392,13 +391,14 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 		if (pnu < 1.0e-7 && ipnu == 0 && mode == 0)
 			continue;
 
-		// using these four variables to determine bin and EventType
-		//pnu  > 0 ? log10(pnu) + 3 : 0;	// GeV
-		//amom > 0 ? log10(amom)    : 0;	// already in GeV
-		//cosnu = dirnu[2];
-		//coslp = dir[2];
-
 		std::string type = _type_names[itype];
+
+		// bin is not in range, just skip it
+		int bin = _reco_hist[type]->FindBin(log10(amom), -dir[2]);
+		if ( _reco_hist[type]->IsBinOverflow(bin)
+		  || _reco_hist[type]->IsBinUnderflow(bin))
+			continue;
+
 
 		weightx *= scale;
 		if (itype > 70)
@@ -413,11 +413,21 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 		//fE = factor_E;
 		//fM = factor_M;
 
+
 		Nu::Flavour nu_out = Nu::fromPDG(ipnu);
+		Nu::Flavour nue, num;
 		if (osc && std::abs(mode) < 30) {	// NCs have mode >= 30
 			// LUT is cleared in this step
 			// -1 dirnu[2] ?? ???? ?? ? ? ? ? ? ?
-			osc->SetMatterProfile(atm_path->MatterProfile(-dirnu[2], start));
+			//double hgt = atm_path->GenerateRandomHeight(nu_out, -dirnu[2], pnu);
+			//std::cout << "production height " << hgt << std::endl;
+			//Oscillator::Profile ld = atm_path->MatterProfile(-dirnu[2], 15);
+			//osc->SetMatterProfile(ld);
+
+			// this automatically get production height
+			// if honda flux is defined in card then height is generted
+			// otherwise is fixed to value defiend in card
+			osc->SetMatterProfile(atm_path->MatterProfile(nu_out, -dirnu[2], pnu));
 
 			// but thanks to LUT, probability is computed only once
 			if (ipnu > 0)	// neutrino
@@ -427,6 +437,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 
 				weightx *= factor_E * osc->Probability(Nu::E_, nu_out, pnu)
 					+  factor_M * osc->Probability(Nu::M_, nu_out, pnu);
+				nue = Nu::E_; num = Nu::M_;
 			}
 			else {		//antineutrino
 				//pE = osc->Probability(Nu::Eb, nu_out, pnu);
@@ -434,12 +445,16 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 
 				weightx *= factor_E * osc->Probability(Nu::Eb, nu_out, pnu)
 					+  factor_M * osc->Probability(Nu::Mb, nu_out, pnu);
+				nue = Nu::Eb; num = Nu::Mb;
 			}
+			//std::cout << "layers at " << -dirnu[2] << " is "
+			//	  << ld.size() << ": " << osc->Length() << "\n";
+			//for (const auto &l : ld)
+			//	std::cout << "\t" << std::get<0>(l) << std::endl;
+			//if (itype == 72)
+				//std::cout << i << " " << itype << " -> " << factor_E << "\t" << factor_M
+				  	//<< "\t" << weightx << std::endl; 
 		}
-		//tt->Fill();
-
-		//std::cout << "osc to " << ipnu << " with " << factor_E << ", " << factor_M
-			  //<< " -> w " << weightx << std::endl;
 
 		_reco_hist[type]->Fill(log10(amom), -dir[2], weightx);
 	}
@@ -466,8 +481,9 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 	return samples;
 }
 
-Eigen::VectorXd AtmoSample::ConstructSamples(Oscillator *osc) {
-	if (osc->GetHierarchy() == Oscillator::normal &&
+Eigen::VectorXd AtmoSample::ConstructSamples(Oscillator *osc)
+{
+	if (osc && osc->GetHierarchy() == Oscillator::normal &&
 	    pre_point_NH.count(_point)) {
 
 		double stats;	//for scaling
@@ -475,7 +491,7 @@ Eigen::VectorXd AtmoSample::ConstructSamples(Oscillator *osc) {
 			stats = 1.0;
 
 		if (kVerbosity > 1)
-			std::cout << "using precomputed NH at point " << _point << std::endl;
+			std::cout << "AtmoSample: using precomputed NH at point " << _point << std::endl;
 
 		nh->SetBranchStatus("*", 1);
 		nh->GetEntry(pre_point_NH[_point]);
@@ -483,7 +499,7 @@ Eigen::VectorXd AtmoSample::ConstructSamples(Oscillator *osc) {
 		Eigen::VectorXd samples = Eigen::Map<Eigen::VectorXd>(data, bins);
 		return stats * samples;
 	}
-	if (osc->GetHierarchy() == Oscillator::inverted &&
+	if (osc && osc->GetHierarchy() == Oscillator::inverted &&
 	    pre_point_IH.count(_point)) {
 
 		double stats;	//for scaling
@@ -491,7 +507,7 @@ Eigen::VectorXd AtmoSample::ConstructSamples(Oscillator *osc) {
 			stats = 1.0;
 
 		if (kVerbosity > 1)
-			std::cout << "using precomputed IH at point " << _point << std::endl;
+			std::cout << "AtmoSample: using precomputed IH at point " << _point << std::endl;
 
 		ih->SetBranchStatus("*", 1);
 		ih->GetEntry(pre_point_IH[_point]);

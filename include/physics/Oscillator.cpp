@@ -162,20 +162,20 @@ Eigen::VectorXd Oscillator::Oscillate(Nu::Flavour in, Nu::Flavour out,
 }
 
 double Oscillator::Length(const Oscillator::Profile &lens_dens) {
-	return std::accumulate(lens_dens.begin(), lens_dens.end(), 0,
+	return std::accumulate(lens_dens.begin(), lens_dens.end(), 0.,
 			[&](double sum, std::tuple<double, double, double> ild)
 			{ return sum + std::get<0>(ild); });
 }
 
 double Oscillator::Density(const Oscillator::Profile &lens_dens) {
-	return std::accumulate(lens_dens.begin(), lens_dens.end(), 0,
+	return std::accumulate(lens_dens.begin(), lens_dens.end(), 0.,
 			[&](double sum, std::tuple<double, double, double> ild)
 			{ return sum + std::get<0>(ild) * std::get<1>(ild); })
 		/ Length(lens_dens);
 }
 
 double Oscillator::ElectronDensity(const Oscillator::Profile &lens_dens) {
-	return std::accumulate(lens_dens.begin(), lens_dens.end(), 0,
+	return std::accumulate(lens_dens.begin(), lens_dens.end(), 0.,
 			[&](double sum, std::tuple<double, double, double> ild)
 			{ return sum + std::get<0>(ild) * std::get<1>(ild)
 				     * std::get<2>(ild); })
