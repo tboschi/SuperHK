@@ -290,10 +290,11 @@ for t in "${point[@]}" ; do
 
 	output=$root/sensitivity/$tname$t
 	mkdir -p $output
+	rm -f $output/*.*
+	# changing card in upper folder shows which point is currently being fitted
 	sed -i "s:^point.*:point\t$t:" $card
-	sed -i "s:^output.*:output\t\"$output/SpaghettiSens.T2HK.root\":" $card
+	sed -i "s:^output.*:output\t\"$output/SpaghettiSens.root\":" $card
 
-	rm -f $output/L*log
 	scriptname=$output/R$nameExec.$t.sub
 
 	this=$output/this_sensitivity.card

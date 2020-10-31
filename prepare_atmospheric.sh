@@ -84,6 +84,7 @@ fi
 #define mass hierarchy to fit
 root=$root/$MH_1
 mkdir -p $root
+rm -f $root/*.*
 
 # copy cards to output folder
 cp $card $oscc $atmo $root/
@@ -147,7 +148,6 @@ sed -i "s:honda_production.*:honda_production\t\"$prod\":"	$atmo
 sed -i "s:production_height.*:production_height\t15:"		$atmo
 
 
-rm -f $root/L*log
 scriptname=$root/R$nameExec.sub
 
 if [ "$SCHED" == "HTCONDOR" ] ; then
