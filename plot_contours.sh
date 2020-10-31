@@ -35,7 +35,7 @@ echo Creating dir plot/$name
 mkdir -p plot/$name
 card=plot/$name/$name.card
 
-rm $lims $olim
+rm -f $lims $olim
 
 for i in ${!model[*]}; do 
 	m="${model[$i]}"

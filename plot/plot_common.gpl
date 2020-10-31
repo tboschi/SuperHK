@@ -1,11 +1,32 @@
 #
 unset multiplot
 
+if (strstrt(GPVAL_TERMINALS, 'cairolatex') == 0 ) { print "cairolatex not found. Exit"; exit}
+
+if (GPVAL_VERSION >= 5.0 && strstrt(GPVAL_TERMINALS, 'cairolatex') > 0 ) {
+	set style arrow 1 nohead lc rgb 'black' lw 1 dt 2	#arrow
+	set style line 1 lt 3 lc rgb 'cyan' lw 1	#grid
+	set style line 2 dt 1 lw 2			#solid
+	set style line 3 dt 2 lw 2			#dashed
+}
+
+if (GPVAL_VERSION < 5.0 && strstrt(GPVAL_TERMINALS, 'cairolatex') > 0 ) {
+	set style arrow 1 nohead lt 2 lc rgb 'black' lw 1	#arrow
+	set style line 1 lt 3 lc rgb 'cyan' lw 1	#grid
+	set style line 2 lt 1 lw 2			#solid
+	set style line 3 lt 1 lw 2			#dashed
+}
+
+
+# margins
 MT = 0.10
 MP = (1-2*MT)/2.0
 
+# file information
 color = "'black' 'red' 'blue' 'web-green' 'orange' 'dark-magenta'"
-names  = system("head -n1 ".f_all." | sed :s")
+names = system("head -n1 ".f_all)
+col_bot = system("head -n1 ".f_dif." | wc -w") - 1
+col_top = system("head -n1 ".f_all." | wc -w")
 
 ##
 #bottom plot
@@ -13,12 +34,11 @@ names  = system("head -n1 ".f_all." | sed :s")
 stats f_dif u 1:2 name 'bot' nooutput
 ymin_bot = bot_min_y
 ymax_bot = bot_max_y
-do for [c=3:bot_columns] { 
+do for [c=3:col_bot] { 
      stats f_dif using 1:c name 'bot' nooutput
      ymin_bot = (ymin_bot > bot_min_y) ? bot_min_y : ymin_bot
      ymax_bot = (ymax_bot < bot_max_y) ? bot_max_y : ymax_bot
 }
-col_bot = bot_columns
 
 ##
 #top plot
@@ -26,12 +46,11 @@ col_bot = bot_columns
 stats f_all u 1:2 name 'top' nooutput
 ymin_top = top_min_y
 ymax_top = top_max_y
-do for [c=3:top_columns] { 
+do for [c=3:col_top] { 
      stats f_all using 1:c name 'top' nooutput
      ymin_top = (ymin_top > top_min_y) ? top_min_y : ymin_top
      ymax_top = (ymax_top < top_max_y) ? top_max_y : ymax_top
 }
-col_top = top_columns
 
 fitp = top_pos_min_y
 
@@ -58,15 +77,17 @@ set xtics xr_0, (xr_1-xr_0)*4/(nn-1), xr_1
 set format x x_form
 set mxtics 4
 
-set style line 12 lc rgb 'cyan' lw 1 dt "."
-set grid xtics, mxtics ls 12 back
+
+
+#set style line 12 lc rgb 'cyan' lw 1 dt "."
+set grid xtics, mxtics ls 1 back
 
 tt = 10.
 #extend range by tt% above and below
 #ymin_bot = ymin_bot + tt * dy_bot
 #ymax_bot = ymax_bot + tt * dy_bot
 
-print ymax_bot, ymin_bot
+#print ymax_bot, ymin_bot
 if (ymax_bot == ymin_bot) {
 	set yr [-0.1:0.1]
 	set ytics -0.1, 8, 0.1
@@ -88,11 +109,11 @@ if (ymax_bot == ymin_bot) {
 set format y "%g"
 set ylabel "\$\\Delta \\chi^2_0 - \\Delta \\chi^2\$"
 
-set arrow 1 nohead from getx(fitp), ymin_bot to getx(fitp), ymax_bot dt 2
+set arrow 1 arrowstyle 1 from getx(fitp), ymin_bot to getx(fitp), ymax_bot
 #set key title "Difference" at fitp+0.02*(xr_1-xr_0), ymin_bot + 0.85 * dy_bot top left samplen 1.5
 # word(names, i+1)
-plot for [i=2:col_bot] f_dif u (getx($1)):i w histe lw 2 dt 1 lc rgb word(color, i) not, \
-	0 w l dt 2 lc rgb 'black' not
+plot for [i=2:col_bot] f_dif u (getx($1)):i w histe ls 2 lc rgb word(color, i) not, \
+	0 w l ls 3 lc rgb 'black' not
 
 #
 ## TOP plot
@@ -110,7 +131,7 @@ set format x ""
 
 
 ntics = (ymax_top - ymin_top) / 10. 
-print "ntics ", ntics
+#print "ntics ", ntics
 if (ntics < 5.) {
 	dd = 5.
 } else {
@@ -144,16 +165,16 @@ dy_top = ymax_top - ymin_top
 ntics = dy_top / dd
 
 set yr [ymin_top:ymax_top]
-print "increment ", ntics > 6 ? 2*dd : dd
+#print "increment ", ntics > 6 ? 2*dd : dd
 set ytics ymin_top, ntics > 6 ? 2*dd : dd, ymax_top
 set mytics 4
 
 set format y "%g"
 set ylabel "\$\\Delta \\chi^2\$"
 
-set arrow 2 nohead from getx(fitp), ymin_top to getx(fitp), ymax_top dt 2
+set arrow 2 arrowstyle 1 from getx(fitp), ymin_top to getx(fitp), ymax_top
 set key title "" at getx(fitp)+0.02*(xr_1-xr_0), ymin_top + 0.75 * (ymax_top - ymin_top) top left samplen 1.5
-plot for [i=2:col_top] f_all u (getx($1)):i w histe lw 2 dt 1 lc rgb word(color, i-1) t system("echo ".word(names, i)." | sed 's:_: :g'")
+plot for [i=2:col_top] f_all u (getx($1)):i w histe ls 2 lc rgb word(color, i-1) t system("echo ".word(names, i)." | sed 's:_: :g'")
 
        #'valor_nostat.dat' w l lw 2 lc rgb 'green' t "VALOR No syst", \
        #'valor_stat.dat' w l lw 2 lc rgb 'cyan' t "VALOR syst"
