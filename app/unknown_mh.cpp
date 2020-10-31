@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <cmath>
 
 int main(int argc, char** argv)
 {
