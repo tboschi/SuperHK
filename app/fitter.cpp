@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 	if (!cd->Get("true_hierarchy", trueOrder))
 		trueOrder = "normal";
 	if (!cd->Get("fit_hierarchy", fitOrder))
-		trueOrder = "normal";
+		fitOrder = "normal";
 
 
 	//open output file
