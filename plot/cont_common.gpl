@@ -5,16 +5,28 @@ if (strstrt(GPVAL_TERMINALS, 'cairolatex') == 0 ) { print "cairolatex not found.
 if (GPVAL_VERSION >= 5.0 && strstrt(GPVAL_TERMINALS, 'cairolatex') > 0 ) {
 	set style arrow 1 nohead lc rgb 'black' lw 1 dt 2	#arrow
 	set style line 1 lt 3 lc rgb 'cyan' lw 1	#grid
-	set style line 2 dt 1 lw 2			#solid
-	set style line 3 dt 2 lw 2			#dashed
+	set style line 2 dt 2 lw 2 lc rgb 'black'	#dashed
+	set style line 3 dt 1 lw 2 lc rgb 'black'
+	set style line 4 dt 1 lw 2 lc rgb 'red'
+	set style line 5 dt 1 lw 2 lc rgb 'blue'
+	set style line 6 dt 1 lw 2 lc rgb 'web-green'
+	set style line 7 dt 1 lw 2 lc rgb 'orange'
+	set style line 8 dt 1 lw 2 lc rgb 'dark-magenta'
 }
+
 if (GPVAL_VERSION < 5.0 && strstrt(GPVAL_TERMINALS, 'cairolatex') > 0 ) {
 	set style arrow 1 nohead lt 2 lc rgb 'black' lw 1	#arrow
 	set style line 1 lt 3 lc rgb 'cyan' lw 1	#grid
-	set style line 2 lt 1 lw 2			#solid
-	set style line 3 lt 1 lw 2			#dashed
+	set style line 2 lt 2 lw 2 lc rgb 'black'	#dashed
+	set style line 3 lt 1 lw 2 lc rgb 'black'
+	set style line 4 lt 1 lw 2 lc rgb 'red'
+	set style line 5 lt 1 lw 2 lc rgb 'blue'
+	set style line 6 lt 1 lw 2 lc rgb 'web-green'
+	set style line 7 lt 1 lw 2 lc rgb 'orange'
+	set style line 8 lt 1 lw 2 lc rgb 'dark-magenta'
 }
 
+colors = 6
 
 # file info
 color = "'black' 'red' 'blue' 'web-green' 'orange' 'dark-magenta'"
@@ -34,7 +46,7 @@ set mxtics 4
 set mytics 4
 
 #set style line 12 lc rgb 'cyan' lw 1 dt "."
-set grid xtics, mxtics, ytics, mytics ls 12 back
+set grid xtics, mxtics, ytics, mytics ls 1 back
 
 bfx = dx_pos_min_y
 bfy = dy_pos_min_y
@@ -69,9 +81,9 @@ set output outp
 
 #set object circle at bfx, bfy radius 0.05 fillcolor rgb 'black' fillstyle solid noborder
 set label at bfx, bfy "" point pt  9 ps 1 lc rgb 'black' front
-plot for [i=3:cols] cont.'_'.word(names, i).'.dat' index 0 w l lw 2 \
-	lc rgb word(color, i-2) t system("echo ".word(names, i)." | sed 's:_: :g'"), \
-     for [i=3:cols] cont.'_'.word(names, i).'.dat' index 4 w l lw 2 lc rgb word(color, i-2) not
+plot for [i=3:cols] cont.'_'.word(names, i).'.dat' index 0 w l ls i%colors \
+	t system("echo ".word(names, i)." | sed 's:_: :g'"), \
+     for [i=3:cols] cont.'_'.word(names, i).'.dat' index 4 w l ls  i%colors not
 
 #file u (getx($1)):(gety($2)):(sqrt(column(5)))  with image not, \
 #for [i=3:cols] cont.'_'.word(names, i).'.dat' index 1 w l lw 2 lc rgb word(color, i-2) dt 2 not, \
