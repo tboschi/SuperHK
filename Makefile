@@ -2,6 +2,7 @@ INCDIR =	include
 APPDIR =	app
 BINDIR =	bin
 LIBDIR =	lib
+DOCDIR =	doc
 
 ## root
 ROOTLIB		= $(shell root-config --glibs)
@@ -37,8 +38,12 @@ all: welcome $(TARGET)
 	@cp $(TARGET) $(BINDIR)
 	@echo "Done!"
 
+doc: 
+	$(MAKE) -C $(DOCDIR)
+
 welcome:
 	@echo "If you need to build just one file, do make APP=name"
+	@echo "To build documentation, make doc"
 	@echo "Enjoy your compilation"
 
 
@@ -55,4 +60,4 @@ clean:
 	-find $(BINDIR) -maxdepth 1 -type f -name "*"   -delete
 
 
-.PHONY: all clean
+.PHONY: all doc clean
