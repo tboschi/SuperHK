@@ -1,31 +1,29 @@
-# Easy Osc3++ - v3.1
+# SuperHK - an easier approach to Osc3++
 
-The core of this simplified version of osc3++ is given by the classes in the ```event``` folder.
-The main code in ```app/fitter.cpp``` uses derived classes inheriting from ```Sample.h``` to load systematics and build distributions, whereas the ChiSquared class computes and and minimises the chi-squared.
-Support to beam sample and atmospheric sample is available.
-The oscillation space is scanned over and it is defined and managed by the ```physics/ParameterSpace``` class.
-Other important classes are ```physics/Oscillation``` to deal with oscillation physics and ```physics/Atmosphere```
-to compute the Earth density profile seen by an atmospheric neutrino.
+The ```osc3++``` framework is a bundle of computational and plotting utilities helpful to asses the sensitivity of a future experiment, like Hyper-Kamiokande, to neutrino oscillation parameters.
 
-The space is specified by combinations of oscillation parameters defined inside ```cards/oscillation.card```.
-For each point of the oscillation parameter space, the observables are created and oscillated with those oscillation parameters.
-The default set is build around the T2K *Asimov A* point.
-The true point is defined by the *Point* variable; if not defined, the default point is used and it is computed as explained in the card.
-The cards ```cards/beam_sample.card``` and ```cards/atmo_sample.card``` defines the input files to build beam and amtospheric samples.
-The ```cards/fit_options.card``` regulates fitting parameters.
+The workflow of the framework can be structured as follows
+* a combination of oscillation parameters is chosen to be the "true" (observed) one;
+* beam and atmospheric predictions at the detector are built twice, using the "true" combination of parameters (observed events) and using a combination under examination (expected events);
+* a chi2 between observed and expected events is created as a function of the systematic parameters;
+* the minimum value of chi2 is found with respect to the systematic parameters;
+* the process is repeated at different combinations of oscillation parameters.
 
-A set of script is used to facilitate the execution of the code and extraction of results.
-In executing the following scripts, the structure of the folder is important.
-We will refer to where the systematic files, outputs of the fit, and plots files will be as the ```root``` folder.
+Please refer to the documentation for a full description of the software.
 
-## Differences with previous version
 
-* Compilation across te cluster is now available
-* Since version v2.0 the energy scaling error is handled more exactly because it is implemented as an anlaytic function.  Hence, the mathematical exact Jacobian and Hessians are used during minimisation.
-* The Oscillator and ChiSquared classes have been remodelled to improve optimization and maximise use of vector instructions.
-* The chi-squared penalisation term is automatically added and it can be specified in the ```cards/oscillation.card```.
+### Current version
+
+The current release is [v3.3][https://github.com/tboschi/SuperHK/releases/tag/v3.3].
+
+Differences with SuperHK v2.0:
 * The atmospheric sample is now supported.
-* The CardDealer class, to import parameters dynamically from text files, has been rewritten as a template class to support as many data types as possible.
+* Cross-compilation across te cluster is now available; see the documentation on how to use it.
+* The energy scaling error is handled more exactly as it is implemented as an anlaytic function.
+* The ```Oscillator``` and ```ChiSquared``` classes have been remodelled to improve optimization and maximise use of vector instructions.
+* The chi2 penalisation term is automatically added.
+* The ```CardDealer``` class has been rewritten as a template class.
+
 
 ## Getting started
 
@@ -73,6 +71,14 @@ is compiled for that particular architecture. This workaround works as long as a
 system is shared on the cluster and that each node can be accessed via ssh by the user.
 
 
+### Documentation
+
+The documentation is created with
+```
+make doc
+```
+
+
 ## Folder structure
 
 After building the executables, run
@@ -89,6 +95,7 @@ The subfolders ```errorstudy/reconstruction_beam``` and ```errorstudy/reconstruc
 
 
 ## Prepare the beam systematics
+**out of date**
 
 This step is not necessary if you have run ```setup.sh``` before.
 
