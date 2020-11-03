@@ -6,14 +6,19 @@
 
 
 # output name unique to combination of sets
+# this name will be used to refer to each output file
 name="one_two_three"
 
-# list of files with CPV scan results
+# list of files with CPV exclusion curves
+# these are the output of the exclude.sh script
+# and should be text file with CPV sensitivies
 model=("errorstudy/one/NH_NH/contours/CPV_scan.dat"
        "errorstudy/two/NH_NH/contours/CPV_scan.dat"
        "errorstudy/three/NH_NH/contours/CPV_scan.dat")
 
 # names for displaying above results
+# this will be used by gnuplot to label the curves
+# in the plots and correspond to the input files above
 nickn=("one_cpv"
        "two_cpv"
        "three_cpv")
@@ -23,6 +28,33 @@ nickn=("one_cpv"
 ###################################
 #### do not modify script below ###
 ###################################
+
+usage="Usage: $0 [-p output] [-h]
+			
+Render plots out of the contours (see contours.sh) and save them to PDF
+In order to use this script, the user should open it with their favourite editor
+and modify the first block accordingly. All the outputs will be saved under the 
+plot folder, where the plotting scripts are located.
+Please refer to the documentation if this is not clear.
+
+  parameters
+    -p output    define output PDF file where to save all the files
+    -h		 print this message and exit
+"
+
+pdf=false
+out=""
+while getopts 'r:d:1:2:N:t:m:sf:p:xv:h' flag; do
+	case "${flag}" in
+		p) pdf=true
+		   out="${OPTARG}" ;;
+		h) echo "$usage" >&2
+		   exit 0 ;;
+		*) printf "illegal option -%s\n" "$OPTARG" >&2
+		   echo "$usage" >&2
+		   exit 1 ;;
+	esac
+done
 
 
 Sens=bin/dropsens
@@ -89,4 +121,10 @@ mv -f $name*.* $name/
 
 cd ..
 
-./bin/plot_bundle plot/$name/$name'_'*.tex
+if [ "$pdf" == "true" ] ; then
+	if [ -z $out ] ; then
+		out="plot_bundle.tex"
+	fi
+
+	./bin/plot_bundle $out plot/$name/$name'_'*.tex
+fi
