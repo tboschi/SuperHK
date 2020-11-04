@@ -7,3 +7,4 @@ if [ -s $PWD/bin/arch/fitter_$arch ] ; then
 	$PWD/bin/arch/fitter_$arch "$@"
 else
 	$PWD/bin/fitter	"$@"
+fi

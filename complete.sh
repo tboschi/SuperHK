@@ -1,4 +1,4 @@
-! /bin/bash
+#! /bin/bash
 
 usage="Usage: $0 info_file [-f]
 
@@ -7,12 +7,14 @@ Works with HTCondor or Slurm.
 
   parameters
     info_file    path to file with .info extension in output folder
-    -f		 repair files"
+    -f		 repair files, otherwise just display information
+    -h		 print this message
+"
 
-rep=false;
+rep=false
 while getopts 'fh' flag; do
 	case "${flag}" in
-		f) rep=true;
+		f) rep=true ;;
 		h) echo "$usage" >&2
 		   exit 0 ;;
 		*) printf "illegal option -%s\n" "$OPTARG" >&2
@@ -25,14 +27,13 @@ shift $((OPTIND-1))
 
 if [ "$#" -ne 1 ] ; then
 	echo This script requires one argument. Check usage with
-	echo $0 -h
+	echo -e "\n    $0 -h\n"
 	exit 1
 elif [ ! -s "$1" ] ; then
 	echo Argument \"$1\" is not valid. Check usage with
-	echo $0 -h
+	echo -e "\n    $0 -h\n"
 	exit 1
 fi
-
 
 Sens=$PWD/cross-fitter.sh
 nameExec=${Sens##*/}
@@ -62,7 +63,7 @@ else
 fi
 
 name=${1%.*}
-root=${nam%/*}
+root=${name%/*}
 
 repeat=()
 while read -r point ; do
@@ -74,7 +75,7 @@ while read -r point ; do
 	script=$outdir/R$nameExec.$point.sub
 
 	# directory does not exists or no script
-	if ! [ -d $outdir ] || ! [ -s $script ] ;
+	if ! [ -d $outdir ] || ! [ -s $script ] ; then
 		echo Detected: directory $outdir or $script do not exist
 		if [ "$rep" == "true" ] ; then
 			echo Point $point will be resubmitted
@@ -117,13 +118,13 @@ while read -r point ; do
 	# now go through each file individually
 	for ff in "${out[@]}" ; do
 		# this is the file number
-		num=${num%.root}
+		num=${ff%.root}
 		num=${num##*.}
 
 		log=$outdir/L$nameExec.$num.log
 
 		# remove wrong stuff
-		if [ $num -ge $job ] ; then
+		if [ "$num" -ge "$job" ] ; then
 			rm -f $ff $log
 			continue
 		fi
@@ -223,16 +224,16 @@ EOF
 		fi
 		$sub $scriptname
 	done
-done
+done < $1
 
 if [ "${#repeat[@]}" -gt 0 ] ; then
 	point_file=".points_list"
-	echo "${repeat[@]}" > .point_to_repeat
+	echo "${repeat[@]}" > $point_file
 	card=$root/multi.card
 	if ! [ -s $card ] ; then
 		echo ERROR There is no main card $(realpath $card), very bad!
 		exit 1
 	fi
 
-	$PWD/$trisens -x -r $root -p $point_file
+	$PWD/$trisens -x -f CPV -r $root -p $point_file -N 500
 fi
