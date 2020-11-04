@@ -10,7 +10,7 @@ verbose	2
 # "E_FHC", "E_RHC", "M_FHC", "M_RHC"
 # will be used
 
-sample	"E_FHC", "E_RHC" #, "M_FHC", "M_RHC"
+#sample	"E_FHC", "E_RHC" #, "M_FHC", "M_RHC"
 
 
 #energy scale error for E or M

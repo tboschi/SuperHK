@@ -14,7 +14,7 @@ oscillation_parameters	"cards/oscillation.card"
 
 # beam contains path to systmatics, reconstruction files
 # and also density profile for oscillation
-#beam_parameters	"cards/test_beam_sample.card"
+beam_parameters	"cards/test_beam_sample.card"
 
 
 # atmo contains path to systematics, reconstruction binning
@@ -25,16 +25,16 @@ atmo_parameters	"cards/test_atmo_sample.card"
 
 # determing type of fit: unknown or known MH..
 true_hierarchy	"normal"
-fit_hierarchy	"normal"
+fit_hierarchy	"inverted"
 
 # specify point to fit
 # if not set, default of oscillation space will be used
 # (check oscillation card)
 true_point	49773
-fit_point	0
+fit_point	49773
 
 # output result of fit will be saved here
-output	"/data/tboschi/HKsens/OscAna/SuperHK/validation/osc3.dat"
+output	"/data/tboschi/HKsens/OscAna/SuperHK/validation/nh_ih.dat"
 
 # verbosity level is integer, (0) = off
 verbose	2
