@@ -30,7 +30,11 @@ systematic_tree	"sigmatree"
 # MC information for buidling samples
 # they are root file with the same structure
 # so they can be chained by the same tree name
+<<<<<<< HEAD
 MC_input	"/mnt/lustre/groups/nms_epapg/k1928247/errorstudy/reconstruction_atmo/*mc.sk4.*.root"
+=======
+MC_input	"/.data/tboschi/HKsens/OscAna/SuperHK/errorstudy/reconstruction_atmo/*.sk4.*.root"
+>>>>>>> 55814bd7575f15496dd7f5509ca126d8bdff4841
 MC_tree_name	"osc_tuple"
 
 pre_input_NH	"/mnt/lustre/groups/nms_epapg/k1928247/errorstudy/reconstruction_atmo/pre/NH/atmo.*.root"
@@ -39,8 +43,17 @@ pre_tree_name	"atmoTree"
 
 # MC scaling from 500 years to HK esposure (10y * 188.4t / 22.5t)
 #MC_scale	8.37333333334	# (188.4 / 22.5)
+<<<<<<< HEAD
 MC_scale	0.16746666667	# (10 / 500) * (188.4 / 22.5)
 #MC_scale	0.01708739726	# 3118.45 / (500 * 365)
+=======
+#MC_scale	0.16746666667	# (10 / 500) * (188.4 / 22.5)
+#MC_scale	0.01708739726	# 3118.45 / (500 * 365)
+MC_scale	1
+
+#reduce 	0.507106178566
+reduce 		1
+>>>>>>> 55814bd7575f15496dd7f5509ca126d8bdff4841
 
 reduce		0.507106
 
