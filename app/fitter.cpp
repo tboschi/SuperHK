@@ -84,9 +84,8 @@ int main(int argc, char** argv)
 	std::string outName;
 	cd->Get("output", outName);	//path for out file with extension
 	
-	//double *Epsilons = new double[fitter->NumSys()];
-	//double *Errors   = new double[fitter->NumSys()];
-	double *Epsilons, *Errors;
+	int NumSys;
+	double Epsilons[3000], Errors[3000];
 	double X2, ObsX2, SysX2;
 	double Time;
 	int Point, tPoint;
@@ -117,11 +116,6 @@ int main(int argc, char** argv)
 	Eigen::VectorXd trueSpectra;	// don't compute just now
 	bool trueLoad = true;
 
-	std::string epsilArray = "Epsilons[" +
-				 std::to_string(fitter->NumSys()) + "]/D";
-	std::string errorArray = "Errors[" +
-				 std::to_string(fitter->NumSys()) + "]/D";
-
 	if (outName.find(".root") == std::string::npos)
 		outName += ".root";
 	outName.insert(outName.find(".root"), "." + std::to_string(id));
@@ -129,8 +123,20 @@ int main(int argc, char** argv)
 	TFile *outf = new TFile(outName.c_str(), "RECREATE");
 	TTree *stepX2 = new TTree("stepX2Tree", "Fit Axis Info");
 	stepX2->Branch("Time",		&Time, "Time/D");
-	stepX2->Branch("Epsilons",	Epsilons, epsilArray.c_str());
-	stepX2->Branch("Errors",	Errors,   errorArray.c_str());
+
+	// for CPV scans there is no need to store these
+	if (scan != "CPV") {
+		NumSys = fitter->NumSys();
+		std::string epsilArray = "Epsilons[" +
+				 std::to_string(NumSys) + "]/D";
+		std::string errorArray = "Errors[" +
+				 std::to_string(NumSys) + "]/D";
+
+		stepX2->Branch("NumSys",	NumSys,   "NumSys/I");
+		stepX2->Branch("Epsilons",	Epsilons, epsilArray.c_str());
+		stepX2->Branch("Errors",	Errors,   errorArray.c_str());
+	}
+
 	stepX2->Branch("X2",		&X2,		"X2/D");
 	stepX2->Branch("SysX2",		&SysX2,		"SysX2/D");
 	stepX2->Branch("Point",		&Point,		"Point/I");
@@ -205,15 +211,17 @@ int main(int argc, char** argv)
 		Eigen::VectorXd fitSpectra = fitter->ConstructSamples(osc);
 
 		Eigen::VectorXd eps = fitter->FitX2(trueSpectra, fitSpectra);
-		Eigen::VectorXd var = fitter->Variance(trueSpectra, fitSpectra, eps);
 
 		ObsX2 = fitter->ObsX2(trueSpectra, fitSpectra, eps);
 		SysX2 = fitter->SysX2(eps);
 		X2 = ObsX2 + SysX2 + PenX2;
 
-		var = var.cwiseSqrt();
-		Epsilons = eps.data();
-		Errors = var.data();
+		if (scan != "CPV") {
+			Eigen::VectorXd var = fitter->Variance(trueSpectra, fitSpectra, eps);
+			var = var.cwiseSqrt();
+			Epsilons = eps.data();
+			Errors = var.data();
+		}
 
 		if (kVerbosity)
 			std::cout << "Fitter: X2 computed " << X2 << " ("
