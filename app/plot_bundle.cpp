@@ -19,8 +19,13 @@ int main(int argc, char** argv)
 	// plot/title/title_type.tex
 	//
 	
+	if (argc < 3) {
+		std::cerr << "Plot bundle: need at least two parameters outfile and infiles\n";
+		return 1;
+	}
+
 	// base = plot/title
-	std::string base(argv[1]);
+	std::string base(argv[2]);
 	base.erase(base.find_last_of('/'));
 	chdir(base.c_str());	// move to plot directory
 
@@ -42,7 +47,10 @@ int main(int argc, char** argv)
 	//typeMap["octant"] = "sensitivity to $\\sin^2 \\theta_{23}$ (differece)";
 
 
-	std::ofstream tout("plot_bundle.tex");
+	std::string out(argv[1]);
+	if (out.find(".tex") != std::string::npos)
+		out += ".tex";
+	std::ofstream tout(out.c_str());
 	beginDocument(tout);
 
 	// input file should look like this
@@ -80,7 +88,7 @@ int main(int argc, char** argv)
 	endDocument(tout);
 	tout.close();
 
-	std::string cmd = "pdflatex plot_bundle.tex";
+	std::string cmd = "pdflatex " + out;
 	system(cmd.c_str());
 
 	return 0;
