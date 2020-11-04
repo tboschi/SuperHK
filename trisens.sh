@@ -15,7 +15,7 @@ Submit fitter jobs to a scheduler, HTCondor or Slurm.
   special parameter
     -x		    use existing cards in output folder if they exist
                     this parameter assumes that root_folder is a full formed path
-		    to the right output location; the options -d, -1 and -2 are then ignored
+		    to the sensitivity output location; options -d, -1 and -2 are then ignored
 
   optional parameters
     -N num_jobs     number of jobs to submit, default 360
@@ -41,6 +41,7 @@ fi
 
 
 Sens=$PWD/cross-fitter.sh
+Oscp=$PWD/bin/oscillation_point
 nameExec=${Sens##*/}
 nameExec=${nameExec%.*}
 
@@ -281,7 +282,7 @@ fi
 if [ -s "$list" ] ; then # user provided list of points
 	point=$(cat $list)
 else
-	./bin/oscillation_point $oscc $parm > $root/$pinfo
+	$Oscp $oscc $parm > $root/$pinfo
 	point=$(cat $root/$pinfo)
 fi
 point=(${point})

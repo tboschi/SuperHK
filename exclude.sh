@@ -43,7 +43,7 @@ $PWD/bin/exclusion $cont/"$name".dat "${point[@]}"
 if [ "$#" -eq 2 ] ; then
 	$0 $2
 
-	comm=${2%_*/sensitivity*}
+	comm=${2%_*/sensitivity*}/contours
 	cont2=${2%/*}/../contours
 
 	mkdir -p $comm
