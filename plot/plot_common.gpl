@@ -6,16 +6,28 @@ if (strstrt(GPVAL_TERMINALS, 'cairolatex') == 0 ) { print "cairolatex not found.
 if (GPVAL_VERSION >= 5.0 && strstrt(GPVAL_TERMINALS, 'cairolatex') > 0 ) {
 	set style arrow 1 nohead lc rgb 'black' lw 1 dt 2	#arrow
 	set style line 1 lt 3 lc rgb 'cyan' lw 1	#grid
-	set style line 2 dt 1 lw 2			#solid
-	set style line 3 dt 2 lw 2			#dashed
+	set style line 2 dt 2 lw 2 lc rgb 'black'	#dashed
+	set style line 3 dt 1 lw 2 lc rgb 'black'
+	set style line 4 dt 1 lw 2 lc rgb 'red'
+	set style line 5 dt 1 lw 2 lc rgb 'blue'
+	set style line 6 dt 1 lw 2 lc rgb 'web-green'
+	set style line 7 dt 1 lw 2 lc rgb 'orange'
+	set style line 8 dt 1 lw 2 lc rgb 'dark-magenta'
 }
 
 if (GPVAL_VERSION < 5.0 && strstrt(GPVAL_TERMINALS, 'cairolatex') > 0 ) {
 	set style arrow 1 nohead lt 2 lc rgb 'black' lw 1	#arrow
 	set style line 1 lt 3 lc rgb 'cyan' lw 1	#grid
-	set style line 2 lt 1 lw 2			#solid
-	set style line 3 lt 1 lw 2			#dashed
+	set style line 2 lt 2 lw 2 lc rgb 'black'	#dashed
+	set style line 3 lt 1 lw 2 lc rgb 'black'
+	set style line 4 lt 1 lw 2 lc rgb 'red'
+	set style line 5 lt 1 lw 2 lc rgb 'blue'
+	set style line 6 lt 1 lw 2 lc rgb 'web-green'
+	set style line 7 lt 1 lw 2 lc rgb 'orange'
+	set style line 8 lt 1 lw 2 lc rgb 'dark-magenta'
 }
+
+colors = 6
 
 
 # margins
@@ -23,7 +35,6 @@ MT = 0.10
 MP = (1-2*MT)/2.0
 
 # file information
-color = "'black' 'red' 'blue' 'web-green' 'orange' 'dark-magenta'"
 names = system("head -n1 ".f_all)
 col_bot = system("head -n1 ".f_dif." | wc -w") - 1
 col_top = system("head -n1 ".f_all." | wc -w")
@@ -55,7 +66,7 @@ do for [c=3:col_top] {
 fitp = top_pos_min_y
 
 #set term qt size 750,525
-set term cairolatex pdf color size 6in, 4.8in lw 2 #standalone header \
+set term cairolatex pdf color size 6in, 4.8in lw 2 dashed #standalone header \
        #"\\usepackage\{amsmath\}"
 set output outp
 
@@ -112,7 +123,7 @@ set ylabel "\$\\Delta \\chi^2_0 - \\Delta \\chi^2\$"
 set arrow 1 arrowstyle 1 from getx(fitp), ymin_bot to getx(fitp), ymax_bot
 #set key title "Difference" at fitp+0.02*(xr_1-xr_0), ymin_bot + 0.85 * dy_bot top left samplen 1.5
 # word(names, i+1)
-plot for [i=2:col_bot] f_dif u (getx($1)):i w histe ls 2 lc rgb word(color, i) not, \
+plot for [i=2:col_bot] f_dif u (getx($1)):i w histe ls (i+2)%colors not, \
 	0 w l ls 3 lc rgb 'black' not
 
 #
@@ -174,7 +185,7 @@ set ylabel "\$\\Delta \\chi^2\$"
 
 set arrow 2 arrowstyle 1 from getx(fitp), ymin_top to getx(fitp), ymax_top
 set key title "" at getx(fitp)+0.02*(xr_1-xr_0), ymin_top + 0.75 * (ymax_top - ymin_top) top left samplen 1.5
-plot for [i=2:col_top] f_all u (getx($1)):i w histe ls 2 lc rgb word(color, i-1) t system("echo ".word(names, i)." | sed 's:_: :g'")
+plot for [i=2:col_top] f_all u (getx($1)):i w histe ls (i+1)%colors t system("echo ".word(names, i)." | sed 's:_: :g'")
 
        #'valor_nostat.dat' w l lw 2 lc rgb 'green' t "VALOR No syst", \
        #'valor_stat.dat' w l lw 2 lc rgb 'cyan' t "VALOR syst"
