@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 {
 	if (argc < 2)
 	{
-		std::cerr << "Validation: need onw parameters: card" << std::endl;
+		std::cerr << "Validation: need one parameters: card" << std::endl;
 		return 1;
 	}
 
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 	if (!cd->Get("true_hierarchy", trueOrder))
 		trueOrder = "normal";
 	if (!cd->Get("fit_hierarchy", fitOrder))
-		trueOrder = "normal";
+		fitOrder = "normal";
 
 	double X2, ObsX2, SysX2;
 	double Time;
@@ -87,8 +87,7 @@ int main(int argc, char** argv)
 	double tdCP, fdCP;
 
 	//get True point
-	//parms->GetEntry(truePoint, tM12, tM23, tS12, tS13, tS23, tdCP);
-	tM12 = 7.49e-5; tM23 = 2.5e-3; tS12 = 0.309; tS13 = 0.021; tS23 = 0.425; tdCP = -2.79252680319;
+	parms->GetEntry(truePoint, tM12, tM23, tS12, tS13, tS23, tdCP);
 
 	if (trueOrder == "normal")
 		osc->SetMasses<Oscillator::normal>(tM12, tM23);
@@ -100,8 +99,7 @@ int main(int argc, char** argv)
 
 	if (fitPoint >= 0) {
 		//get Fit point
-		//parms->GetEntry(fitPoint, fM12, fM23, fS12, fS13, fS23, fdCP);
-		fM12 = 7.49e-5; fM23 = 2.5e-3; fS12 = 0.309; fS13 = 0.021; fS23 = 0.425; fdCP = 0;
+		parms->GetEntry(fitPoint, fM12, fM23, fS12, fS13, fS23, fdCP);
 
 		if (fitOrder == "normal")
 			osc->SetMasses<Oscillator::normal>(fM12, fM23);
