@@ -56,7 +56,7 @@ if condor_q &> /dev/null ; then
 elif squeue &> /dev/null ; then
 	SCHED="SLURM"
 	sub=sbatch
-	squeue -h -r -u $USER -o \"%o %K\" > $queue
+	squeue -h -r -u $USER -o "%o %K" > $queue
 else
 	echo There is neither HTCondor nor Slurm on this machine. I am sorry, I cannot help you
 	exit 1
@@ -87,10 +87,11 @@ while read -r point ; do
 	fi
 
 	# find all root files
-	out=$(find $outdir -name "*.root")
-	out=(${out})
+	all=$(find $outdir -name "SpaghettiSens.*.root")
+	all=(${all})
 
-	if [ ${#out[@]} -eq 0 ] ; then	# no root files
+
+	if find $outdir -name "SpaghettiSens.\*.root" | grep -q . ; then # no files
 		# check if job is still running
 		echo Detected: there are no output files in $outdir
 		if grep -q $point $queue; then 
@@ -116,36 +117,26 @@ while read -r point ; do
 	repair=()
 
 	# now go through each file individually
-	for ff in "${out[@]}" ; do
+	for num in {0..$jobs} ; do
 		# this is the file number
-		num=${ff%.root}
-		num=${num##*.}
 
+		out=$outdir/SpaghettiSens.$num.root
 		log=$outdir/L$nameExec.$num.log
 
-		# remove wrong stuff
-		if [ "$num" -ge "$job" ] ; then
-			rm -f $ff $log
-			continue
-		fi
-
-		# if root file is older than script
-		if [ $ff -ot $script ] ; then	# maybe failed?
-			echo Detected: $ff is older than $script
-			if grep $point $queue | grep -q $num; then 
-				echo $nameExec for point $point at $num/$job is still running. Just wait.
-			elif [ "$rep" == "true" ] ; then
-				repair=(${repair[@]} "$num")
-				echo Point $point will be repaired at $num/$job
-			else
-				echo $nameExec failed for point $point at $num/$job. You can resubmit with -f to repair
-			fi
-			continue
-		fi
-
-		# at this stage output file is newer than script
-		if [ -s $log ] && ! tail $log | grep -q Finished ; then
+		bad=false
+		if ! [ -s $out ] ; then	
+			echo Detected: $out does not exist
+			bad=true
+		elif [ $out -ot $script ] ; then
+			echo Detected: $out is older than $script
+			bad=true  # at this stage output file is newer than script
+		elif [ -s $log ] && ! tail $log | grep -q Finished ; then
 			echo Detected: $log did not finish
+			bad=true
+		fi
+
+
+		if [ "$bad" == "true" ] ; then
 			if grep $point $queue | grep -q $num; then 
 				echo $nameExec for point $point at $num/$job is still running. Just wait.
 			elif [ "$rep" == "true" ] ; then
@@ -154,9 +145,9 @@ while read -r point ; do
 			else
 				echo $nameExec failed for point $point at $num/$job. You can resubmit with -f to repair
 			fi
-			continue
 		fi
 	done
+
 
 	for rr in "${repair[@]}" ; do
 
