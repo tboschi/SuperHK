@@ -5,9 +5,9 @@ verbose	2
 # scale statistics
 #stats	1.00
 
-density_profile	"/.data/tboschi/HKsens/OscAna/SuperHK/data/PREM_osc3.dat"
-production_height	12.5
-honda_production	"/.data/tboschi/HKsens/OscAna/SuperHK/data/prod_honda/kam-ally-aa-*.d"
+density_profile	"/mnt/lustre/users/k1928247/SuperHK/data/PREM_25pts.dat"
+production_height	15
+honda_production	"/mnt/lustre/users/k1928247/SuperHK/data/prod_honda/kam-ally-aa-*.d"
 
 # systematic information for atmospheric sample
 
@@ -18,7 +18,7 @@ skip		"t2k_m23_error_fij", "t2k_s23_error_fij"
 
 # systematics are stored in root file
 # and TTree object with description information
-systematic_file	"/.data/tboschi/HKsens/OscAna/SuperHK/errorstudy/0/systematics/atmo_fij.root"
+systematic_file	"/mnt/lustre/groups/nms_epapg/k1928247/errorstudy/0/systematics/atmo_fij.root"
 systematic_tree	"sigmatree"
 #stats_only	1
 
@@ -30,14 +30,19 @@ systematic_tree	"sigmatree"
 # MC information for buidling samples
 # they are root file with the same structure
 # so they can be chained by the same tree name
-MC_input	"/.data/tboschi/HKsens/OscAna/SuperHK/errorstudy/reconstruction_atmo/*mc.sk4.*.root"
+MC_input	"/mnt/lustre/groups/nms_epapg/k1928247/errorstudy/reconstruction_atmo/*mc.sk4.*.root"
 MC_tree_name	"osc_tuple"
+
+pre_input_NH	"/mnt/lustre/groups/nms_epapg/k1928247/errorstudy/reconstruction_atmo/pre/NH/atmo.*.root"
+pre_input_IH	"/mnt/lustre/groups/nms_epapg/k1928247/errorstudy/reconstruction_atmo/pre/NH/atmo.*.root"
+pre_tree_name	"atmoTree"
 
 # MC scaling from 500 years to HK esposure (10y * 188.4t / 22.5t)
 #MC_scale	8.37333333334	# (188.4 / 22.5)
-#MC_scale	0.16746666667	# (10 / 500) * (188.4 / 22.5)
-MC_scale	0.01708739726	# 3118.45 / (500 * 365)
+MC_scale	0.16746666667	# (10 / 500) * (188.4 / 22.5)
+#MC_scale	0.01708739726	# 3118.45 / (500 * 365)
 
+reduce		0.507106
 
 #
 #tree_input	"/data/tboschi/HKsens/errorstudy/sk/sk4osct/*mc*.root"

@@ -10,7 +10,7 @@ verbose	2
 # "E_FHC", "E_RHC", "M_FHC", "M_RHC"
 # will be used
 
-sample	"E_FHC", "E_RHC" #, "M_FHC", "M_RHC"
+#sample	"E_FHC", "E_RHC" #, "M_FHC", "M_RHC"
 
 
 #energy scale error for E or M
@@ -28,16 +28,16 @@ sample	"E_FHC", "E_RHC" #, "M_FHC", "M_RHC"
 #skip		55, 56, 73	# Eb error
 
 #systematic informations
-corr_file	"/.data/tboschi/HKsens/OscAna/SuperHK/errorstudy/0/systematics/combinedmatrix.root"
+corr_file	"/mnt/lustre/groups/nms_epapg/k1928247/errorstudy/0/systematics/combinedmatrix.root"
 corr_name	"correlation"
 
-systematic_E_FHC "/.data/tboschi/HKsens/OscAna/SuperHK/errorstudy/0/systematics/FHC1Re.fij.t2k_spline.root"
-systematic_E_RHC "/.data/tboschi/HKsens/OscAna/SuperHK/errorstudy/0/systematics/RHC1Re.fij.t2k_spline.root"
-systematic_M_FHC "/.data/tboschi/HKsens/OscAna/SuperHK/errorstudy/0/systematics/FHC1Rmu.fij.t2k_spline.root"
-systematic_M_RHC "/.data/tboschi/HKsens/OscAna/SuperHK/errorstudy/0/systematics/RHC1Rmu.fij.t2k_spline.root"
+systematic_E_FHC "/mnt/lustre/groups/nms_epapg/k1928247/errorstudy/0/systematics/FHC1Re.fij.t2k_spline.root"
+systematic_E_RHC "/mnt/lustre/groups/nms_epapg/k1928247/errorstudy/0/systematics/RHC1Re.fij.t2k_spline.root"
+systematic_M_FHC "/mnt/lustre/groups/nms_epapg/k1928247/errorstudy/0/systematics/FHC1Rmu.fij.t2k_spline.root"
+systematic_M_RHC "/mnt/lustre/groups/nms_epapg/k1928247/errorstudy/0/systematics/RHC1Rmu.fij.t2k_spline.root"
 
 
-reco_input	"/.data/tboschi/HKsens/OscAna/SuperHK/errorstudy/reconstruction_beam/syst_*.card"
+reco_input	"/mnt/lustre/groups/nms_epapg/k1928247/errorstudy/reconstruction_beam/syst_*.card"
 
 # OOOOOO LLLLLL DDDDDD
 # these are needed to build observables
@@ -62,4 +62,4 @@ reco_input	"/.data/tboschi/HKsens/OscAna/SuperHK/errorstudy/reconstruction_beam/
 
 
 # density profile for beamline
-density_profile	"/.data/tboschi/HKsens/OscAna/SuperHK/data/DensityProfileTochibora.dat"
+density_profile	"/mnt/lustre/users/k1928247/SuperHK/data/DensityProfileTochibora.dat"
