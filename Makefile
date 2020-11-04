@@ -10,9 +10,12 @@ ROOTCXX		= $(shell root-config --cflags)
 ## Eigen matrix library
 EIGENINC = $(EIGEN)
 
+#optimization
+ARCH ?= -march=native
+
 LDFLAGS  := -Wl,--no-as-needed $(LDFLAGS) $(ROOTLIB) -L$(LIBDIR)
 #LDLIBS   := -losc3pp
-CXXFLAGS := $(CXXFLAGS) $(DEBUG) -fPIC -std=c++11 -O3 -march=native $(ROOTCXX) -I$(INCDIR) -I$(EIGENINC)
+CXXFLAGS := $(CXXFLAGS) $(DEBUG) -fPIC -std=c++11 -O3 $(ARCH) $(ROOTCXX) -I$(INCDIR) -I$(EIGENINC)
 
 
 
@@ -39,6 +42,7 @@ all: welcome $(TARGET)
 
 welcome:
 	@echo "If you need to build just one file, do make APP=name"
+	@echo "or if you need to specify an architecture, do make ARCH=arch"
 	@echo "Enjoy your compilation"
 
 
