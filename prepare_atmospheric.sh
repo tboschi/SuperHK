@@ -26,9 +26,8 @@ else
 fi
 
 
-Atmo=$PWD/cross-atmo.sh
-nameExec=${Atmo##*/}
-nameExec=${nameExec%.*}
+Atmo=$PWD/cross-binary.sh
+nameExec=atmo_input
 
 card=$PWD/cards/multi.card
 oscc=$PWD/cards/oscillation.card
@@ -158,7 +157,7 @@ if [ "$SCHED" == "HTCONDOR" ] ; then
 #	$sub $scriptname
 
 executable		= $Atmo
-arguments		= \$(Process) $NJOBS $card
+arguments		= atmo_input \$(Process) $NJOBS $card
 getenv			= True
 #requirements		= HasAVXInstructions
 should_transfer_files	= IF_NEEDED
@@ -186,7 +185,7 @@ elif [ "$SCHED" == "SLURM" ] ; then
 #SBATCH --time=3-0
 #SBATCH --cpus-per-task=1
 
-srun $Atmo \$SLURM_ARRAY_TASK_ID $NJOBS $card
+srun $Atmo atmo_input \$SLURM_ARRAY_TASK_ID $NJOBS $card
 
 EOF
 	echo Launching $NJOBS jobs with Slurm

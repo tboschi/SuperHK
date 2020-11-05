@@ -49,7 +49,7 @@ else
 	exit 1
 fi
 
-Sens="$PWD/cross-binary.sh fitter"
+Sens=$PWD/cross-binary.sh
 Oscp=$PWD/bin/oscillation_point
 nameExec=fitter
 
@@ -311,6 +311,7 @@ fi
 for t in "${point[@]}" ; do
 
 	output=$root/$tname$t
+	echo $output
 	mkdir -p $output
 	rm -f $output/*.*
 	# changing card in upper folder shows which point is currently being fitted
@@ -334,7 +335,7 @@ for t in "${point[@]}" ; do
 #	$sub $scriptname
 
 executable		= $Sens
-arguments		= \$(Process) $NJOBS $this
+arguments		= fitter \$(Process) $NJOBS $this
 getenv			= True
 #requirements		= HasAVXInstructions
 should_transfer_files	= IF_NEEDED
@@ -362,7 +363,7 @@ EOF
 #SBATCH --time=3-0
 #SBATCH --cpus-per-task=1
 
-srun $Sens \$SLURM_ARRAY_TASK_ID $NJOBS $this
+srun $Sens fitter \$SLURM_ARRAY_TASK_ID $NJOBS $this
 
 EOF
 	fi
@@ -374,7 +375,6 @@ EOF
 	#but return if last point
 	jobs_run=$(eval $running)
 	jobs_que=$(eval $inqueue)
-	echo $jobs_run and $jobs_que
 	if [ $t -ne ${point[${#point[@]} - 1]} ] ; then
 		echo not last point.. and running $jobs_run and waiting $jobs_que
 		while [ $jobs_run -gt $MAX_JOBS ] || [ $jobs_que -gt $MAX_QUEUE ] ; do

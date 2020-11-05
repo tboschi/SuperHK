@@ -35,14 +35,13 @@ elif [ ! -s "$1" ] ; then
 	exit 1
 fi
 
-Sens=$PWD/cross-fitter.sh
-nameExec=${Sens##*/}
-nameExec=${nameExec%.*}
+Sens=$PWD/cross-binary.sh
+nameExec=fitter
 trisens=trisens.sh
 
 
 if pgrep $trisens ; then
-	echo Trisens is still running. Wait for it to finish.
+	echo trisens.sh is still running. Wait for it to finish.
 	exit 1
 fi
 
@@ -203,7 +202,7 @@ while read -r point ; do
 #	$sub $recover
 
 executable		= $Sens
-arguments		= $rr $job $this
+arguments		= fitter $rr $job $this
 getenv			= True
 should_transfer_files	= IF_NEEDED
 when_to_transfer_output	= ON_EXIT
@@ -226,7 +225,7 @@ EOF
 #SBATCH --time=3-0
 #SBATCH --cpus-per-task=1
 
-srun $Sens $rr $job $this
+srun $Sens fitter $rr $job $this
 
 EOF
 		fi
@@ -247,5 +246,5 @@ if [ "${#repeat[@]}" -gt 0 ] ; then
 	if [[ "$1" =~ .*CPV.* ]] ; then
 		scan="-f CPV"
 	fi
-	$PWD/$trisens -x "$scan" -r $root -p $point_file -N 500
+	$PWD/$trisens -x $scan -r $root -p $point_file -N 500
 fi
