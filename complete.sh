@@ -71,7 +71,7 @@ while read -r point ; do
 
 	outdir=$name'_'$point
 	outdir=$(realpath $outdir)
-	script=$outdir/R$nameExec.$point.sub
+	script=$(ls -rt $outdir/R*.$point.sub | tail -n1)
 
 	# directory does not exists or no script
 	if ! [ -d $outdir ] || ! [ -s $script ] ; then
@@ -121,7 +121,7 @@ while read -r point ; do
 			continue
 		fi
 
-		num=${all%.root}
+		num=${out%.root}
 		num=${num##*.}
 
 		if [ $num -ge $job ] ; then
@@ -192,8 +192,11 @@ while read -r point ; do
 			sed -i "s:^atmo_parameters.*:atmo_parameters\t\"$atmo\":" $this
 		fi
 
+
 		recover=$outdir/Recover.$rr.sub
-		log=$outdir/L$nameExec.$num.log
+		echo $outdir
+		echo $recover
+		log=$outdir/L$nameExec.$rr.log
 		if [ "$SCHED" == "HTCONDOR" ] ; then
 			cat > $recover << EOF
 #! /bin/bash
@@ -213,7 +216,7 @@ error			= $log
 queue
 EOF
 		elif [ "$SCHED" == "SLURM" ] ; then
-			cat > $record << EOF
+			cat > $recover << EOF
 #! /bin/bash
 # script submission for Slurm
 # sumbit with --
@@ -229,7 +232,7 @@ srun $Sens fitter $rr $job $this
 
 EOF
 		fi
-		$sub $scriptname
+		$sub $recover
 	done
 done < $1
 
