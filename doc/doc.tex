@@ -282,7 +282,7 @@ The important options to consider are
 		true sample and for the fit sample and the can be both either \texttt{NH} %
 		for normal hierarchy of \texttt{IH} for inverted hierarchy.
 	\item \texttt{-N <jobs>} sets the number of jobs to submit to the cluster;
-	\item \texttt{-s} is a flag to do a statistics only fit, i.e.\ the systematic parmaters are not fitted;
+	\item \texttt{-s} is a flag to do a statistics only fit, i.e.\ the systematic parameters are not fitted;
 	\item \texttt{-f <scan\_type>} enables a scan fit where the true oscillation point is changed at each iteration; only a CPV sensitivity scan is available and can be activated with \texttt{-f CPV};
 	\item \texttt{-v <verbosity>} changes the verbosity of the log files.
 \end{itemize}
@@ -331,10 +331,10 @@ This command is
 	condor_q -sub $USER  # for HTCondor
 	squeue -u $USER      # for SLURM
 \end{lstlisting}
-Once the jobs are done, it is worth checking whether they were successfull, %
+Once the jobs are done, it is worth checking whether they were successful, %
 as it may occur that some job fails.
 This could be due to many reasons, e.g.\ missing input files or job requests rejected by the manager.
-The log files will usually contain an error message exaplining what went wrong.
+The log files will usually contain an error message explaining what went wrong.
 The user should understand the reason for failed jobs and fix it.
 
 As a full fit requires many resources and can take a long time to complete, %
@@ -343,7 +343,7 @@ Using the previous example, this is done with
 \begin{lstlisting}[]
 	./complete.sh errorstudy/first_run/NH_NH/sensitivity/CPV_scan.info
 \end{lstlisting}
-The script scans through the output files and tries to understand whether the job failed, the job is not complete, or some other error occured.
+The script scans through the output files and tries to understand whether the job failed, the job is not complete, or some other error occurred.
 If no error is detected and no error message is displayed, it is very unlikely that the fit is not complete.
 Otherwise, error messages will be printed and the user can decide if they want to repair the fit %
 simply by launching the script with the \texttt{-f} option
@@ -396,7 +396,7 @@ Each entry of the tree corresponds to a point of the oscillation space.
 The branches of these objects are quite self-explanatory, but for completeness they are
 \begin{itemize}
 	\item \texttt{X2} and \texttt{SysX2} are respectively the total $\chi^2$ for that entry %
-		and the $\chi^2_\text{sys}$ contribution from systematic paramater fit;
+		and the $\chi^2_\text{sys}$ contribution from systematic parameter fit;
 	\item \texttt{TPoint} and \texttt{Point} are respectively the true point of the oscillation %
 		parameter space and the point fitted;
 	\item \texttt{TM12}, \texttt{TM23}, \texttt{TS21}, \texttt{TS13}, \texttt{TS23}, and \texttt{TCP} %
@@ -433,9 +433,9 @@ Their names have the following meaning
 	\item \texttt{P<X><Y>} are equivalent to the \texttt{X2<X><Y>} histograms except they %
 		store the point number that gives the minimum $\chi^2$ value;
 	\item \texttt{V<X>min<Y>} are 1D histograms showing the value of the parameter \texttt{<Y>} %
-		tht gives a minimum $\chi^2$ as a function the parameter \texttt{<X>}.
+		that gives a minimum $\chi^2$ as a function the parameter \texttt{<X>}.
 \end{itemize}
-Only the histogram \texttt{X2min<X>} and \texttt{X2<X><Y>} are revelant for plotting (see \refsec{sec:plot}).
+Only the histogram \texttt{X2min<X>} and \texttt{X2<X><Y>} are relevant for plotting (see \refsec{sec:plot}).
 
 The output of the \texttt{exclude.sh} script is a simple multicolumn text file %
 and the meaning of each column is the following
@@ -807,7 +807,7 @@ the variables are stored in maps as strings:
 	\item $\Delta m^2_{21}$ and $\Delta m^2_{32}$ are respectively \texttt{M12} and \texttt{M12};
 	\item $\sin^2\theta_{12}$, $\sin^2 \theta_{13}$, $\sin^2 \theta_{23}$ are respectively \texttt{S12}, \texttt{S13}, %
 		and \texttt{S23};
-	\item $\delta_\text{CP}$ is \texttt{CP}\footnote{In future versions of \texttt{osc3++}, this will become \texttt{dCP}.}.
+	\item $\delta_\text{CP}$ is \texttt{CP}.
 \end{itemize}
 Numbering the points allows an easy and homogeneous distribution of jobs in a computing cluster.
 The methods
@@ -1237,7 +1237,7 @@ an improved analysis which takes into account the increment of data over time an
 
 The model consists of 72 uncertainties for flux and cross-section parameters from near detector constraints, %
 known as the BANFF fit, acronym for Beam And ND280 Flux extrapolation task Force.%
-\footnote{The T2K model has 74 BANFF parameters, but two of them are not included anymore, namely the SCCV and SCCA paramters.}
+\footnote{The T2K model has 74 BANFF parameters, but two of them are not included anymore, namely the SCCV and SCCA parameters.}
 %divided in $25\times 2$ systematics, for each beam mode, for the four main flux components, %
 These are grouped in 50 systematics\,---\,25 for the $\nu$ mode and 25 for the $\cj{\nu}$~mode\,---\,%
 for the main four flux components ($\nu_e$, $\nu_\mu$, $\cj{\nu}_e$, and $\cj{\nu}_\mu$), % 
