@@ -218,9 +218,10 @@ int main(int argc, char** argv)
 
 		if (scan != "CPV") {
 			Eigen::VectorXd var = fitter->Variance(trueSpectra, fitSpectra, eps);
-			var = var.cwiseSqrt();
-			Epsilons = eps.data();
-			Errors = var.data();
+			for (int i = 0; i < NumSys; ++i) {
+				Epsilons[i] = eps(i);
+				Errors[i] = sqrt(var(i));
+			}
 		}
 
 		if (kVerbosity)
