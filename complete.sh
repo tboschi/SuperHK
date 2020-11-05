@@ -1,14 +1,14 @@
 #! /bin/bash
 
-usage="Usage: $0 info_file [-f]
+usage="usage: $0 [<options>] <list>
 
-Check if jobs were completed and repair if needed
+Check if jobs were completed and repair if needed where <list> is
+the file with the list of fitted points in the sensitivity folder.
 Works with HTCondor or Slurm.
 
-  parameters
-    info_file    path to file with .info extension in output folder
-    -f		 repair files, otherwise just display information
-    -h		 print this message
+Options
+    -f	      repair files, otherwise just display information
+    -h        print this message
 "
 
 rep=false
@@ -90,8 +90,7 @@ while read -r point ; do
 	all=$(find $outdir -name "SpaghettiSens.*.root")
 	all=(${all})
 
-
-	if find $outdir -name "SpaghettiSens.\*.root" | grep -q . ; then # no files
+	if [ "${#all[@]}" -eq 0 ] ; then # no files
 		# check if job is still running
 		echo Detected: there are no output files in $outdir
 		if grep -q $point $queue; then 
@@ -114,11 +113,31 @@ while read -r point ; do
 		job=$((job + 1))	# arrays start from 0
 	fi
 
-	repair=()
+	# now all known files
+	for out in "${all[@]}" ; do
 
-	# now go through each file individually
-	for num in {0..$jobs} ; do
-		# this is the file number
+		# skip file with weird format
+		if ! [[ $out =~ SpaghettiSens\.[0-9]+\.root ]] ; then
+			echo Detected: skip unknown file $out
+			continue
+		fi
+
+		num=${all%.root}
+		num=${num##*.}
+
+		if [ $num -ge $job ] ; then
+			echo Detected: file misplaced $out 
+			if [ "$rep" == "true" ] ; then
+				rm $out
+			else
+				echo "    " you can resubmit with -f to delete
+			fi
+			continue
+		fi
+	done
+
+	repair=()
+	for num in $(seq $((job - 1)) ) ; do 
 
 		out=$outdir/SpaghettiSens.$num.root
 		log=$outdir/L$nameExec.$num.log
@@ -135,7 +154,6 @@ while read -r point ; do
 			bad=true
 		fi
 
-
 		if [ "$bad" == "true" ] ; then
 			if grep $point $queue | grep -q $num; then 
 				echo $nameExec for point $point at $num/$job is still running. Just wait.
@@ -147,7 +165,6 @@ while read -r point ; do
 			fi
 		fi
 	done
-
 
 	for rr in "${repair[@]}" ; do
 
@@ -226,5 +243,8 @@ if [ "${#repeat[@]}" -gt 0 ] ; then
 		exit 1
 	fi
 
-	$PWD/$trisens -x -f CPV -r $root -p $point_file -N 500
+	scan=""
+	if [[ "$1" =~ .*CPV.* ]] ; then
+		scan="-f CPV"
+	$PWD/$trisens -x "$scan" -r $root -p $point_file -N 500
 fi

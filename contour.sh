@@ -1,11 +1,19 @@
 #! /bin/bash
 
-usage="Usage: $0 point_path
+usage="usage: $0 <point>
 			
-Create X2 contours
+Create X2 contours for a fit result obtained with trisens.sh.
+The input <point> is the path to the output folder. Using the
+parameter names of trisens.sh, the output folder names should
+look like
 
-  parameters
-    point_dir    output directory of complete fit, usually ends with ...point_xxx/
+	<root>/<mh1>_<mh2>/sensitivity/point_<value>
+
+and <value> is the number of the fitted point.
+The X2 contours are saved as histograms in the ROOT file
+
+	<root>/<mh1>_<mh2>/contours/point_<value>.root
+
 "
 
 if [ "$#" -ne 1 ] ; then

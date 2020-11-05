@@ -1,31 +1,42 @@
 #! /bin/bash
 
-usage="Usage: $0 -r root_folder -1 [NH | IH] -2 [NH | IH] [-N num_jobs] [-s] 
-              [-t fraction] [-f scan_mode] [-p point_list] [-x] [-m matrix]
-	      [-v verbosity] [-h]
+usage="usage: $0 -r <root> -d <sample> -1 <mh1> -2 <mh2> [-x] [<options>]
 
 Submit fitter jobs to a scheduler, HTCondor or Slurm.
+The correct binary run is taken from cross-fitter.sh.
+The main working folder is defined by <root> which must have a \"systematics\"
+subfolder containing systematic input files. The <sample> to fit can be one of
+the following: \"beam\", \"data\", or \"comb\" for a combined fit.
+The mass hierarchy for the true sample is <mh1> and for the fit sample is <mh2>
+and they can both be either \"NH\" for the normal hierarchy of \"IH\" for the
+inverted hierarchy.
+The output folder will be 
 
-  parameters (overriden by -x)
-    -r root_folder  main working folder, must have a \"systematics\" sub folder
-    -d data_sample  sample to include in the fit (beam, data, comb)
-    -1 [NH | IH]    mass hierarchy of the observed/true data (NH or IH)
-    -2 [NH | IH]    mass hierarchy of the expected/to fit data (NH or IH)
+	<root>/<mh1>_<mh2>/sensitivity/
+	
+The script uses already existing card templates in the \"cards\" folder, modifies
+them, and copies them in the output folder.
 
-  special parameter
-    -x		    use existing cards in output folder if they exist
-                    this parameter assumes that root_folder is a full formed path
-		    to the sensitivity output location; options -d, -1 and -2 are then ignored
+The special option [-x] will use existing card in the output folder, if they exist.
+In this case, the parameters <sample>, <mh1>, and <mh2> are ignored.
+This option is useful when resubmitting broken files in combination with the
+[-p <list>] option (see below).
 
-  optional parameters
-    -N num_jobs     number of jobs to submit, default 360
-    -s		    does not fit systematic parameters, only statistics
-    -t fraction	    specify fraction of data to fit as value [0,1], default 1 (full data)
-    -f scan_mode    special scan mode, (CPV or octant)
-    -p point_list   file with list of true points to fit, default depends on scan
-    -m matrix	    specify matrix type for beam sample, default correlation
-    -v verbosity    specify a verbosity value
-    -h		    show usage
+Optional parameters
+    -N <jobs>       number of jobs to submit to the cluster; the default value
+                    is 360. There will be <jobs> output files in the end.
+    -s		    does not fit systematic parameters.
+    -t <stat>	    specify fraction of data to fit as float value between
+    		    0 and 1; the default value is 1, i.e. full data.
+    -f <scan>       special scan mode. At the moment only \"CPV\" is available
+                    and the fitter will change deltaCP true value along the range
+    -p <list>       file with list of true points to fit, useful to use in combin-
+                    ation with [-x]. If not specified, nominal points are used.
+    -m <matrix>	    specify matrix name for beam sample; the default one is
+    		    \"correlation\"
+    -v <verb>       specify a verbosity value where <verb> is an integer number;
+    		    the greater the number, the higher the verbosity.
+    -h		    print this message.
 "
 
 SCHED=""
@@ -38,12 +49,9 @@ else
 	exit 1
 fi
 
-
-
-Sens=$PWD/cross-fitter.sh
+Sens="$PWD/cross-binary.sh fitter"
 Oscp=$PWD/bin/oscillation_point
-nameExec=${Sens##*/}
-nameExec=${nameExec%.*}
+nameExec=fitter
 
 card=$PWD/cards/multi.card
 fitc=$PWD/cards/fit_options.card

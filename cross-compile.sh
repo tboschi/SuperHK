@@ -1,12 +1,15 @@
 #! /bin/bash
 
-usage="Usage: $0
+usage="usage: $0
 
-Compile the fitter binary on some nodes on the cluster.
+Compile the fitter and the atmo_input binaries on some nodes on the cluster.
 The script runs through all the nodes and compiles a new version of the binary
-only if a new architecture is found.
+only if a new architecture is found. If it was not possible to ssh into any
+node, then a generic version of the two binaries will be compiled, otherwise
+a highly optimized version is creted.
 
-Works with HTCondor or Slurm and requires shared file system between nodes."
+Works with HTCondor or Slurm and requires shared file system between nodes.
+"
 
 
 if [ "$#" -gt 0 ] ; then

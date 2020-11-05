@@ -35,7 +35,7 @@ nickn=("one_xxx"
 ###################################
 
 
-usage="Usage: $0 [-p output] [-h]
+usage="usage: $0 [-p output] [-h]
 			
 Render plots out of the contours (see contours.sh) and save them to PDF
 In order to use this script, the user should open it with their favourite editor

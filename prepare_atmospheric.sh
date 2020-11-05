@@ -1,6 +1,6 @@
 #! /bin/bash
 
-usage="Usage: $0 -r root_folder -1 [NH | IH] [-N num_jobs]
+usage="usage: $0 -r root_folder -1 [NH | IH] [-N num_jobs]
               [-t fraction] [-v verbosity] [-h]
 
 Pre compute the atmospheric sample, using HTCondor or Slurm.

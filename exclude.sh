@@ -1,17 +1,31 @@
 #! /bin/bash
 
-usage="Usage: $0 info_file [ info_file2 ]
+usage="usage: $0 <file> [ <file2> ]
 			
-Create CPV exclusion curves
+Create CPV exclusion curves using the output of a CPV scan created
+with trisens.sh. The input <file> is found in the output directory, 
+with extension \".info\" and contains a list of the true deltaCP
+points fitted.
+Using the parameter names of trisens.sh, the file should look like
 
-  parameters
-    info_file    path to file with .info extension in output folder
-    info_file2   path to file with .info extension and different fit mass hierarchy,
-    		 but with the same true mass hierarchy; exclusion lines with unknown
-		 mass hierarchy will be created as well under a new folder
+	<root>/<mh1>_<mh2>/sensitivity/CPV_scan.info
+
+The output is a text file which will be saved in
+
+	<root>/<mh1>_<mh2>/contours/CPV_scan.dat
+
+If a second file <file2> is passed, then the script will create
+the CPV curves for the other fit as well.
+The second file should be a CPV scan made with a different fit mass
+hierarchy, but same true mass hierarchy (see trisens.sh documentation).
+The script will also create CPV exclusion curves for unknown mass
+hierarchy of the common true mass hierarchy, and it will be saved in
+
+	<root>/<mh1>/contours/CPV_scan.dat
+
 "
 
-if [ "$#" -lt 1 ] ; then
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ] ; then
 	echo This script requires one or two arguments. Check usage with
 	echo $0 -h
 	exit 1
