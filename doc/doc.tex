@@ -179,6 +179,11 @@ For example, to compile just the fitter executable, it is possible to run
 \end{lstlisting}
 as there is a main function in the file \texttt{app/fitter.cpp}.
 
+This documentation can be compiled with
+\begin{lstlisting}[language=bash]
+	make doc
+\end{lstlisting}
+
 \subsection{Cross-compilation}
 
 Due to the default flags passed to the gcc compiler (\texttt{-O3 -march}), the executables are highly optimised %
@@ -201,9 +206,8 @@ This workaround works as long as access to the file system is shared on the clus
 be accessed via ssh by the user.
 
 The user can test if they can ssh into a node of the cluster first.
-If this is not possible, then the \texttt{cross-compile.sh} script will not work.
-The user should manually edit the \texttt{Makefile} and remove the \texttt{-march=native} flag and %
-compile locally with \texttt{make}.
+If this is not possible for any node, then the \texttt{cross-compile.sh} script will detect this and generic architecture flags are used instead.
+The script creates a generic version of the binaries \texttt{bin/fitter} and \texttt{bin/atmo\_input} anyway.
 
 \subsection{Setting up the environment}
 
@@ -223,14 +227,17 @@ The subfolders
 \end{itemize}
 are created to contain reconstruction files to build the beam and atmospheric data samples.
 
-Now the framework is ready for analysis.
+Now the framework is ready for analysis. Please note that this script needs to be run only once.
 In the following examples, it will be assumed that the result directory is the default one, %
 \texttt{errorstudy}.
+The use should assure that there is sufficient quota for running the analysis.
+A single fit can take up around 5\,GB of space in output files, whereas a CPV scan %
+as much as 25\,GB.
 
 \subsection{Running the fitter}
 
-The fitter is the most important tool of the framework, %
-whereas the other executables are used for validation or plotting.
+The fitter is the most important tool of the framework; %
+the other executables are used for validation or plotting.
 Before running it, the user has to decide which sample to fit:
 \begin{itemize}
 	\item the beam sample;
@@ -254,59 +261,69 @@ The nominal T2K 2018 systematic model is found under \texttt{errorstudy/0}, ther
 
 Finally, the fitter can be launched on the distributed computing system with %
 the \texttt{trisens.sh} utility.
-For example,
+The usage is
 \begin{lstlisting}[language=bash]
 	./trisens.sh -r errorstudy/first_run -d comb -1 NH -2 NH -N 500
 \end{lstlisting}
 will launch 500 jobs (\texttt{-N 500}) on the cluster, fitting both the beam and atmospheric samples %
 (\texttt{-d comb}) with true and fitted normal mass hierarchies (\texttt{-1 NH -2 NH}).
-Other important options are 
+The output will be saved in
+\begin{lstlisting}[language=bash]
+	errorstudy/first_run/NH_NH/sensitivity/point_<nominal>
+\end{lstlisting}
+The important options to consider are
 \begin{itemize}
 		\small
-	\item \texttt{-s} to do a statistics only fit, i.e.\ no systematics;
-	\item \texttt{-f <scan\_type>} to perform a scan fit, i.e.\ changing the true point at each iteration %
-		as it is done for CPV sensitivity studies;
-	\item \texttt{-v <verbosity>} to change the verbosity of the log files.
+	\item \texttt{-r <root>} defines the main working folder > which must have a \"systematics\"
+		subfolder containing systematic input files;
+	\item \texttt{-d <sample>} defines the samples to fit and \texttt{<sample>} can be one of
+		the following: \texttt{beam}, \texttt{data}, or \texttt{comb}.
+	\item \texttt{-1 <mh1> -2 <mh2>} are respectively the mass hierarchies for the %
+		true sample and for the fit sample and the can be both either \texttt{NH} %
+		for normal hierarchy of \texttt{IH} for inverted hierarchy.
+	\item \texttt{-N <jobs>} sets the number of jobs to submit to the cluster;
+	\item \texttt{-s} is a flag to do a statistics only fit, i.e.\ the systematic parmaters are not fitted;
+	\item \texttt{-f <scan\_type>} enables a scan fit where the true oscillation point is changed at each iteration; only a CPV sensitivity scan is available and can be activated with \texttt{-f CPV};
+	\item \texttt{-v <verbosity>} changes the verbosity of the log files.
 \end{itemize}
-The full list of options can be shown with
+The full list of options and the usage can be shown with
 \begin{lstlisting}[language=bash]
 	./trisens.sh -h
 \end{lstlisting}
 The utilities automatically edit the card files in the \texttt{cards} folder and place copies %
-in the folder
+in the output folder
 \begin{lstlisting}[language=bash]
 	errorstudy/first_run/NH_NH/sensitivity/
 \end{lstlisting}
 An \texttt{.info} file will be created as well with a name determined by the scan type.
-A single fit creates a \texttt{point.info} file containing the number of the point fitted, %
+A single fit creates a \texttt{point.info} file containing the number of the fitted point, %
 whereas a fit scan for CPV creates a \texttt{CPV\_scan.info} file with a list of all the %
-points fitted.
+fitted points.
 Once the fitter is finished the output results will be stored in the folder %
 \begin{lstlisting}[language=bash]
 	errorstudy/first_run/NH_NH/sensitivity/point_<p>
 \end{lstlisting}
-where \texttt{<p>} is the point in the oscillation space. For example, \np{49773} is the nominal (\emph{true}) %
-fit point of the default oscillation parameter space, defined in \texttt{cards/oscillation.card}.
-In the output folder, there will be
+where \texttt{<p>} is the point in the oscillation space.
+For example, \np{49773} is the nominal (\emph{true}) fit point of the default oscillation parameter space, %
+defined in \texttt{cards/oscillation.card}.
+When the jobs are finished, the output folder will contain
 \begin{itemize}
 		\small
-	\item 1 submission file, with name \texttt{R....sub};
+	\item 1 submission file, with name \texttt{Rfitter.<p>.sub};
 	\item 1 card file called \texttt{this\_sensitivity.card} which links other cards in the above directory;
-	\item $N_\text{jobs}$ ROOT files, with names starting with \texttt{SpaghettiSens...};
-	\item $N_\text{jobs}$ log files, with names \texttt{L....log};
+	\item $N_\text{jobs}$ ROOT files, with names starting with \texttt{SpaghettiSens.<j>.root};
+	\item $N_\text{jobs}$ log files, with names \texttt{Lfitter.<j>.log};
 \end{itemize}
-where $N_\text{jobs}$ is the number of jobs launched.
+where $N_\text{jobs}$ is the number of jobs launched and \texttt{<j>} is an incremental number %
+from 0 to $N_\text{jobs}$ excluded.
 High level of verbosity will create bigger log files, so the user must pay attention to their disk quota.
 Those files are needed for debugging and status purposes only, %
-hence if no problem occurred they can be eventually deleted (see below).
-The output ROOT files also take up a lot of space, but they contain the actual results, stored under \texttt{TTree} objects called \texttt{stepX2Tree}.
-%The entries of the \texttt{TTree} objects will have around
-%\[
-	%\frac{\text{number of points}}{500}\ \text{entries}
-%\]
-%where the number of points of the default space is \np{195871}.
+hence if no problem occurred they can be eventually deleted (see \refsec{sec:complete} before).
+The output ROOT files also take up a lot of space, but they contain the actual result of the fit %
+stored in \texttt{TTree} objects called \texttt{stepX2Tree}.
 
 \subsection{Checking the jobs}
+\label{sec:complete}
 
 The user should use their manager queue utility to control the status of their jobs.
 This command is
@@ -314,19 +331,26 @@ This command is
 	condor_q -sub $USER  # for HTCondor
 	squeue -u $USER      # for SLURM
 \end{lstlisting}
-Once the jobs are done, it is wirth checking whether they were successfull, %
-as it may happen that some job fails.
-This could be due to many reasons, e.g.\ job request rejected by the manager.
+Once the jobs are done, it is worth checking whether they were successfull, %
+as it may occur that some job fails.
+This could be due to many reasons, e.g.\ missing input files or job requests rejected by the manager.
+The log files will usually contain an error message exaplining what went wrong.
+The user should understand the reason for failed jobs and fix it.
+
 As a full fit requires many resources and can take a long time to complete, %
 an utility to fix broken or missing jobs it is provided.
 Using the previous example, this is done with
 \begin{lstlisting}[]
 	./complete.sh errorstudy/first_run/NH_NH/sensitivity/CPV_scan.info
 \end{lstlisting}
-The script reads through the log files checking whether the respective job completed.
-If not, that specific job is relaunched.
-The script detects also if a whole point is skipped by any reason and can resubmit the full job for that point.
-If no error message is displayed, then the fitter concluded successfully and the log files may be deleted.
+The script scans through the output files and tries to understand whether the job failed, the job is not complete, or some other error occured.
+If no error is detected and no error message is displayed, it is very unlikely that the fit is not complete.
+Otherwise, error messages will be printed and the user can decide if they want to repair the fit %
+simply by launching the script with the \texttt{-f} option
+\begin{lstlisting}[]
+	./complete.sh -f errorstudy/first_run/NH_NH/sensitivity/CPV_scan.info
+\end{lstlisting}
+The alternative is to repeat the full fit with the \texttt{trisens.sh} utility.
 
 \subsection{Extracting the results}
 
@@ -351,10 +375,89 @@ The utility runs the \texttt{exclusion} binary which creates a text file with ex
 at each value of $\delta_\text{CP}$.
 The file is saved as
 \begin{lstlisting}[language=bash]
-	errorstudy/first_run/NH_NH/contours/CVP_scan.dat
+	errorstudy/first_run/NH_NH/contours/CPV_scan.dat
 \end{lstlisting}
 
+For mass hierarchies studies, the \texttt{exclude.sh} utility can accepts two parameters, for example
+\begin{lstlisting}[language=bash]
+	./exclude.sh errorstudy/first_run/NH_NH/sensitivity/CPV_scan.info \
+		     errorstudy/first_run/NH_IH/sensitivity/CPV_scan.info
+\end{lstlisting}
+Since the true mass hierarchy is identical in both inputs, the script will make CPV sensitivity curves %
+for an unknown mass hierarchy fit and save it to a new directory
+\begin{lstlisting}[language=bash]
+	errorstudy/first_run/NH/CPV_scan.dat
+\end{lstlisting}
+
+\subsection{Understanding the output files}
+
+The results of the fitter are stored in \texttt{TTree} objects called \texttt{stepX2Tree}.
+Each entry of the tree corresponds to a point of the oscillation space.
+The branches of these objects are quite self-explanatory, but for completeness they are
+\begin{itemize}
+	\item \texttt{X2} and \texttt{SysX2} are respectively the total $\chi^2$ for that entry %
+		and the $\chi^2_\text{sys}$ contribution from systematic paramater fit;
+	\item \texttt{TPoint} and \texttt{Point} are respectively the true point of the oscillation %
+		parameter space and the point fitted;
+	\item \texttt{TM12}, \texttt{TM23}, \texttt{TS21}, \texttt{TS13}, \texttt{TS23}, and \texttt{TCP} %
+		are the true values of the oscillation parameters and their values are the same %
+		for the full tree; %
+		%$\Delta m^2_{21}$, $\Delta m^2_{32}$, $\sin^2\theta_{12}$, $\sin^2 \theta_{13}$, %
+		%$\sin^2 \theta_{23}$, $\delta_\text{CP}$, and $\delta_\text{CP}$;
+	\item \texttt{M12}, \texttt{M23}, \texttt{S21}, \texttt{S13}, \texttt{S23}, and \texttt{CP} %
+		are the values of the oscillation parameters at the fit point;
+	\item \texttt{NumSys} is the number of systematic parameters, although this branch is not %
+		saved when doing a CPV scans;
+	\item \texttt{Epsilons} and \texttt{Errors} are arrays of length \texttt{NumSys} %
+		which contains the value of the fitted systematic parameters and their fit errors;
+		as \texttt{NumSys}, these branches are not saved in CPV scans;
+	\item \texttt{Time} stores the total CPU time took to fit the point.
+\end{itemize}
+Each output ROOT file (\texttt{SpaghettiSens.<j>.root}) will contain a number of entries %
+that depends on the total number of points $N_\text{points}$ and the number of submitted %
+jobs $N_\text{jobs}$, or approximately
+\[
+	\frac{N_\text{points}}{N_\text{jobs}}
+\]
+
+The output of the \texttt{contours.sh} script is also stored in a ROOT file, which %
+contains a collection of 1D and 2D histograms.
+Their names have the following meaning
+\begin{itemize}
+	\item \texttt{X2min<X>} are 1D histograms of minimum $\chi^2$ values as a function %
+		the parameter \texttt{<X>};
+	\item \texttt{Pmin<X>} are equivalent to the \texttt{X2min<X>} histograms except they %
+		store the point number that gives the minimum $\chi^2$ value;
+	\item \texttt{X2<X><Y>} are 2D histograms of minimum $\chi^2$ values as a function %
+		the parameters \texttt{<X>} and \texttt{<Y>};
+	\item \texttt{P<X><Y>} are equivalent to the \texttt{X2<X><Y>} histograms except they %
+		store the point number that gives the minimum $\chi^2$ value;
+	\item \texttt{V<X>min<Y>} are 1D histograms showing the value of the parameter \texttt{<Y>} %
+		tht gives a minimum $\chi^2$ as a function the parameter \texttt{<X>}.
+\end{itemize}
+Only the histogram \texttt{X2min<X>} and \texttt{X2<X><Y>} are revelant for plotting (see \refsec{sec:plot}).
+
+The output of the \texttt{exclude.sh} script is a simple multicolumn text file %
+and the meaning of each column is the following
+\begin{enumerate}
+	\item is the true value of $\delta_\text{CP}$;
+	\item is the sensitivity, computed as (see \refsec{sec:x2})
+		\[
+			\sigma = \sqrt{\min_{\delta_\text{CP} = 0,\pm\pi}\! \chi^2\  -\,\chi^2_\text{\emph{true}}}\ ;
+		\]
+	\item is the minimum $\chi^2$ value found for the given true $\delta_\text{CP}$
+	\item is the minimum $\chi^2$ value computed between CP conserving $\delta_\text{CP}$ values, %
+		i.e.\ $0$ and $\pm\pi$;
+	\item is the point which gives the above minimum value.
+\end{enumerate}
+When the sensitivity is computed for unknown mass hierarchy fits, the output file is %
+also a multicolumn text file, but the columns are simply the true value of $\delta_\text{CP}$ %
+and the sensitivity $\sigma$ computed taking the smallest $\chi^2$ among both hierarchy fits %
+for any point and the CP conserving points.
+
+
 \subsection{Plotting the results}
+\label{sec:plot}
 
 There are a few plotting utilities that automatically read the result files %
 and produce plots and PDF presentations.
@@ -938,8 +1041,8 @@ A part from the binning information, the card file for the atmospheric sample cl
 
     # Earth density profile
     density_profile	"/path/to/earth_profile"
-    production_height	15
     honda_production	"/path/to/honda_files"
+    production_height	15
     
     # systematic information for atmospheric sample
     

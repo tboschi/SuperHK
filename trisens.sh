@@ -8,9 +8,8 @@ The main working folder is defined by <root> which must have a \"systematics\"
 subfolder containing systematic input files. The <sample> to fit can be one of
 the following: \"beam\", \"data\", or \"comb\" for a combined fit.
 The mass hierarchy for the true sample is <mh1> and for the fit sample is <mh2>
-and they can both be either \"NH\" for the normal hierarchy of \"IH\" for the
-inverted hierarchy.
-The output folder will be 
+and they can both be either \"NH\" for normal hierarchy of \"IH\" for inverted
+hierarchy. The output folder will be 
 
 	<root>/<mh1>_<mh2>/sensitivity/
 	
