@@ -6,8 +6,12 @@
 
 arch=$(gcc -march=native -Q --help=target | grep march | cut -f3)
 
+exe=$1
+shift 
+
 echo Running on $arch
-if [ -s $PWD/bin/arch/atmo_input_$arch ] ; then
-	$PWD/bin/arch/atmo_input_$arch "$@"
+if [ -s $PWD/bin/arch/"$exe"_$arch ] ; then
+	$PWD/bin/arch/"$exe"_$arch "$@"
 else
-	$PWD/bin/atmo_input "$@"
+	$PWD/bin/"$exe" "$@"
+fi
