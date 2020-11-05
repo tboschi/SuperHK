@@ -120,7 +120,7 @@ int main(int argc, char** argv)
 					      binning[tx->first].size() - 1, &binning[tx->first][0],
 					      binning[ty->first].size() - 1, &binning[ty->first][0]);
 
-			TH1 *cpnt = new TH2D(npnt.c_str(), npnt.c_str(),
+			TH1 *cpnt = new TH2I(npnt.c_str(), npnt.c_str(),
 					      binning[tx->first].size() - 1, &binning[tx->first][0],
 					      binning[ty->first].size() - 1, &binning[ty->first][0]);
 
