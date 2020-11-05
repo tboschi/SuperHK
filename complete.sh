@@ -246,5 +246,6 @@ if [ "${#repeat[@]}" -gt 0 ] ; then
 	scan=""
 	if [[ "$1" =~ .*CPV.* ]] ; then
 		scan="-f CPV"
+	fi
 	$PWD/$trisens -x "$scan" -r $root -p $point_file -N 500
 fi
