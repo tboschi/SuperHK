@@ -51,7 +51,11 @@ do
 	    -o StrictHostKeyChecking=no \
 	    $host /bin/bash << EOF
 echo on \$(hostname)
-source .profile
+if [ -f ~/.bash_profile ] ; then
+	. ~/.bash_profile
+elif [ -f ~/.profile ] ; then
+	. ~/.profile
+fi
 cd $PWD
 arch=\$(gcc -march=native -Q --help=target | grep march | cut -f3)
 tgt=bin/arch/fitter_\$arch
