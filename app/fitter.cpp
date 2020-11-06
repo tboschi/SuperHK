@@ -106,7 +106,6 @@ int main(int argc, char** argv)
 	parms->GetEntry(tPoint, tM12, tM23, tS12, tS13, tS23, tdCP);
 
 	//spectra for true point ( On )
-	//it is a concat of all events, E_FHC + E_RHC + M_FHC + M_RHC
 	if (trueOrder == "normal")
 		osc->SetMasses<Oscillator::normal>(tM12, tM23);
 	else if (trueOrder == "inverted")
@@ -122,6 +121,7 @@ int main(int argc, char** argv)
 
 	TFile *outf = new TFile(outName.c_str(), "RECREATE");
 	TTree *stepX2 = new TTree("stepX2Tree", "Fit Axis Info");
+
 	stepX2->Branch("Time",		&Time, "Time/D");
 
 	// for CPV scans there is no need to store these
@@ -132,7 +132,7 @@ int main(int argc, char** argv)
 		std::string errorArray = "Errors[" +
 				 std::to_string(NumSys) + "]/D";
 
-		stepX2->Branch("NumSys",	NumSys,   "NumSys/I");
+		stepX2->Branch("NumSys",	&NumSys,   "NumSys/I");
 		stepX2->Branch("Epsilons",	Epsilons, epsilArray.c_str());
 		stepX2->Branch("Errors",	Errors,   errorArray.c_str());
 	}
@@ -143,7 +143,7 @@ int main(int argc, char** argv)
 	stepX2->Branch("TPoint",	&tPoint,	"TPoint/I");
 	stepX2->Branch("CP",	&dCP,	"CP/D");
 	stepX2->Branch("TCP",	&tdCP,	"TCP/D");
-	stepX2->Branch("M12",	&M12,	"OM12/D");
+	stepX2->Branch("M12",	&M12,	"TM12/D");
 	stepX2->Branch("TM12",	&tM12,	"TM12/D");
 	stepX2->Branch("M23",	&M23,	"M23/D");
 	stepX2->Branch("TM23",	&tM23,	"TM23/D");
