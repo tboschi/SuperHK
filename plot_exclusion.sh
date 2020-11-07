@@ -31,14 +31,17 @@ nickn=("one_cpv"
 
 usage="usage: $0 [-p output] [-h]
 			
-Render plots out of the contours (see contours.sh) and save them to PDF
+Render plots out of the exclusion (see exclusion.sh) and save them to PDF.
 In order to use this script, the user should open it with their favourite editor
 and modify the first block accordingly. All the outputs will be saved under the 
 plot folder, where the plotting scripts are located.
 Please refer to the documentation if this is not clear.
 
-  parameters
-    -p output    define output PDF file where to save all the files
+It requires gnuplot and texlive to produce the final PDF.
+
+Options
+    -p [<file>]  the plots are saved in a single PDF <file>; if omitted, 
+    		 the output is by default \"./plot/$name/plot_bundle.pdf\"
     -h		 print this message and exit
 "
 
