@@ -43,7 +43,7 @@ do
 
 	hadd -f $cont/all_$name.root $sens/$name/*.root
 
-	$$PWD/bin/buildcontours $cont/all_$name.root $cont/$name.root $sens/oscillation.card
+	$PWD/bin/buildcontours $cont/all_$name.root $cont/$name.root $sens/oscillation.card
 
 	rm $cont/all_$name.root
 done

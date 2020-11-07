@@ -7,14 +7,17 @@ the file with the list of fitted points in the sensitivity folder.
 Works with HTCondor or Slurm.
 
 Options
-    -f	      repair files, otherwise just display information
-    -h        print this message
+    -f	   repair files, otherwise just display information
+    -i	   if trisens.sh is running, just ignore it
+    -h     print this message
 "
 
 rep=false
-while getopts 'fh' flag; do
+skip=false
+while getopts 'ifh' flag; do
 	case "${flag}" in
 		f) rep=true ;;
+		i) skip=true ;;
 		h) echo "$usage" >&2
 		   exit 0 ;;
 		*) printf "illegal option -%s\n" "$OPTARG" >&2
@@ -40,7 +43,7 @@ nameExec=fitter
 trisens=trisens.sh
 
 
-if pgrep $trisens ; then
+if [ "$skip" == "false" ] && pgrep $trisens ; then
 	echo trisens.sh is still running. Wait for it to finish.
 	exit 1
 fi

@@ -14,7 +14,7 @@ stats	1.00
 
 
 #energy scale error for E or M
-#scale_error	0.024	#if just one
+scale_error	0.024	#if just one
 #scale_error_E	0.024
 #scale_error_M	0.024
 

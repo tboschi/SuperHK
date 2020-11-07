@@ -1,12 +1,12 @@
-INCDIR =	include
-APPDIR =	app
-BINDIR =	bin
-LIBDIR =	lib
-DOCDIR =	doc
+INCDIR = include
+APPDIR = app
+BINDIR = bin
+LIBDIR = lib
+DOCDIR = doc
 
 ## root
-ROOTLIB		= $(shell root-config --glibs)
-ROOTCXX		= $(shell root-config --cflags)
+ROOTLIB	= $(shell root-config --glibs)
+ROOTCXX	= $(shell root-config --cflags)
 
 ## Eigen matrix library
 EIGENINC = $(EIGEN)

@@ -472,31 +472,61 @@ and they are
 	./plot_contours.sh
 	./plot_exclusion.sh
 \end{lstlisting}
-The scripts create plots that combine results from different fitter runs and it is particularly useful %
+The scripts create plots that combine results from different fitter runs and they are particularly useful %
 when a comparison between systematic models or mass hierarchies is needed.
 However, it is important that all the fitter results are from the same oscillation parameter space.
-The scripts will detect if that is not the case and will exit.
+The scripts will detect if that is not the case and will exit with an error.
 
-Before executing them, the user should modify the first lines of each script which will look like this
+Before executing them, the user should edit the first lines of each script which for %
+\texttt{plot\_exclusions.sh} will look like this %
+
 \begin{lstlisting}[language=bash]
 	# output name unique to combination of sets
+	# this name will be used to refer to each output file
 	name="one_two_three"
 
-	# list of files with CPV scan results
-	model=("errorstudy/one/NH_NH/contours/point_xxx.root"
-	       "errorstudy/two/NH_NH/contours/point_yyy.root"
-	       "errorstudy/three/NH_NH/contours/point_zzz.root")
+	# list of files with CPV exclusion curves
+	# these are the output of the exclude.sh script
+	# and should be text file with CPV sensitivies
+	model=("errorstudy/one/NH_NH/contours/CPV_scan.dat"
+	       "errorstudy/two/NH_NH/contours/CPV_scan.dat"
+	       "errorstudy/three/NH_NH/contours/CPV_scan.dat")
 
 	# names for displaying above results
+	# this will be used by gnuplot to label the curves
+	# in the plots and correspond to the input files above
 	nickn=("one_cpv"
 	       "two_cpv"
 	       "three_cpv")
 \end{lstlisting}
 The first variable \texttt{name} is a unique name that identifies the particular combination of results.
-The second variable \texttt{model} is the list of input files, whereas the third variable \texttt{nickn} %
-is a list of names associated to the input files.
+All the output files will have this specific tag in their names.
+The second variable \texttt{model} is the list of input files generated the \texttt{exclude.sh} script, %
+whereas the third variable \texttt{nickn} is a list of names associated to the input files.
 These will be used for labelling the results in the plots.
+The \texttt{plot\_contours.sh} script is analogous.
+
 The scripts will automatically create \LaTeX\ files with all the $\chi^2$ contours. 
+The output plots can be bundled together into a single PDF using \texttt{pdflatex} %
+when the option \texttt{-p [<file>]} is passed.
+The graphs created by \texttt{plot\_contours.sh} are of two kinds
+\begin{itemize}
+	\item $\chi^2$ profiles versus a single oscillation parameters for which the plot %
+		contains two panels, the top one with all the profiles of the \texttt{model} array %
+		and the bottom one with the differences of the curves with respect to the first one;
+	\item $\chi^2$ contours against two oscillation parameters taken at 1\,$\sigma$ and 3\,$\sigma$.
+\end{itemize}
+The two graphs created by \texttt{plot\_exclusion.sh} are
+\begin{itemize}
+	\item the sensitivity to exclude CP conservation of all the inputs provided by %
+		the \texttt{model} array;
+	\item the difference between CPV sensitivities with respect to the first one.
+\end{itemize}
+
+Please note that these scripts are not useful (partially) if texlive is not installed or %
+if the user is not interested in the \LaTeX format or is interested in plotting something different.
+In this case, the $\chi^2$ profiles can be read off the ROOT files created by the \texttt{contours.sh} %
+utility and the CPV sensitivity curves from the text file created by the \texttt{exclusion.sh} script.
 
 
 \section{Tools module}

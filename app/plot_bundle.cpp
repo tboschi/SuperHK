@@ -88,7 +88,7 @@ int main(int argc, char** argv)
 	endDocument(tout);
 	tout.close();
 
-	std::string cmd = "pdflatex " + out;
+	std::string cmd = "pdflatex " + out + " > /dev/null";
 	system(cmd.c_str());
 
 	return 0;

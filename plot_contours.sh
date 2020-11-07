@@ -9,7 +9,7 @@
 
 # output name unique to combination of sets
 # this name will be used to refer to each output file
-name="beam_test"
+name="one_two_three"
 
 
 # list of files with contours
@@ -35,16 +35,21 @@ nickn=("one_xxx"
 ###################################
 
 
-usage="usage: $0 [-p output] [-h]
+usage="usage: $0 [-p <file>] [-h]
 			
-Render plots out of the contours (see contours.sh) and save them to PDF
+Render plots out of the contours (see contours.sh) and save them to PDF.
 In order to use this script, the user should open it with their favourite editor
 and modify the first block accordingly. All the outputs will be saved under the 
 plot folder, where the plotting scripts are located.
 Please refer to the documentation if this is not clear.
 
-  parameters
-    -p output    define output PDF file where to save all the files
+It requires gnuplot and texlive to produce the final PDF.
+If texlive is not available, the user can decide to copy the individual plots
+created by gnuplot which are in \"./plot/$name/plot_bundle.pdf\"
+
+Options
+    -p [<file>]  the plots are saved in a single PDF <file>; if omitted, 
+    		 the output is by default \"./plot/$name/plot_bundle.pdf\"
     -h		 print this message and exit
 "
 
@@ -135,10 +140,16 @@ mv -f $name*.* $name/
 
 cd ..
 
+echo Output files are here:
+echo "     " ./plot/$name/$name'_'*.tex
+
 if [ "$pdf" == "true" ] ; then
 	if [ -z $out ] ; then
 		out="plot_bundle.tex"
 	fi
 
+	if ! pdflatex &> /dev/null ; then
+		echo No texlive installation found. You have to manually bundle the tex files
+	fi
 	./bin/plot_bundle $out plot/$name/$name'_'*.tex
 fi
