@@ -14,7 +14,7 @@ Please refer to the documentation for a full description of the software.
 
 ### Current version
 
-The current release is [v3.3][https://github.com/tboschi/SuperHK/releases/tag/v3.3].
+The latest release can be found in [releases](https://github.com/tboschi/SuperHK/releases).
 
 Differences with SuperHK v2.0:
 * The atmospheric sample is now supported.
