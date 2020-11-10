@@ -96,6 +96,13 @@ while getopts 'r:d:1:2:N:t:m:sf:p:xv:h' flag; do
 	esac
 done
 
+shift $((OPTIND-1))
+if [ $# -gt 0 ]; then
+	echo "illegal extra arguments \"$@\"" >&2
+	echo "$usage" >&2
+	exit 1
+fi
+
 rm -f .reconstruction_files
 rm -f .production_files
 
@@ -211,18 +218,17 @@ else # must build folders and card files
 
 	#beam systematics
 
-	corr_beam=$upper/systematics/combinedmatrix.root
-	corr_atmo=$upper/systematics/atmo_corr.root
+	corr_beam=$upper/systematics/matrix.root
 	mtype="correlation"
 
 	# need to know correlation matrix to know number of systematics
 	sed -i "s:^corr_file.*:corr_file\t\"$corr_beam\":" $beam
 	sed -i "s:^corr_name.*:corr_name\t\"$mtype\":"  $beam
 
-	sys_E_FHC=$upper/systematics/FHC1Re.fij.t2k_spline.root
-	sys_E_RHC=$upper/systematics/RHC1Re.fij.t2k_spline.root
-	sys_M_FHC=$upper/systematics/FHC1Rmu.fij.t2k_spline.root
-	sys_M_RHC=$upper/systematics/RHC1Rmu.fij.t2k_spline.root
+	sys_E_FHC=$upper/systematics/FHC1Re.fij.spline.root
+	sys_E_RHC=$upper/systematics/RHC1Re.fij.spline.root
+	sys_M_FHC=$upper/systematics/FHC1Rmu.fij.spline.root
+	sys_M_RHC=$upper/systematics/RHC1Rmu.fij.spline.root
 	#just stats, comment systematics
 	if [ "$ss" = "true" ] ; then
 		echo "statistics only fit"
@@ -377,8 +383,8 @@ EOF
 	if [ $t -ne ${point[${#point[@]} - 1]} ] ; then
 		echo not last point.. and running $jobs_run and waiting $jobs_que
 		while [ $jobs_run -gt $MAX_JOBS ] || [ $jobs_que -gt $MAX_QUEUE ] ; do
-			echo 'waiting 5m...'
-			sleep 300
+			echo 'waiting 1m...'
+			sleep 60
 			jobs_run=$(eval $running)
 			jobs_que=$(eval $inqueue)
 		done

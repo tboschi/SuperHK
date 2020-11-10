@@ -13,33 +13,50 @@
 
 int main(int argc, char** argv)
 {
+	if (argc < 2)
+	{
+		std::cerr << "Addmatrix: need at least two parameters\n"
+			<< "           output input [input2 ...]\n";
+		return 1;
+	}
+
 	std::vector<TMatrixT<double>*> matrices;
-	std::cout << "Reading " << argc-1 << " files" << std::endl;
-	for (int f = 1; f < argc; ++f)
+	std::cout << "Reading " << argc-2 << " files" << std::endl;
+	for (int f = 2; f < argc; ++f)
 	{
 		TFile inf(argv[f], "OPEN");
 		if (inf.IsZombie())
 			continue;
 		std::cout << "opening " << argv[f] << std::endl;
 
-		TList *list = inf.GetListOfKeys();
-		TIter next(list) ;
-		TKey* key;
+		if (inf.Get("postfit_cov"))
+			matrices.push_back( static_cast<TMatrixT<double>*> (inf.Get("postfit_cov")) );
+		if (inf.Get("skdetfsi"))
+			matrices.push_back( static_cast<TMatrixT<double>*> (inf.Get("skdetfsi")) );
 
-		while ( key = (TKey*)next() )
-		{
-			std::cout << "\tk: " << key->GetName() << ", " << key->GetClassName() << ", TMatrixT<double>" << std::endl;
-			if (strcmp(key->GetClassName(), "TMatrixT<double>") == 0 &&
-			    (strcmp(key->GetName(), "postfit_cov") == 0 ||
-			     strcmp(key->GetName(), "skdetfsi") == 0) )
-			{
-				std::cout << "\t\tget " << key->GetName() << std::endl;
-				matrices.push_back( static_cast<TMatrixT<double>*> (key->ReadObj()) );
-			}
-		}
+
+		//TList *list = inf.GetListOfKeys();
+		//TIter next(list) ;
+		//TKey* key;
+
+		//while ( key = (TKey*)next() )
+		//{
+		//	std::cout << "\tk: " << key->GetName() << ", " << key->GetClassName() << ", TMatrixT<double>" << std::endl;
+		//	if (strcmp(key->GetClassName(), "TMatrixT<double>") == 0 &&
+		//	    (strcmp(key->GetName(), "postfit_cov") == 0 ||
+		//	     strcmp(key->GetName(), "skdetfsi") == 0) )
+		//	{
+		//		std::cout << "\t\tget " << key->GetName() << std::endl;
+		//		matrices.push_back( static_cast<TMatrixT<double>*> (key->ReadObj()) );
+		//	}
+		//}
 	}
 
 	std::cout << "Collected " << matrices.size() << " matrices" << std::endl;
+
+	if (!matrices.size())
+		return 1;
+
 	int cols = 0;
 	for (int m = 0; m < matrices.size(); ++m)
 		cols += matrices[m]->GetNcols();
@@ -82,7 +99,7 @@ int main(int argc, char** argv)
 			cor->operator()(c, r) = cor->operator()(r, c);	//it is symmetric
 		}
 
-	TFile out("combinedmatrix.root", "RECREATE");
+	TFile out(argv[1], "RECREATE");
 	cov->Write("covariance");
 	cor->Write("correlation");
 	ide->Write("identity");
