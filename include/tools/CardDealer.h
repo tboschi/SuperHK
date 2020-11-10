@@ -103,14 +103,16 @@ class CardDealer
 
 						std::string word;
 						std::getline(ssl, word, end);
-						words.push_back(word);
+						if (word.length())
+							words.push_back(word);
 					}
 					// no delimiters, so expect words separated by commas
 					else if (!std::isspace(ssl.peek())) {
 						std::string word;
 						std::getline(ssl, word, ',');
 						//ssl >> word;
-						words.push_back(word);
+						if (word.length())
+							words.push_back(word);
 					}
 					else
 						ssl.ignore();
