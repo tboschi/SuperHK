@@ -53,6 +53,10 @@ int main(int argc, char** argv)
 	}
 
 	std::cout << "Collected " << matrices.size() << " matrices" << std::endl;
+
+	if (!matrices.size())
+		return 1;
+
 	int cols = 0;
 	for (int m = 0; m < matrices.size(); ++m)
 		cols += matrices[m]->GetNcols();
