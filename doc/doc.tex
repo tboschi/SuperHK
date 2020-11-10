@@ -209,28 +209,33 @@ The user can test if they can ssh into a node of the cluster first.
 If this is not possible for any node, then the \texttt{cross-compile.sh} script will detect this and generic architecture flags are used instead.
 The script creates a generic version of the binaries \texttt{bin/fitter} and \texttt{bin/atmo\_input} anyway.
 
-\subsection{Setting up the environment}
+\subsection{Retrieving the input files}
 
-After a successful compilation, the environment is set up with the utility
+After a successful compilation, the input files should be downloaded by running the utility
 \begin{lstlisting}[language=bash]
-	./setup.sh
+	./download.sh
 \end{lstlisting}
-This builds the folder structure required by the framework and downloads the input files from %
-\url{http://hep.lancs.ac.uk/~tdealtry/oa/} and \url{https://pprc.qmul.ac.uk/~tboschi/HK/atmo}.
+This builds the folder structure required by the framework and downloads the reconstruction %
+and systematic files from \url{https://pprc.qmul.ac.uk/~tboschi/HK/atmo}.
 The result directory can be specified with the \texttt{-p <prefix>} option.
-By default, the prefix is a new folder called \texttt{errorstudy} inside the current working directory.
+By default, the prefix is a new folder called \texttt{<prefix>} inside the current working directory.
+In order to function properly, the framework expects that these files to be located in the same %
+location where the analysis will be run and so the \texttt{<prefix>} should be set accordingly.
 The subfolders
 \begin{itemize}
 		\small
-	\item \texttt{<prefix>/reconstruction\_beam} and
+	\item \texttt{<prefix>/reconstruction\_beam},
 	\item \texttt{<prefix>/reconstruction\_atmo}
+	\item \texttt{<prefix>/systematics\_beam},
+	\item \texttt{<prefix>/systematics\_atmo}
 \end{itemize}
-are created to contain reconstruction files to build the beam and atmospheric data samples.
+are created and contain reconstruction and systematic files %
+needed to build the beam and atmospheric data samples.
 
-Now the framework is ready for analysis. Please note that this script needs to be run only once.
-In the following examples, it will be assumed that the result directory is the default one, %
-\texttt{errorstudy}.
-The use should assure that there is sufficient quota for running the analysis.
+Now the framework is ready for analysis. Please note that this script is to be run only once.
+In the following examples, the placeholder \texttt{<prefix>} will be used %
+to denote the directory of the analysis.
+The user should assure that there is sufficient quota for running the analysis.
 A single fit can take up around 5\,GB of space in output files, whereas a CPV scan %
 as much as 25\,GB.
 
@@ -242,38 +247,51 @@ Before running it, the user has to decide which sample to fit:
 \begin{itemize}
 	\item the beam sample;
 	\item the atmospheric sample;
-	\item the beam and atmospheric samples together.
+	\item the beam and atmospheric samples together;
+\end{itemize}
+and which systematic model to provide to each sample.
+The available error models are
+\begin{itemize}
+	\small
+	\item the T2K 2018 beam error model, in \texttt{<prefix>/systematics\_beam/T2K/};
+	\item the improved HK beam error model, in \texttt{<prefix>/systematics\_beam/HK/};
+	\item a mock error model for validation purposes of the beam sample, %
+		made of only the $\nu_e$ and $\cj{\nu}_e$ %
+		cross-section errors, either correlated or anti-correlated, %
+		in \texttt{<prefix>/systematics\_beam/NUENORM/};
+	\item the SK atmospheric model, in \texttt{<prefix>/systematics\_atmo/SK/}
 \end{itemize}
 Next, the true and fitted neutrino mass hierarchy should be chosen and whether or not %
 fit the systematic errors.
-The systematic files should be provided in any case.
+Please note that the systematic files should be provided in any case, even if not fitted.
 
-A new folder in the analysis directory should be created whenever the samples or the systematic models are changed.
-For example,
-\begin{lstlisting}[language=bash]
-	mkdir errorstudy/first_run
-\end{lstlisting}
-Then, a sub folder containing the systematic files should be created (or copied) in this new directory.
-The nominal T2K 2018 systematic model is found under \texttt{errorstudy/0}, therefore
-\begin{lstlisting}[language=bash]
-	cp -r errorstudy/0/systematics errorstudy/first_run
-\end{lstlisting}
-
+A new subfolder in the analysis directory should be created whenever the samples or %
+the systematic models are changed.
+Then, a folder called \texttt{systematics} should be created under this new directory %
+which will contain systematic files needed for this specific run.
+The user can select only one error model for each sample and copy it to the new input directory.%
+\footnote{There is exactly one for the atmospheric sample at the moment.}
 Finally, the fitter can be launched on the distributed computing system with %
 the \texttt{trisens.sh} utility.
-The usage is
+
+For example, if the user is interested in doing a combined fit between atmospheric and beam data %
+using the T2K 2018 error model and normal hierarcies, they should do
 \begin{lstlisting}[language=bash]
-	./trisens.sh -r errorstudy/first_run -d comb -1 NH -2 NH -N 500
+	mkdir -p <prefix>/first_run/systematics
+	cp <prefix>/systematics_beam/T2K/* <prefix>/first_run/systematics/
+	cp <prefix>/systematics_atmo/SK/*  <prefix>/first_run/systematics/
+	./trisens.sh -r <prefix>/first_run -d comb -1 NH -2 NH -N 500
 \end{lstlisting}
-will launch 500 jobs (\texttt{-N 500}) on the cluster, fitting both the beam and atmospheric samples %
+The command will spawn 500 jobs (\texttt{-N 500}) on the cluster, %
+fitting both the beam and atmospheric samples %
 (\texttt{-d comb}) with true and fitted normal mass hierarchies (\texttt{-1 NH -2 NH}).
 The output will be saved in
 \begin{lstlisting}[language=bash]
-	errorstudy/first_run/NH_NH/sensitivity/point_<nominal>
+	<prefix>/first_run/NH_NH/sensitivity/point_<nominal>
 \end{lstlisting}
-The important options to consider are
+The options of the \texttt{trisens.sh} script to consider are
 \begin{itemize}
-		\small
+	\small
 	\item \texttt{-r <root>} defines the main working folder > which must have a \"systematics\"
 		subfolder containing systematic input files;
 	\item \texttt{-d <sample>} defines the samples to fit and \texttt{<sample>} can be one of
@@ -283,17 +301,19 @@ The important options to consider are
 		for normal hierarchy of \texttt{IH} for inverted hierarchy.
 	\item \texttt{-N <jobs>} sets the number of jobs to submit to the cluster;
 	\item \texttt{-s} is a flag to do a statistics only fit, i.e.\ the systematic parameters are not fitted;
-	\item \texttt{-f <scan\_type>} enables a scan fit where the true oscillation point is changed at each iteration; only a CPV sensitivity scan is available and can be activated with \texttt{-f CPV};
+	\item \texttt{-f <scan\_type>} enables a scan fit where the true oscillation point %
+		is changed at each iteration; only a CPV sensitivity scan is available and %
+		can be activated with \texttt{-f CPV};
 	\item \texttt{-v <verbosity>} changes the verbosity of the log files.
 \end{itemize}
 The full list of options and the usage can be shown with
 \begin{lstlisting}[language=bash]
 	./trisens.sh -h
 \end{lstlisting}
-The utilities automatically edit the card files in the \texttt{cards} folder and place copies %
+This utility automatically edits the card files in the \texttt{cards} folder and place copies %
 in the output folder
 \begin{lstlisting}[language=bash]
-	errorstudy/first_run/NH_NH/sensitivity/
+	<prefix>/first_run/NH_NH/sensitivity/
 \end{lstlisting}
 An \texttt{.info} file will be created as well with a name determined by the scan type.
 A single fit creates a \texttt{point.info} file containing the number of the fitted point, %
@@ -301,16 +321,17 @@ whereas a fit scan for CPV creates a \texttt{CPV\_scan.info} file with a list of
 fitted points.
 Once the fitter is finished the output results will be stored in the folder %
 \begin{lstlisting}[language=bash]
-	errorstudy/first_run/NH_NH/sensitivity/point_<p>
+	<prefix>/first_run/NH_NH/sensitivity/point_<p>
 \end{lstlisting}
 where \texttt{<p>} is the point in the oscillation space.
-For example, \np{49773} is the nominal (\emph{true}) fit point of the default oscillation parameter space, %
-defined in \texttt{cards/oscillation.card}.
+For example, \np{49773} is the nominal (\emph{true}) fit point of the default oscillation %
+parameter space, defined in \texttt{cards/oscillation.card}.
 When the jobs are finished, the output folder will contain
 \begin{itemize}
 		\small
 	\item 1 submission file, with name \texttt{Rfitter.<p>.sub};
-	\item 1 card file called \texttt{this\_sensitivity.card} which links other cards in the above directory;
+	\item 1 card file called \texttt{this\_sensitivity.card} which links other cards %
+		in the above directory;
 	\item $N_\text{jobs}$ ROOT files, with names starting with \texttt{SpaghettiSens.<j>.root};
 	\item $N_\text{jobs}$ log files, with names \texttt{Lfitter.<j>.log};
 \end{itemize}
@@ -326,7 +347,7 @@ stored in \texttt{TTree} objects called \texttt{stepX2Tree}.
 \label{sec:complete}
 
 The user should use their manager queue utility to control the status of their jobs.
-This command is
+These commands are
 \begin{lstlisting}[language=bash]
 	condor_q -sub $USER  # for HTCondor
 	squeue -u $USER      # for SLURM
@@ -341,26 +362,28 @@ As a full fit requires many resources and can take a long time to complete, %
 an utility to fix broken or missing jobs it is provided.
 Using the previous example, this is done with
 \begin{lstlisting}[]
-	./complete.sh errorstudy/first_run/NH_NH/sensitivity/CPV_scan.info
+	./complete.sh <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info
 \end{lstlisting}
-The script scans through the output files and tries to understand whether the job failed, the job is not complete, or some other error occurred.
-If no error is detected and no error message is displayed, it is very unlikely that the fit is not complete.
+The script scans through the output files and tries to understand whether the job failed, %
+the job did not complete, or some other error occurred.
+If no error is detected and no error message is displayed, it is very unlikely that the fit %
+is not complete.
 Otherwise, error messages will be printed and the user can decide if they want to repair the fit %
 simply by launching the script with the \texttt{-f} option
 \begin{lstlisting}[]
-	./complete.sh -f errorstudy/first_run/NH_NH/sensitivity/CPV_scan.info
+	./complete.sh -f <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info
 \end{lstlisting}
-The alternative is to repeat the full fit with the \texttt{trisens.sh} utility.
+The other option is to repeat the full fit with the \texttt{trisens.sh} utility.
 
 \subsection{Extracting the results}
 
 The $\chi^2$ contours can only be created for single fits (not scans) by calling
 \begin{lstlisting}[language=bash]
-	./contours.sh errorstudy/first_run/NH_NH/sensitivity/point_<p>
+	./contours.sh <prefix>/first_run/NH_NH/sensitivity/point_<p>
 \end{lstlisting}
 and the result is saved in 
 \begin{lstlisting}[language=bash]
-	errorstudy/first_run/NH_NH/contours/point_<p>.root
+	<prefix>/first_run/NH_NH/contours/point_<p>.root
 \end{lstlisting}
 The resulting file contains a list of \texttt{TH1} and \texttt{TH2} objects with the %
 $\chi^2$ profile against one or two oscillation parameters.
@@ -368,25 +391,25 @@ The processing is done by the \texttt{build\_contours} binary.
 
 CPV sensitivity curves are instead created with
 \begin{lstlisting}[language=bash]
-	./exclude.sh errorstudy/first_run/NH_NH/sensitivity/CPV_scan.info
+	./exclude.sh <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info
 \end{lstlisting}
 In this case, the \texttt{.info} file which lists all the points scanned over should be passed.
 The utility runs the \texttt{exclusion} binary which creates a text file with exclusion power %
 at each value of $\delta_\text{CP}$.
 The file is saved as
 \begin{lstlisting}[language=bash]
-	errorstudy/first_run/NH_NH/contours/CPV_scan.dat
+	<prefix>/first_run/NH_NH/contours/CPV_scan.dat
 \end{lstlisting}
 
 For mass hierarchies studies, the \texttt{exclude.sh} utility can accepts two parameters, for example
 \begin{lstlisting}[language=bash]
-	./exclude.sh errorstudy/first_run/NH_NH/sensitivity/CPV_scan.info \
-		     errorstudy/first_run/NH_IH/sensitivity/CPV_scan.info
+	./exclude.sh <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info \
+		     <prefix>/first_run/NH_IH/sensitivity/CPV_scan.info
 \end{lstlisting}
 Since the true mass hierarchy is identical in both inputs, the script will make CPV sensitivity curves %
 for an unknown mass hierarchy fit and save it to a new directory
 \begin{lstlisting}[language=bash]
-	errorstudy/first_run/NH/CPV_scan.dat
+	<prefix>/first_run/NH/CPV_scan.dat
 \end{lstlisting}
 
 \subsection{Understanding the output files}
@@ -414,7 +437,7 @@ The branches of these objects are quite self-explanatory, but for completeness t
 	\item \texttt{Time} stores the total CPU time took to fit the point.
 \end{itemize}
 Each output ROOT file (\texttt{SpaghettiSens.<j>.root}) will contain a number of entries %
-that depends on the total number of points $N_\text{points}$ and the number of submitted %
+that depend on the total number of points $N_\text{points}$ and the number of submitted %
 jobs $N_\text{jobs}$, or approximately
 \[
 	\frac{N_\text{points}}{N_\text{jobs}}
@@ -437,7 +460,7 @@ Their names have the following meaning
 \end{itemize}
 Only the histogram \texttt{X2min<X>} and \texttt{X2<X><Y>} are relevant for plotting (see \refsec{sec:plot}).
 
-The output of the \texttt{exclude.sh} script is a simple multicolumn text file %
+The output of the \texttt{exclude.sh} script is a simple multicolumn TSV file %
 and the meaning of each column is the following
 \begin{enumerate}
 	\item is the true value of $\delta_\text{CP}$;
@@ -488,9 +511,9 @@ Before executing them, the user should edit the first lines of each script which
 	# list of files with CPV exclusion curves
 	# these are the output of the exclude.sh script
 	# and should be text file with CPV sensitivies
-	model=("errorstudy/one/NH_NH/contours/CPV_scan.dat"
-	       "errorstudy/two/NH_NH/contours/CPV_scan.dat"
-	       "errorstudy/three/NH_NH/contours/CPV_scan.dat")
+	model=("<prefix>/one/NH_NH/contours/CPV_scan.dat"
+	       "<prefix>/two/NH_NH/contours/CPV_scan.dat"
+	       "<prefix>/three/NH_NH/contours/CPV_scan.dat")
 
 	# names for displaying above results
 	# this will be used by gnuplot to label the curves
@@ -1127,7 +1150,7 @@ If the oscillation parameter space does not change during the analysis, it is po
 all the atmospheric samples for each point of the parameter space.
 This is done with the script
 \begin{lstlisting}[language=bash]
-   ./prepare_atmospheric -r errorstudy/reconstruction_atmo/pre
+   ./prepare_atmospheric -r <prefix>/reconstruction_atmo/pre
    			 -1 [NH | IH] -N JOBS -v verbosity
 \end{lstlisting}
 The path specified by the key \texttt{pre\_input} in the card file tells the framework where %
@@ -1556,13 +1579,13 @@ The card file for the beam sample class looks like this
     skip		55, 56, 73
     
     #systematic information
-    corr_file	"errorstudy/one/systematics/matrix.root"
+    corr_file	"<prefix>/one/systematics/matrix.root"
     corr_name	"correlation"
     
-    systematic_E_FHC "errorstudy/one/systematics/E_FHC.root"
-    systematic_E_RHC "errorstudy/one/systematics/E_RHC.root"
-    systematic_M_FHC "errorstudy/one/systematics/M_FHC.root"
-    systematic_M_RHC "errorstudy/one/systematics/M_RHC.root"
+    systematic_E_FHC "<prefix>/one/systematics/E_FHC.root"
+    systematic_E_RHC "<prefix>/one/systematics/E_RHC.root"
+    systematic_M_FHC "<prefix>/one/systematics/M_FHC.root"
+    systematic_M_RHC "<prefix>/one/systematics/M_RHC.root"
     
     reco_input	"/somewhere/in/reconstruction_atmo"
 \end{lstlisting}
