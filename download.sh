@@ -117,8 +117,17 @@ clone systematics_beam/T2K $HK/beam/syst/T2K
 combine systematics_beam/T2K	#make correlation matrix
 clone systematics_beam/HK  $HK/beam/syst/HK
 combine systematics_beam/HK	#make correlation matrix
+clone systematics_beam/HK_1  $HK/beam/syst/HK_1
+combine systematics_beam/HK_1	#make correlation matrix
+clone systematics_beam/HK_1_new  $HK/beam/syst/HK_1_new
+combine systematics_beam/HK_1_new	#make correlation matrix
+clone systematics_beam/HK_2  $HK/beam/syst/HK_2
+combine systematics_beam/HK_2	#make correlation matrix
+clone systematics_beam/HK_4  $HK/beam/syst/HK_4
+combine systematics_beam/HK_4	#make correlation matrix
 
 clone systematics_atmo/SK  $HK/atmo/syst/SK
+# no need for correlation matrix for atmo atm
 
 # clone nuenorm models
 clone systematics_beam/NUENORM/anti/1 $HK/beam/syst/NUENORM/anti/1
