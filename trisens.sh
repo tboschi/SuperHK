@@ -31,6 +31,8 @@ Optional parameters
                     and the fitter will change deltaCP true value along the range
     -p <list>       file with list of true points to fit, useful to use in combin-
                     ation with [-x]. If not specified, nominal points are used.
+    -w <dir>        specify a different directory for log files as some file shared
+    		    systems redirect output differently
     -m <matrix>	    specify matrix name for beam sample; the default one is
     		    \"correlation\"
     -v <verb>       specify a verbosity value where <verb> is an integer number;
@@ -62,6 +64,7 @@ MAX_JOBS=500
 MAX_QUEUE=500
 
 root=""
+logr=""
 data=""
 #global=/data/tboschi
 MH_1=""
@@ -74,11 +77,12 @@ NJOBS=360
 mtype="correlation"
 verb="1"
 
-while getopts 'r:d:1:2:N:t:m:sf:p:xv:h' flag; do
+while getopts 'r:d:1:2:N:t:w:m:sf:p:xv:h' flag; do
 	case "${flag}" in
 		1) MH_1="${OPTARG}" ;;
 		2) MH_2="${OPTARG}" ;;
 		r) root="${OPTARG}" ;;
+		w) logr="${OPTARG}" ;;
 		d) data="${OPTARG}" ;;
 		m) mtype="${OPTARG}" ;;
 		N) NJOBS="${OPTARG}" ;;
@@ -150,6 +154,11 @@ else # must build folders and card files
 	root=$root/$mhfit/sensitivity
 
 	mkdir -p $root
+
+	if [ -n "$logr" ] ; then
+		logr=$logr/$mhfit/sensitivity
+		mkdir -p $logr
+	fi
 
 	# copy cards to output folder
 	cp $card $fitc $oscc $beam $atmo $root
@@ -332,6 +341,14 @@ for t in "${point[@]}" ; do
 	sed -i "s:^beam_parameters.*:beam_parameters\t\"$beam\":" $this
 	sed -i "s:^atmo_parameters.*:atmo_parameters\t\"$atmo\":" $this
 
+	if [ -n "$logr" ] ; then
+		outlog=$logr/$tname$t
+		mkdir -p $outlog
+		echo Log files are stored in $outlog
+	else
+		outlog=$output
+	fi
+
 	## send as many jobs as files
 	if [ "$SCHED" == "HTCONDOR" ] ; then
 		cat > $scriptname << EOF
@@ -346,8 +363,8 @@ getenv			= True
 should_transfer_files	= IF_NEEDED
 when_to_transfer_output	= ON_EXIT
 initialdir		= $PWD
-output			= $output/L$nameExec.\$(Process).log
-error			= $output/L$nameExec.\$(Process).log
+output			= $outlog/L$nameExec.\$(Process).log
+error			= $outlog/L$nameExec.\$(Process).log
 stream_output		= True
 stream_error		= True
 
@@ -363,7 +380,7 @@ EOF
 
 #SBATCH --array=0-$((NJOBS - 1))
 #SBATCH --job-name=$nameExec
-#SBATCH -o $output/L$nameExec.%a.log
+#SBATCH -o $outlog/L$nameExec.%a.log
 #SBATCH -p nms_research,shared
 #SBATCH --time=3-0
 #SBATCH --cpus-per-task=1

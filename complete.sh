@@ -7,9 +7,11 @@ the file with the list of fitted points in the sensitivity folder.
 Works with HTCondor or Slurm.
 
 Options
-    -f	   repair files, otherwise just display information
-    -i	   if trisens.sh is running, just ignore it
-    -h     print this message
+    -f	      repair files, otherwise just display information
+    -i	      if trisens.sh is running, just ignore it
+    -w <dir>  if the log files are in a different directory,
+              please specify it
+    -h        print this message
 "
 
 rep=false
@@ -75,6 +77,12 @@ while read -r point ; do
 	outdir=$name'_'$point
 	outdir=$(realpath $outdir)
 	script=$(ls -rt $outdir/R*.$point.sub | tail -n1)
+
+	if [ -n $logr ] ; then
+		outlog=$logr/$(expr "$outdir" : '.*\(.H_.H/.*\)')
+	else
+		outlog=$outdir
+	fi
 
 	# directory does not exists or no script
 	if ! [ -d $outdir ] || ! [ -s $script ] ; then
@@ -142,7 +150,7 @@ while read -r point ; do
 	for num in $(seq $((job - 1)) ) ; do 
 
 		out=$outdir/SpaghettiSens.$num.root
-		log=$outdir/L$nameExec.$num.log
+		log=$outlog/L$nameExec.$num.log
 
 		bad=false
 		if ! [ -s $out ] ; then	
@@ -199,7 +207,7 @@ while read -r point ; do
 		recover=$outdir/Recover.$rr.sub
 		echo $outdir
 		echo $recover
-		log=$outdir/L$nameExec.$rr.log
+		log=$outlog/L$nameExec.$rr.log
 		if [ "$SCHED" == "HTCONDOR" ] ; then
 			cat > $recover << EOF
 #! /bin/bash
