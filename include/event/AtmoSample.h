@@ -52,9 +52,9 @@
 class AtmoSample : public Sample
 {
 	public:
-		AtmoSample(CardDealer *card);
-		AtmoSample(std::string card);
-		void Init();
+		AtmoSample(CardDealer *card, std::string process = "");
+		AtmoSample(std::string card, std::string process = "");
+		void Init(std::string process = "");
 
 		void LoadSimulation();
 

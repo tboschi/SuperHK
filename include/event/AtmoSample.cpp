@@ -1,20 +1,24 @@
 #include "AtmoSample.h"
 
-AtmoSample::AtmoSample(CardDealer *card) :
+// process is a string specying what to process of the sample input files
+// R -> load reconstruction
+// B -> define binning
+// S -> load systematics
+AtmoSample::AtmoSample(CardDealer *card, std::string process) :
 	Sample(card)
 {
-	Init();
+	Init(process);
 	atm_path = std::unique_ptr<Atmosphere>(new Atmosphere(card));
 }
 
-AtmoSample::AtmoSample(std::string card) :
+AtmoSample::AtmoSample(std::string card, std::string process) :
 	Sample(card)
 {
-	Init();
+	Init(process);
 	atm_path = std::unique_ptr<Atmosphere>(new Atmosphere(card));
 }
 
-void AtmoSample::Init()
+void AtmoSample::Init(std::string process)
 {
 	_oscf = { {"nuE0_nuE0", std::make_pair(Nu::E_, Nu::E_)},
 		  {"nuE0_nuM0", std::make_pair(Nu::E_, Nu::M_)},
@@ -65,11 +69,19 @@ void AtmoSample::Init()
 
 	_point = -1;
 
-	LoadReconstruction();
 
-	DefineBinning();
+	if (process.empty())
+		process = "RBS";
+	else
+		std::transform(process.begin(), process.end(), process.begin(),
+				[](unsigned char c){ return std::toupper(c); });
 
-	LoadSystematics();
+	if (process.find('R') != std::string::npos)
+		LoadReconstruction();
+	if (process.find('B') != std::string::npos)
+		DefineBinning();
+	if (process.find('S') != std::string::npos)
+		LoadSystematics();
 }
 
 

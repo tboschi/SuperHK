@@ -36,9 +36,9 @@
 class BeamSample : public Sample
 {
 	public:
-		BeamSample(CardDealer *card);
-		BeamSample(std::string card);
-		void Init();
+		BeamSample(CardDealer *card, std::string process = "");
+		BeamSample(std::string card, std::string process = "");
+		void Init(std::string process = "");
 
 		void LoadReconstruction(std::string reco_file);
 

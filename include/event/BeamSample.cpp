@@ -1,19 +1,19 @@
 #include "BeamSample.h"
 
 //ctor
-BeamSample::BeamSample(CardDealer *card) :
+BeamSample::BeamSample(CardDealer *card, std::string process) :
 	Sample(card)
 {
-	Init();
+	Init(process);
 }
 
-BeamSample::BeamSample(std::string card) :
+BeamSample::BeamSample(std::string card, std::string process) :
 	Sample(card)
 {
-	Init();
+	Init(process);
 }
 
-void BeamSample::Init()
+void BeamSample::Init(std::string process)
 {
 	//_mode = {"nuE0_nuE0", "nuM0_nuM0", "nuM0_nuE0",
 	//	 "nuEB_nuEB", "nuMB_nuMB", "nuMB_nuEB"};
@@ -104,10 +104,19 @@ void BeamSample::Init()
 		_lens_dens = Oscillator::GetMatterProfile(profile);
 
 
-	LoadReconstruction();
 
-	DefineBinning();
-	LoadSystematics();
+	if (process.empty())
+		process = "RBS";
+	else
+		std::transform(process.begin(), process.end(), process.begin(),
+				[](unsigned char c){ return std::toupper(c); });
+
+	if (process.find('R') != std::string::npos)
+		LoadReconstruction();
+	if (process.find('B') != std::string::npos)
+		DefineBinning();
+	if (process.find('S') != std::string::npos)
+		LoadSystematics();
 }
 
 
