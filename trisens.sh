@@ -1,6 +1,7 @@
 #! /bin/bash
 
-usage="usage: $0 -r <root> -d <sample> -1 <mh1> -2 <mh2> [-x] [<options>]
+usage="
+usage: $0 -r <root> -d <sample> -1 <mh1> -2 <mh2> [-x] [<options>]
 
 Submit fitter jobs to a scheduler, HTCondor or Slurm.
 The correct binary run is taken from cross-fitter.sh.

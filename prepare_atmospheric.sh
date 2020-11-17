@@ -1,19 +1,24 @@
 #! /bin/bash
 
-usage="usage: $0 -r root_folder -1 [NH | IH] [-N num_jobs]
+usage="
+usage: $0 -r <root> -1 <mh> [<options>]
               [-t fraction] [-v verbosity] [-h]
 
-Pre compute the atmospheric sample, using HTCondor or Slurm.
+Pre-compute the atmospheric sample, using HTCondor or Slurm.
+The <root> folder is the location of \"reconstruction_atmo\"
+in the main analysis folder and <mh> is the desired mass
+hierarchy.
 
-  parameters
-    -r root_folder  output folder
-    -1 [NH | IH]    mass hierarchy of the observed/true data (NH or IH)
-
-  optional parameters
-    -N num_jobs     number of jobs to submit, default 360
-    -t fraction	    specify fraction of data to fit as value [0,1], default 1 (full data)
-    -v verbosity    specify a verbosity value
-    -h		    show usage"
+Optional parameters
+    -N <jobs>       number of jobs to submit to the cluster; the default value
+                    is 360. There will be <jobs> output files in the end.
+    -t <stat>	    specify fraction of data to fit as float value between
+    -w <dir>        specify a different directory for log files as some file shared
+    		    systems redirect output differently
+    -v <verb>       specify a verbosity value where <verb> is an integer number;
+    		    the greater the number, the higher the verbosity.
+    -h		    print this message.
+"
 
 SCHED=""
 if condor_q &> /dev/null ; then
@@ -41,11 +46,13 @@ data=""
 #global=/data/tboschi
 MH_1=""
 verb="1"
+logr=""
 
-while getopts 'r:1:N:t:v:h' flag; do
+while getopts 'r:1:w:N:t:v:h' flag; do
 	case "${flag}" in
 		1) MH_1="${OPTARG}" ;;
 		r) root="${OPTARG}" ;;
+		w) logr="${OPTARG}" ;;
 		N) NJOBS="${OPTARG}" ;;
 		t) stats="${OPTARG}" ;;
 		v) verb="${OPTARG}" ;;
@@ -81,9 +88,18 @@ fi
 
 
 #define mass hierarchy to fit
-root=$root/$MH_1
+root=$root/pre/$MH_1
 mkdir -p $root
 rm -f $root/*.*
+
+if [ -n "$logr" ] ; then
+	logr=$logr/pre/$MH_1/sensitivity
+	mkdir -p $logr
+	echo Log files are stored in $logr
+else
+	logr=$root
+fi
+
 
 # copy cards to output folder
 cp $card $oscc $atmo $root/
@@ -163,8 +179,8 @@ getenv			= True
 should_transfer_files	= IF_NEEDED
 when_to_transfer_output	= ON_EXIT
 initialdir		= $PWD
-output			= $root/L$nameExec.\$(Process).log
-error			= $root/L$nameExec.\$(Process).log
+output			= $logr/L$nameExec.\$(Process).log
+error			= $logr/L$nameExec.\$(Process).log
 
 queue $NJOBS
 
@@ -180,7 +196,7 @@ elif [ "$SCHED" == "SLURM" ] ; then
 
 #SBATCH --array=0-$((NJOBS - 1))
 #SBATCH --job-name=$nameExec
-#SBATCH -o $root/L$nameExec.%a.log
+#SBATCH -o $logr/L$nameExec.%a.log
 #SBATCH -p nms_research,shared
 #SBATCH --time=3-0
 #SBATCH --cpus-per-task=1
