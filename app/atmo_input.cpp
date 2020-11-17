@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 		std::cerr << "Atmo_input: no atmospheric sample card defined, very bad!" << std::endl;
 		return 1;
 	}
-	AtmoSample *as = new AtmoSample(sample_card);
+	AtmoSample *as = new AtmoSample(sample_card, "R");
 
 
 	// parameters for the main script

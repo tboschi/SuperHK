@@ -60,7 +60,7 @@ class CardDealer
 
 			std::ifstream inf(cardFile.c_str());
 
-			if(!inf.is_open()) {
+			if (!inf.is_open()) {
 				std::string msg = "ERROR CardDealer: " + cardFile + "does not exist";
 				throw std::invalid_argument(msg);
 			}
