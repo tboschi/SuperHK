@@ -56,9 +56,9 @@ clone () { #1 is path, #2 is folder on web
 	fi
 
 	echo Creating $1
-	mkdir $PREFIX/$1 -p
+	mkdir -p $PREFIX/$1
 
-	mkdir .tmp
+	mkdir -p .tmp
 	cd .tmp
 	echo wget from $2
 	wget --quiet --accept="*.root" -r -l1 -nd -np -e robots=off $2/
