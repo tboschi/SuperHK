@@ -155,6 +155,8 @@ reco_atmo=$root'/../../*.sk4.*.root'
 #MC inputs
 sed -i "s:^MC_input.*:MC_input\t\"$reco_atmo\":"	$atmo
 sed -i "s:^MC_tree_name.*:MC_tree_name\t\"osc_tuple\":"	$atmo
+# block pre computed entries
+sed -i "/^pre_/s:^:#:" $atmo
 
 dens=$PWD'/data/PREM_25pts.dat'
 prod=$PWD'/data/prod_honda/kam-ally-aa-*.d'
