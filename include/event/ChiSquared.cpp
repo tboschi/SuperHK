@@ -324,17 +324,18 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 
 		Eigen::VectorXd nextp = epsil - delta;	//next step
 		//check if this step is good
-		double _x2 = X2(On, En, nextp);
-		if (std::isnan(_x2))
+		double obs_x2 = ObsX2(On, En, nextp);
+		double sys_x2 = SysX2(nextp);
+		if (obs_x2 < 0 || sys_x2 < 0) // bad points
 			return 2;	//X2 cannot be computed
 
-		diff = x2 - _x2;
 
-		//if (_x2 < x2 || (1-cosb) * _x2 < x2)
+		diff = x2 - obs_x2 - sys_x2;
+
 		if (diff > 0) {	//next x2 is better, update lambda and epsilons
 			lambda /= lm_down;
 			epsil = nextp;
-			x2 = _x2;
+			x2 = obs_x2 + sys_x2;
 		}
 		else if (std::abs(delta.norm()) > 0)	//next x2 is worse
 			lambda *= lm_up;	//nothing changes but lambda
@@ -343,9 +344,11 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 		//std::cout << "\ndelta\n" << delta << std::endl;
 		//if (false)
 		if (kVerbosity > 2) {
+			//std::cout << "epsil " << delta.transpose() << std::endl;
 			std::cout << c << " -> l " << lambda
 				  << ",\tstep: " << delta.norm() 
-				  << ", X2: " << x2
+				  << ", X2: " << ObsX2(On, En, epsil)
+				  << " + " << SysX2(epsil)
 				  << " ( " << diff
 				  << " ) " << diff / delta.norm() << std::endl;
 		}
