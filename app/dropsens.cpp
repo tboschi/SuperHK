@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 	aout << std::endl;
 	dout << std::endl;
 
-	for (int i = 0; i < xaxis.size(); ++i)
+	for (size_t i = 0; i < xaxis.size(); ++i)
 	{
 		aout << xaxis[i];
 		dout << xaxis[i];

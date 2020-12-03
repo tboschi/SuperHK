@@ -91,7 +91,7 @@ void Atmosphere::LoadProductionHeights()
 			std::cout << "Loading production file " << file << std::endl;
 		std::string line;
 
-		int iz = 0;	// zenith index
+		//int iz = 0;	// zenith index
 		int ie = 0;	// energy index
 
 		bool fill_energy = false;
@@ -128,7 +128,7 @@ void Atmosphere::LoadProductionHeights()
 						break;
 				}
 
-				iz = int(row[2]) - 1;
+				//iz = int(row[2]) - 1;
 
 				// row[3] is azimuthal bin, but it is averaged over
 
@@ -159,7 +159,7 @@ void Atmosphere::LoadProductionHeights()
 
 
 // Load matter density profile from file
-// the profile is saved as a tuple of at least 2 elements, but it can be 3 too
+// the profile is saved as an array[3] of at least 2 elements, but it can be 3 too
 // columns above 3 are discarded
 // the elements are
 // 	radius, which can be normalised
@@ -225,7 +225,7 @@ void Atmosphere::LoadDensityProfile(std::string table_file)
 		if (row.size() < 3)
 			row[2] = 0.5;	// electron density default
 
-		_profile.push_back(std::make_tuple(row[0], row[1], row[2]));
+		_profile.push_back({row[0], row[1], row[2]});
 	}
 
 	if (kReverse)
@@ -254,9 +254,11 @@ double Atmosphere::RandomHeight(Nu::Flavour flv, double cosz, double energy)
 	std::map<int, std::vector<double> > *table;	// "reference"
 	switch (flv) {	// nu flavor
 		case Nu::M_: // nu mu
+		case Nu::T_: // nu mu
 			table = &nuM0_table;
 			break;
 		case Nu::Mb: // nu mu bar
+		case Nu::Tb: // nu mu bar
 			table = &nuMb_table;
 			break;
 		case Nu::E_: // nu e
@@ -264,6 +266,9 @@ double Atmosphere::RandomHeight(Nu::Flavour flv, double cosz, double energy)
 			break;
 		case Nu::Eb: // nu e bar
 			table = &nuEb_table;
+			break;
+		default:
+			throw std::invalid_argument("Undefine neutrino flavour\n");
 			break;
 	}
 
@@ -367,7 +372,7 @@ Oscillator::Profile Atmosphere::MatterProfile(double cosz, double atm)
 			- Const::EarthR * std::abs(cosz);
 			//- Const::EarthR * (cosz);
 
-	Oscillator::Profile lens_dens = {std::make_tuple(x0, 0 /*Const::rhoAir*/, 0.5)};
+	Oscillator::Profile lens_dens = {{x0, 0 /*Const::rhoAir*/, 0.5}};
 	// neutrino from above, so no Earth crossing
 	if (cosz > -1e-9)
 		return lens_dens;
@@ -379,29 +384,25 @@ Oscillator::Profile Atmosphere::MatterProfile(double cosz, double atm)
 	double x_prev = 0;
 	// find deepest radius touched by neutrino
 	auto ir = std::lower_bound(_profile.begin(), _profile.end(), dist,
-				  [](const std::tuple<double, double, double> &p, double v)
-				  	{ return std::get<0>(p) < v; });
+				  [](const Oscillator::LDY &ldy, double v)
+				  	{ return ldy[0] < v; });
 	for ( ; ir != _profile.end(); ++ir) {
-		if (std::abs(std::get<0>(*ir) - dist) < 1e-9)
+		Oscillator::LDY &ldy = *ir;
+		if (std::abs(ldy[0] - dist) < 1e-9)
 			continue;
 		// find track length inside this shell
-		double x_n = sqrt(pow(std::get<0>(*ir), 2) - pow(dist, 2)) - x_prev;
-		halves.push_back(std::make_tuple(x_n, std::get<1>(*ir), std::get<2>(*ir)));
+		double x_n = sqrt(pow(ldy[0], 2) - pow(dist, 2)) - x_prev;
+		halves.push_back({x_n, ldy[1], ldy[2]});
 		x_prev += x_n;
 	}
 
 	if (halves.size()) { // double the deepest length
-		std::get<0>(halves[0]) *= 2;
+		halves.front()[0] *= 2;
 
 		// halves is 2*xn, xn-1, ... x2, x1
 		lens_dens.insert(lens_dens.end(), halves.rbegin(), halves.rend());
 		lens_dens.insert(lens_dens.end(), halves.begin() + 1, halves.end());
 	} //else shell passed is very very small
-
-	//std::cout << "profile:";
-	//for (const auto &ip : lens_dens)
-		//std::cout << "\t(" << std::get<0>(ip) << ", " << std::get<1>(ip) << ")";
-	//std::cout << std::endl;
 
 	// lens_dens is now x0, x1, x2, ..., xn-1, xn, xn, 
 	return lens_dens;

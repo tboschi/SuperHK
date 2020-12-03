@@ -62,7 +62,7 @@ int main(int argc, char** argv)
 		{
 			aout << vh[0]->GetBinCenter(j) << "\t" << vh[0]->GetBinContent(j);
 			dout << vh[0]->GetBinCenter(j);
-			for (int i = 1; i < vh.size(); ++i)
+			for (size_t i = 1; i < vh.size(); ++i)
 			{
 				aout << "\t" << vh[i]->GetBinContent(j);
 				dout << "\t" << vh[0]->GetBinContent(j) - vh[i]->GetBinContent(j);
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 		aout.close();
 		dout.close();
 
-		for (int i = 0; i < vh.size(); ++i)
+		for (size_t i = 0; i < vh.size(); ++i)
 			delete vh[i];
 	}
 
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 			{
 				out << vhh[0]->GetXaxis()->GetBinCenter(j) << "\t" << vhh[0]->GetYaxis()->GetBinCenter(k)
 					<< "\t" << vhh[0]->GetBinContent(j, k);
-				for (int i = 1; i < vhh.size(); ++i)
+				for (size_t i = 1; i < vhh.size(); ++i)
 					out << "\t" << vhh[i]->GetBinContent(j, k);
 				out << std::endl;
 			}
@@ -132,7 +132,7 @@ int main(int argc, char** argv)
 
 		out.close();
 
-		for (int i = 0; i < vhh.size(); ++i)
+		for (size_t i = 0; i < vhh.size(); ++i)
 			delete vhh[i];
 	}
 

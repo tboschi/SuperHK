@@ -51,11 +51,12 @@ class CardDealer
 			Parse(_cardFile);
 		}
 
+
 		std::string CardName() {
 			return _cardFile;
 		}
 
-		bool Parse(const std::string &cardFile) {
+		void Parse(const std::string &cardFile) {
 			_entries.clear();
 
 			std::ifstream inf(cardFile.c_str());
@@ -237,8 +238,8 @@ class CardDealer
 		std::map<std::string, int, ic> st;
 		std::map<std::string, std::vector<std::string>, ic> _entries;
 
-		bool kVerbosity;
 		std::string _cardFile;
+		bool kVerbosity;
 };
 
 #endif

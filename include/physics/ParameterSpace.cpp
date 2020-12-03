@@ -53,7 +53,7 @@ void ParameterSpace::Init()
 			bins[0] = std::min(ip.second[0], ip.second[1]);
 
 			//and add step until end
-			for (int i = 1; i < ip.second[2]; ++i)
+			for (size_t i = 1; i < ip.second[2]; ++i)
 				bins[i] = bins[i-1] + bw;
 
 			//varmap[ip->first] = new double;		//null pointer
@@ -89,7 +89,7 @@ ParameterSpace::Binning ParameterSpace::GetHistogramBinning()
 		bins[0] = ib.second[0] - bw / 2.;
 
 		//and add step until end
-		for (int i = 1; i < bins.size(); ++i)
+		for (size_t i = 1; i < bins.size(); ++i)
 			bins[i] = bins[i-1] + bw;
 
 		histbin[ib.first] = bins;
@@ -191,9 +191,8 @@ std::vector<int> ParameterSpace::GetScanEntries(const std::vector<std::string> &
 	std::vector<int> entries;
 	std::set<std::string> parms(p.begin(), p.end());
 
-	int reps = 1;
-	std::map<std::string, int> index;
-	std::map<std::string, int> maxes;
+	std::map<std::string, size_t> index;
+	std::map<std::string, size_t> maxes;
 	for (const auto &in : nominal) {
 		if (parms.find(in.first) == parms.end())
 			index[in.first] = in.second;
@@ -203,7 +202,7 @@ std::vector<int> ParameterSpace::GetScanEntries(const std::vector<std::string> &
 		}
 	}
 
-	int reset = 0;
+	size_t reset = 0;
 	do {
 		int n = 0, q = 1;
 		Binning::reverse_iterator ir;

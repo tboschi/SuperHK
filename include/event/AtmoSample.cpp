@@ -140,7 +140,7 @@ void AtmoSample::LoadSystematics()
 
 	int k_err = 0;
 	for (int i = 0; i < nsyst; ++i) {
-		int off = 0;	// offset for global bin
+		//int off = 0;	// offset for global bin
 		syst->GetEntry(i);
 		std::string name_err = name_ptr->Data();
 		if (skip_sys.find(name_err) != skip_sys.end()) {
@@ -356,7 +356,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 	for (const auto &ih : _reco_hist)
 		ih.second->Reset("ICES");
 
-	double scale, start, reduce;
+	double scale, reduce;
 	if (!cd->Get("MC_scale", scale))// adjust MC time and exposure
 		scale = 188.4 / 22.5;	// HK to SK ratio
 	if (!cd->Get("reduce", reduce))	// FV reduction
@@ -427,7 +427,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 
 
 		Nu::Flavour nu_out = Nu::fromPDG(ipnu);
-		Nu::Flavour nue, num;
+		//Nu::Flavour nue, num;
 		if (osc && std::abs(mode) < 30) {	// NCs have mode >= 30
 			// LUT is cleared in this step
 			// -1 dirnu[2] ?? ???? ?? ? ? ? ? ? ?
@@ -449,7 +449,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 
 				weightx *= factor_E * osc->Probability(Nu::E_, nu_out, pnu)
 					+  factor_M * osc->Probability(Nu::M_, nu_out, pnu);
-				nue = Nu::E_; num = Nu::M_;
+				//nue = Nu::E_; num = Nu::M_;
 			}
 			else {		//antineutrino
 				//pE = osc->Probability(Nu::Eb, nu_out, pnu);
@@ -457,7 +457,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 
 				weightx *= factor_E * osc->Probability(Nu::Eb, nu_out, pnu)
 					+  factor_M * osc->Probability(Nu::Mb, nu_out, pnu);
-				nue = Nu::Eb; num = Nu::Mb;
+				//nue = Nu::Eb; num = Nu::Mb;
 			}
 			//std::cout << "layers at " << -dirnu[2] << " is "
 			//	  << ld.size() << ": " << osc->Length() << "\n";
@@ -597,7 +597,7 @@ void AtmoSample::LoadReconstruction(std::string channel)
 
 	TIter next(inFile->GetListOfKeys());
 	TKey *k;
-	while (k = static_cast<TKey*>(next()))
+	while ((k = static_cast<TKey*>(next())))
 	{
 		if ( reconame.compare(k->GetName())
 		  || truename.compare(k->GetName()) )

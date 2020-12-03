@@ -421,7 +421,7 @@ void ChiSquared::JacobianHessian(Eigen::VectorXd &jac, Eigen::MatrixXd &hes,
 
 	// looping over bins of given sample and type <is, it>
 	/* >>>>>>>>>>>>>>> */
-	for (int m = 0, n = is->_offset[it] + bin_off; m < is->_binpos[it].size(); ++m, ++n) {
+	for (size_t m = 0, n = is->_offset[it] + bin_off; m < is->_binpos[it].size(); ++m, ++n) {
 
 		int m0 = slices[m].first, dm = slices[m].second - m0;
 		m0 += bin_off;
@@ -583,8 +583,8 @@ Eigen::ArrayXd ChiSquared::ObsX2n(const Eigen::VectorXd &On,
 			std::vector<Eigen::ArrayXd> scales = is->AllScale(&Sample::Nor, it, skerr);
 
 			//for (int m = 0, n = is->_offset[it]; m < is->_binpos[it].size(); ++m, ++n) {
-			for (int m = 0, n = is->_offset[it] + bin_off;
-					m < is->_binpos[it].size(); ++m, ++n) {
+			for (size_t m = 0, n = is->_offset[it] + bin_off;
+					   m < is->_binpos[it].size(); ++m, ++n) {
 				//if (On(n) == 0)
 				//	continue;
 				int m0 = slices[m].first, dm = slices[m].second - m0;
@@ -617,7 +617,6 @@ Eigen::ArrayXd ChiSquared::RawX2n(const Eigen::VectorXd &On,
 {
 	Eigen::ArrayXd chi2 = Eigen::ArrayXd::Zero(std::min(On.size(), En.size()));
 
-	int err_off = 0, bin_off = 0;
 	for (int n = 0; n < chi2.size(); ++n)
 		if (On(n) > 0)
 			chi2(n) = 2 * En(n) - 2 * On(n) * (1 + log(En(n) / On(n)));
@@ -684,7 +683,7 @@ Eigen::ArrayXd ChiSquared::one_Fk(double err, int k)
 	else if (err >= 0 && err < 1) {
 		dl = 0; du = 1;
 	}
-	else if (err >= 1) {
+	else {
 		dl = 1; du = 3;
 	}
 
@@ -724,7 +723,7 @@ Eigen::ArrayXd ChiSquared::one_Fpk(double err, int k)
 	else if (err >= 0 && err < 1) {
 		dl = 0; du = 1;
 	}
-	else if (err >= 1) {
+	else {
 		dl = 1; du = 3;
 	}
 

@@ -21,6 +21,7 @@ int main(int argc, char** argv)
 	}
 
 	std::vector<TMatrixT<double>*> matrices;
+	matrices.reserve(2*(argc-2));
 	std::cout << "Reading " << argc-2 << " files" << std::endl;
 	for (int f = 2; f < argc; ++f)
 	{
@@ -55,25 +56,23 @@ int main(int argc, char** argv)
 	std::cout << "Collected " << matrices.size() << " matrices" << std::endl;
 
 	if (!matrices.size())
-		return 1;
+		throw std::invalid_argument("Input files do not contain matrices\n");
 
-	int cols = 0;
-	for (int m = 0; m < matrices.size(); ++m)
-		cols += matrices[m]->GetNcols();
+	int cols = std::accumulate(matrices.begin(), matrices.end(), 0,
+			[](const int &sum, TMatrixT<double> *m) { return sum + m->GetNcols() ;});
 
 	TMatrixD *cov = new TMatrixD(cols, cols);
 	TMatrixD *cor = new TMatrixD(cols, cols);
 	TMatrixD *ide = new TMatrixD(TMatrixD::kUnit, *cor);
 
 	cols = 0;
-	for (int m = 0; m < matrices.size(); ++m)
-	{
-		int lCols = matrices[m]->GetNcols();
+	for (const auto &m : matrices) {
+		int lCols = m->GetNcols();
 		std::cout << "loading " << lCols << " columns" << std::endl;
 		for (int c = 0; c < lCols; ++c)
 			for (int r = 0; r < lCols; ++r)
 			{
-				cov->operator()(cols + r, cols + c) = matrices[m]->operator()(r, c);
+				(*cov)(cols + r, cols + c) = (*m)(r, c);
 				//std::cout << "Out(" << cols + r << ", " << cols + c << ") "
 				//	  << mm->operator()(cols + r, cols + c)
 				//	  << " = m[" << m << "] at (" << r << ", " << c << ") "
@@ -87,16 +86,16 @@ int main(int argc, char** argv)
 	for (int r = 0; r < cols; ++r)
 		for (int c = r; c < cols; ++c)
 		{
-			cor->operator()(r, c) = cov->operator()(r, c) /
-				std::sqrt(cov->operator()(r, r) * cov->operator()(c, c) );
+			(*cor)(r, c) = (*cov)(r, c) /
+				std::sqrt((*cov)(r, r) * (*cov)(c, c) );
 
-			if (r != c && std::abs(cor->operator()(r, c)) - 1 < 1e-6)
+			if (r != c && std::abs((*cor)(r, c)) - 1 < 1e-6)
 			{
-				cov->operator()(r, c) *= 0.99999; // = (1-1e-5), to make it non singular
-				cor->operator()(r, c) *= 0.99999; // = (1-1e-5), to make it non singular
+				(*cov)(r, c) *= 0.99999; // = (1-1e-5), to make it non singular
+				(*cor)(r, c) *= 0.99999; // = (1-1e-5), to make it non singular
 			}
 
-			cor->operator()(c, r) = cor->operator()(r, c);	//it is symmetric
+			(*cor)(c, r) = (*cor)(r, c);	//it is symmetric
 		}
 
 	TFile out(argv[1], "RECREATE");
