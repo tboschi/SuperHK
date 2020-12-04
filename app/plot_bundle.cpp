@@ -61,22 +61,16 @@ int main(int argc, char** argv)
 
 		// title_type.tex
 		file.erase(0, file.find_last_of('/')+1);
-		std::cout << "X " << file << std::endl;
 
 		// title
 		title.erase(title.find_last_of('/'));		// plot/title
-		std::cout << "X " << title << std::endl;
 		title.erase(0, title.find_first_of('/')+1); 	// title
-		std::cout << "X " << title << std::endl;
 
 
 		// type
 		std::string type = file;		// title_type.tex
-		std::cout << "X " << type << std::endl;
 		type.erase(type.find(".tex"));		// title_type
-		std::cout << "X " << type << std::endl;
 		type.erase(type.find(title), title.length()+1); // type
-		std::cout << "X " << type << std::endl;
 
 		std::cout << "grab " << file << " " << title << " " << type << std::endl;
 		while (title.find_first_of('_') != std::string::npos)
