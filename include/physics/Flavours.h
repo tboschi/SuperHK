@@ -1,6 +1,8 @@
 #ifndef Flavours_H
 #define Flavours_H
 
+#include <string>
+
 struct Nu
 {
 	enum Flavour {
@@ -15,7 +17,9 @@ struct Nu
 		Mb = 4,
 		antimuon = Mb,
 		Tb = 5,
-		antitau = Tb
+		antitau = Tb,
+
+		_undefined = -1
 	};
 
 	static Flavour fromString(const std::string &flv) {
@@ -31,6 +35,8 @@ struct Nu
 			return Flavour::M_;
 		else if (flv == "nuT0")
 			return Flavour::T_;
+		else
+			return _undefined;
 	}
 	
 	static Flavour fromPDG(int pdg) {
@@ -47,6 +53,8 @@ struct Nu
 				return Flavour::M_;
 			case 16:
 				return Flavour::T_;
+			default:
+				return _undefined;
 		}
 	}
 
@@ -68,6 +76,8 @@ struct Nu
 				return "nuM0";
 			case Flavour::T_:
 				return "nuT0";
+			default:
+				return "";
 		}
 	}
 };

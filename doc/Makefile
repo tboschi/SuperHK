@@ -1,7 +1,12 @@
-
+TARGET := doc
 
 all:
-	pdflatex doc.tex
-	bibtex doc
-	pdflatex doc.tex
-	pdflatex doc.tex
+	@pdflatex $(TARGET)
+	@bibtex $(TARGET)
+	@pdflatex $(TARGET)
+	@pdflatex $(TARGET)
+
+clean:
+	$(RM) $(TARGET).{aux,bbl,blg,dvi,log,out,pdf}
+
+.PHONY: all clean

@@ -44,6 +44,8 @@ class Sample
 				kVerbosity = 0;
 		}
 
+		virtual ~Sample() = default;
+
 		/*
 		virtual int NumBin() {
 			if (_nBin < 0) {
@@ -94,13 +96,13 @@ class Sample
 				//		break;
 				//	}
 
-				std::vector<int> bpos;
+				std::vector<size_t> bpos;
 				bpos.reserve(is.second.size());
 
 				// bpos has nonzero bins
 				for (int i = 0; i < is.second.size(); ++i)
 					if (is.second(i) > 0)
-						bpos.push_back(i);
+						bpos.push_back(size_t(i));
 
 				// lims has start and end of nonzero bins
 				//lims.push_back(_nBin + lims.front());
@@ -178,11 +180,11 @@ class Sample
 		}
 
 		// must be defined in derived
-		virtual void LoadReconstruction() {};
-		virtual void LoadSystematics() {};
+		virtual void LoadReconstruction() = 0;
+		virtual void LoadSystematics() = 0;
 
 		// must be defined in derived
-		virtual std::map<std::string, Eigen::VectorXd> BuildSamples(Oscillator *osc = 0) { std::cout << "virtual build samples\n"; };
+		virtual std::map<std::string, Eigen::VectorXd> BuildSamples(Oscillator *osc = 0) = 0;
 
 
 		// energy bin scaling routines
@@ -206,22 +208,22 @@ class Sample
 		}
 		*/
 
-		virtual int StartingBin(std::string it, double shift, int n)
+		virtual size_t StartingBin(std::string it, double shift, int n)
 		{
 			auto im = std::lower_bound(_global[it].begin(),
 					_global[it].end(),
 					_global[it][n] / shift);
-			return int(std::distance(_global[it].begin(), im)) - 1;
+			return std::distance(_global[it].begin(), im) - 1; // negative value?
 			//return std::max(int(std::distance(_global[it].begin(), im)) - 1,
 			//		_limits[it].first);
 		}
 
-		virtual int EndingBin(std::string it, double shift, int n)
+		virtual size_t EndingBin(std::string it, double shift, int n)
 		{
 			auto im = std::upper_bound(_global[it].begin(),
 					_global[it].end(),
 					_global[it][n+1] / shift);
-			return int(std::distance(_global[it].begin(), im));
+			return std::distance(_global[it].begin(), im);
 			//return std::min(int(std::distance(_global[it].begin(), im)),
 			//		_limits[it].second);
 		}
@@ -248,7 +250,7 @@ class Sample
 
 			// loop over bins of this sample
 			//for (int n = _binpos[it].first; n < _binpos[it].second; ++n)
-			for (int n = _offset[it]; n < _offset[it] + _binpos[it].size(); ++n)
+			for (size_t n = _offset[it]; n < _offset[it] + _binpos[it].size(); ++n)
 				allslices.push_back(std::make_pair(n, n+1));
 
 			return allslices;
@@ -260,7 +262,7 @@ class Sample
 		{
 			std::vector<Eigen::ArrayXd> allfacts;
 			//for (int n = _binpos[it].first; n < _binpos[it].second; ++n)
-			for (int n = _offset[it]; n < _offset[it] + _binpos[it].size(); ++n)
+			for (size_t n = _offset[it]; n < _offset[it] + _binpos[it].size(); ++n)
 				allfacts.push_back(Eigen::ArrayXd::Ones(1));
 			return allfacts;
 		}
@@ -307,8 +309,8 @@ class Sample
 		int _nBin, _allBin;
 		//std::map<std::string, std::pair<int, int> > _binpos;
 		//std::map<std::string, std::pair<int, int> > _limits;
-		std::map<std::string, std::vector<int> > _binpos;
-		std::map<std::string, int> _offset;
+		std::map<std::string, std::vector<size_t> > _binpos;
+		std::map<std::string, size_t> _offset;
 		std::map<std::string, std::vector<double> > _global;
 		// store point for pre computed bins
 		int _point;

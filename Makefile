@@ -1,7 +1,6 @@
 INCDIR = include
 APPDIR = app
 BINDIR = bin
-LIBDIR = lib
 DOCDIR = doc
 
 ## root
@@ -9,59 +8,68 @@ ROOTLIB	= $(shell root-config --glibs)
 ROOTCXX	= $(shell root-config --cflags)
 
 ## Eigen matrix library
-EIGENINC = $(EIGEN)
+#TARGETS := $(if $(APP), $(APPDIR)/$(APP), $(CPP:.cpp=))
+EIGENINC = $(if $(EIGEN), -I$(EIGEN), )
 
 #optimization
 ARCH ?= -march=native
 
-LDFLAGS  := -Wl,--no-as-needed $(LDFLAGS) $(ROOTLIB) -L$(LIBDIR)
-#LDLIBS   := -losc3pp
-CXXFLAGS := $(CXXFLAGS) $(DEBUG) -fPIC -std=c++11 -O3 $(ARCH) $(ROOTCXX) -I$(INCDIR) -I$(EIGENINC)
-
-
+WARNING := -Wall
+LDFLAGS  := -Wl,--no-as-needed $(LDFLAGS) $(ROOTLIB)
+CXXFLAGS := $(DEBUG) $(WARNING) -fPIC -std=c++11 -O3 $(ARCH) $(ROOTCXX) -I$(INCDIR) $(EIGENINC)
 
 
 #apps and exctuables
-CPP := $(wildcard $(APPDIR)/*.cpp)
-SRC := $(shell find $(INCDIR) -maxdepth 2 -path $(INCDIR)/ignore -prune -o -name '*.c*' -not -name '.*' -print)
+TARGETS := $(shell find $(APPDIR) -maxdepth 1 -name '*.cpp')
+SOURCES := $(shell find $(INCDIR) -maxdepth 2 -name '*.cpp')
+HEADERS := $(shell find $(INCDIR) -maxdepth 2 -name '*.h')
+
+OBJECTS := $(SOURCES:.cpp=.o)
+DEPENDS := $(SOURCES:.cpp=.d)
+TARGETS := $(if $(APP), $(APPDIR)/$(APP), $(TARGETS:.cpp=))
 
 
-#main target
-TARGET := $(if $(APP), $(APPDIR)/$(APP), $(CPP:.cpp=))
-#TARGET := $(CPP:.cpp=)
-DEPEND := $(SRC:.cpp=.o)
-DEPEND := $(DEPEND:.cc=.o)
-DEPEND := $(DEPEND:.c=.o)
+##main target
+#OBJECTS := $(SOURCES:.cpp=.o)
+#DEPEND := $(SRC:.cpp=.o)
+#DEPEND := $(DEPEND:.cc=.o)
+#DEPEND := $(DEPEND:.c=.o)
 
-all: welcome $(TARGET)
-	@mkdir -p $(LIBDIR)
+all: $(TARGETS)
 	@mkdir -p $(BINDIR)
-	@echo "Cleaning up..."
-	@cp $(DEPEND) $(LIBDIR)
-	@cp $(TARGET) $(BINDIR)
+	@cp $^ $(BINDIR)
 	@echo "Done!"
+
 
 doc: 
 	$(MAKE) -C $(DOCDIR)
 
-welcome:
+help:
+	@echo Targets found are $(TARGETS)
+	@echo Sources found are $(SOURCES)
+	@echo Headers found are $(HEADERS)
 	@echo "If you need to build just one file, do make APP=name"
 	@echo "or if you need to specify an architecture, do make ARCH=arch"
 	@echo "To build documentation, make doc"
 	@echo "Enjoy your compilation"
 
+$(TARGETS): $(OBJECTS)
 
-$(TARGET): $(DEPEND)
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
-include:
-	$(eval DEPEND := $(shell find $(LIBDIR) -maxdepth 1 -name '*.o'))
+-include $(DEPENDS)
+
+#$(OBJECT): $(HEADERS)
 
 
 clean:
-	-find $(INCDIR) -name "*.o"  -delete
-	-find $(LIBDIR) -maxdepth 1 -type f -name "*"   -delete
-	-find $(APPDIR) -maxdepth 1 -type f -name "*~"  -delete
-	-find $(BINDIR) -maxdepth 1 -type f -name "*"   -delete
+	$(RM) $(TARGETS)
+	$(RM) $(OBJECTS)
+	$(RM) $(DEPENDS)
+	$(RM) -r $(BINDIR)
+
+	$(MAKE) -C $(DOCDIR) clean
 
 
-.PHONY: all doc clean
+.PHONY: all doc help clean

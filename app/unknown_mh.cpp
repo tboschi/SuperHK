@@ -39,7 +39,7 @@ int main(int argc, char** argv)
 
 
 	std::ofstream out(argv[3]);
-	for (int i = 0; i < x_dCP.size(); ++i)
+	for (size_t i = 0; i < x_dCP.size(); ++i)
 		out << x_dCP[i] << "\t"
 		    << sqrt(std::abs(std::min(tx2_1[i], tx2_2[i])
 				   - std::min(cx2_1[i], cx2_2[i]))) << "\n";

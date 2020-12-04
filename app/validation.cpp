@@ -69,8 +69,6 @@ int main(int argc, char** argv)
 	if (!cd->Get("fit_hierarchy", fitOrder))
 		fitOrder = "normal";
 
-	double X2, ObsX2, SysX2;
-	double Time;
 	int truePoint, fitPoint;
 	if (!cd->Get("point", truePoint))
 		truePoint = parms->GetNominalEntry();

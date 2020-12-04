@@ -8,10 +8,10 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <array>
 #include <map>
 #include <cmath>
 #include <complex>
-#include <tuple>
 #include <algorithm>
 #include <numeric>
 
@@ -40,7 +40,10 @@ class Oscillator
 			angles,
 		};
 
-		typedef std::vector<std::tuple<double, double, double> > Profile;
+		// length, density, yield
+		using LDY = std::array<double, 3>;
+		using Profile = std::vector<LDY>;
+
 		// anyone can access this without object
 		static Oscillator::Profile GetMatterProfile(const std::string &densityFile);
 
@@ -147,14 +150,12 @@ class Oscillator
 		int _dim;	//number of neutrinos
 		double _thr;
 		bool kLUT;
+		std::map<double, Eigen::MatrixXd > mLUT;
 
 		//Fermi constant in SI units times Avogadro's constant (eV² cm³)/(mol GeV)
-		//double fG2 = Const::GF * pow(Const::hBarC * Const::m/Const::cm, 3) * Const::Na * Const::GeV/Const::eV;
-		//double fG = Const::GF * Const::Na * pow(Const::hBarC, 3) * 1e13;
-		double fG, fG2;
-
-		std::map<double, Eigen::MatrixXd > mLUT;
 		//double fG = 1.52588e-4 / sqrt(8);
+
+
 };
 
 #endif

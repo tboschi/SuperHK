@@ -399,7 +399,7 @@ void BeamSample::LoadSystematics()
 	cd->Get("skip", skip_sys);	// errors to skip
 
 	zeroEpsilons = true;
-	int off = 0;	// offset for global bin
+	//int off = 0;	// offset for global bin
 	for (const std::string &it : _type) {
 		// it is sample type name
 		std::string file_name;
@@ -424,7 +424,7 @@ void BeamSample::LoadSystematics()
 		TIter next(sysf->GetListOfKeys());
 		TH1D* hsys;
 		TKey *k;
-		while (k = static_cast<TKey*>(next()))
+		while ((k = static_cast<TKey*>(next())))
 		{
 			std::string sysname = k->GetName();
 

@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 		TTree* sX2_old = static_cast<TTree*>(inf->Get("stepX2Tree"));
 
 		std::cout << "Penalising " << file;
-		int pos = file.find("SpaghettiSens.");
+		size_t pos = file.find("SpaghettiSens.");
 		if (pos != std::string::npos)
 			file.insert(file.find_first_of('.', pos+13), "_penalised"); 
 		std::cout << " into " << file << std::endl;
@@ -213,9 +213,9 @@ int main(int argc, char** argv)
 		{
 			sX2_old->GetEntry(i);
 			double penalty = 0;
-			for (int p = 0; p < vParm.size(); ++p)
+			for (size_t p = 0; p < vParm.size(); ++p)
 			{
-				double nominal;
+				double nominal = 0;
 				if (vParm[p] == "CP")
 					nominal = CP;
 				else if(vParm[p] == "M12")
@@ -228,6 +228,8 @@ int main(int argc, char** argv)
 					nominal = S13;
 				else if(vParm[p] == "S23")
 					nominal = S23;
+				else
+					throw std::invalid_argument("Unknown parameter\n");
 
 				double chi2 = (nominal - vValue[p]) / vSigma[p];
 				penalty += chi2*chi2;
