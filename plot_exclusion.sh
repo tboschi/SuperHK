@@ -62,36 +62,14 @@ done
 
 Sens=bin/dropsens
 
-lims="plot/limits.gpl"
-olim="plot/.limits.gpl"
-parms=("M12" "M23" "S12" "S13" "S23" "CP")
-
 echo Creating dir plot/$name
 mkdir -p plot/$name
 card=plot/$name/$name.card
 
-rm $lims $olim
+rm $card
 
 for i in ${!model[*]}; do 
 	m="${model[$i]}"
-	oscc=${m%/*}
-	oscc=${oscc/contours/sensitivity}/oscillation.card
-
-	echo "pi = 4.*atan(1.)" > $olim
-	for p in "${parms[@]}"
-	do
-		echo "" >> $lims
-		cat "$oscc" | awk -v par=$p '/^parm/ && $0~par {gsub('/,/', "", $2); print "x0_" par " = " $2}' >> $olim
-		cat "$oscc" | awk -v par=$p '/^parm/ && $0~par {gsub('/,/', "", $3); print "x1_" par " = " $3}' >> $olim
-		cat "$oscc" | awk -v par=$p '/^parm/ && $0~par {gsub('/,/', "", $4); print "nn_" par " = " $4}' >> $olim
-	done
-
-	cp $olim $lims
-	if [ -f $lims ] && ! diff $lims $olim; then # lims file does not exist
-		echo oscillation cards are different! Cannot process "$m" with the rest
-		exit 1
-	fi
-
 	echo "${nickn[$i]}" \"$m\" >> $card
 done
 

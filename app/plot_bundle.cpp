@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 
 	// input file should look like this
 	// plot/title/title_type.tex
-	for (int f = 1; f < argc; ++f) {
+	for (int f = 2; f < argc; ++f) {
 		std::string file(argv[f]), title = file;
 		std::cout << "processing file " << file << std::endl;
 

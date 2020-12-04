@@ -1,0 +1,82 @@
+#
+reset
+
+pi = 4.*atan(1.)
+
+file = dataset."/".dataset."_exclusion_diff.dat"
+outp = dataset."_detail.tex"
+
+color = "'black' 'red' 'blue' 'web-green' 'orange' 'dark-magenta'"
+names  = system("head -n1 ".file)
+
+stats file u 1:2 name 's' nooutput
+cols = s_columns
+ymax = s_max_y
+ymin = s_min_y
+do for [c=3:cols] { 
+     stats file using 1:c name 's' nooutput
+     ymax = (ymax < s_max_y) ? s_max_y : ymax
+     ymin = (ymin > s_min_y) ? s_min_y : ymin
+}
+
+print ymin, ymax
+
+print ymax, ymin
+tt = 10.
+ey = floor(log(ymax - ymin) / log(tt))
+
+#round up the closest common number
+ymin_2 = floor(ymin / tt**ey) * tt**ey
+ymax_2 = ceil (ymax / tt**ey) * tt**ey
+
+if (abs(ymin - ymin_2) < 0.01 * abs(ymin)) {
+	ymin_2 = floor(ymin / tt**ey - 1) * tt**ey
+}
+
+if (abs(ymax - ymax_2) < 0.01 * abs(ymax)) {
+	ymax_2 = ceil (ymax / tt**ey + 1) * tt**ey
+}
+
+print ymin_2, ymax_2
+
+dy = ymax_2 - ymin_2
+ymin = ymin_2
+ymax = ymax_2
+
+ntics = dy / tt**ey
+print ymin, ymax
+set yr [ymin:ymax]
+set ytics 2*ymin, ntics > 6 ? 2*tt**ey : tt**ey, ymax
+set mytics 4
+#set ytics ymin, ((ymax - ymin) / 5.), ymax
+#set mytics 5
+
+set ylabel "\$\\sigma_0 - \\sigma\$"
+set format y "%g"
+
+
+set xr [-pi:pi]
+set mxtics 5
+set xtics -pi, pi/4.0, pi
+
+set format x "%.1P\$\\pi\$"
+set xlabel "\$\\delta_\\text\{CP\}\$"
+
+
+#set label 1 "\$5 \\sigma\$" centre at 0, 5.5
+#set label 2 "\$3 \\sigma\$" centre at 0, 3.5
+
+set key samplen 1.5 Left top left reverse
+
+#set term qt size 800, 455
+set term cairolatex pdf color size 5in, 3.5in lw 2 #standalone header \
+#	"\\usepackage\{amsmath\}"
+set output outp
+
+plot for [c=2:cols] file u 1:c w l lw 2 lc rgb word(color, (c-2) % words(color) +1) t system("echo ".word(names, c)." | sed 's:_: :g'"), c), \
+     0 w l dt 3 lc rgb "black" not
+
+unset output
+
+
+#system("mv -f ".dataset."*.* ".dataset."/")
