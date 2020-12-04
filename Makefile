@@ -22,7 +22,7 @@ CXXFLAGS := $(CXXFLAGS) $(DEBUG) -fPIC -std=c++11 -O3 $(ARCH) $(ROOTCXX) -I$(INC
 
 
 #apps and exctuables
-CPP := $(shell find $(APPDIR) -maxdepth 1 -name '*.cpp')
+CPP := $(wildcard $(APPDIR)/*.cpp)
 SRC := $(shell find $(INCDIR) -maxdepth 2 -path $(INCDIR)/ignore -prune -o -name '*.c*' -not -name '.*' -print)
 
 
