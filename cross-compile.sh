@@ -1,6 +1,6 @@
 #! /bin/bash
 
-usage="usage: $0
+usage="usage: $0 [<options>]
 
 Compile the fitter and the atmo_input binaries on some nodes on the cluster.
 The script runs through all the nodes and compiles a new version of the binary
@@ -9,15 +9,27 @@ node, then a generic version of the two binaries will be compiled, otherwise
 a highly optimized version is creted.
 
 Works with HTCondor or Slurm and requires shared file system between nodes.
+
+Optional parameters
+   -x <node>[,<nodes>]	 specify a node or list of nodes to exclude
+   			 from compilation. For a list use commas and
+			 not white spaces. Wildcards are supported.
+
+   -h			 print this message and quits.
+
 "
 
-
-if [ "$#" -gt 0 ] ; then
-	echo No arguments required.
-	echo "$usage" >&2
-	exit 1
-fi
-
+exclude=""
+while getopts 'x:h' flag; do
+	case "${flag}" in
+		x) exclude="${OPTARG}" ;;
+		h) echo "$usage" >&2
+		   exit 0 ;;
+		*) printf "illegal option -%s\n" "$OPTARG" >&2
+		   echo "$usage" >&2
+		   exit 1 ;;
+	esac
+done
 
 # tool to determine arch
 mkdir -p bin/arch
@@ -38,6 +50,12 @@ else
 fi
 
 hpc=(${hpc})
+if [ -n "$exclude" ]; then
+	exclude=(${exclude//,/ })
+	for e in "${exclude[@]}" ; do
+		hpc=("${hpc[@]/$e}")
+	done
+fi
 
 echo Hosts found in cluster:
 echo "    " "${hpc[@]}"
