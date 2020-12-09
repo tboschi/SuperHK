@@ -101,7 +101,7 @@ The subfolders ```errorstudy/reconstruction_beam``` and ```errorstudy/reconstruc
 The subfolders ```errorstudy/systematics_beam``` and ```errorstudy/systematics_atmo``` contain various systematic models that can be used straight away in the analysis.
 
 
-## Prepare the beam systematics **out of date**
+## Prepare the beam systematics - WARNING \*\*out of date\*\*
 
 This step is not necessary if you have run ```download.sh``` before.
 
