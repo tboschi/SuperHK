@@ -326,11 +326,12 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 		//check if this step is good
 		double obs_x2 = ObsX2(On, En, nextp);
 		double sys_x2 = SysX2(nextp);
-		if (obs_x2 < 0 || sys_x2 < 0) // bad points
+
+		// requring both terms positive also picks up nan value
+		if (!(obs_x2 >= 0 && sys_x2 >= 0)) // bad points
 			return 2;	//X2 cannot be computed
 
-
-		diff = x2 - obs_x2 - sys_x2;
+		diff = x2 - (obs_x2 + sys_x2);
 
 		if (diff > 0) {	//next x2 is better, update lambda and epsilons
 			lambda /= lm_down;
