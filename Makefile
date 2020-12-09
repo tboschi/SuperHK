@@ -67,9 +67,10 @@ clean:
 	$(RM) $(TARGETS)
 	$(RM) $(OBJECTS)
 	$(RM) $(DEPENDS)
-	$(RM) -r $(BINDIR)
-
 	$(MAKE) -C $(DOCDIR) clean
+
+#$(RM) -r $(BINDIR)
+
 
 
 .PHONY: all doc help clean
