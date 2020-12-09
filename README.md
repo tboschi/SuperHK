@@ -39,7 +39,7 @@ The requirements for the code to be compiled and run are
 * **Eigen** version 3.3 or higher;
 * for running on the cluster **HTCondor** or *SLURM* as workload managers, for distributed computing.
 
-[ROOT][https://root.cern.ch/] should be installed and properly linked. To test if true, simply run
+[ROOT](https://root.cern.ch/) should be installed and properly linked. To test if true, simply run
 ```
 root-config --cflags --glibs
 ```
@@ -67,37 +67,43 @@ Specific compilation on each node can be achieved by using
 ```
 It is not a cross-compilation properly speaking, as both scripts first determine the nodes on the
 cluster, then ssh into each node and only if a new architecture is found a new, optimized binary
-is compiled for that particular architecture. This workaround works as long as access to the file
-system is shared on the cluster and that each node can be accessed via ssh by the user.
+is compiled for that particular architecture. This workaround works as long as **access to the file
+system is shared** on the cluster and that **each node can be accessed via ssh by the user**.
 
 
 ### Documentation
 
-The documentation is created with
+#### Requirements
+* a quite complete **TeX live** distribution
+
+The usual *ams maths* packages are required to build the documentation. Other packages are standard and should be shipped with any basic TeX live distribution.
+The compilation uses ```pdflatex``` and ```bibtex```.
+
+The documentation is built with
 ```
 make doc
 ```
+which creates the ```doc/doc.pdf``` file.
 
 
 ## Folder structure
 
 After building the executables, run
 ```
-./setup.sh
+./download.sh
 ```
 to build the folder structure required by the framework.
-The script also downloads the input files from http://hep.lancs.ac.uk/~tdealtry/oa/ and https://pprc.qmul.ac.uk/~tboschi/HK/atmo.
+The script also downloads the input files from https://pprc.qmul.ac.uk/~tboschi/HK/atmo.
 
-You can specify a specific path with the ```-p prefix``` option, as specified in the usage. The default value is the folder ```errorstudy/``` in the current working directory 
+You can specify a specific path with the ```-p prefix``` option, as explained in the usage. The default value is the folder ```errorstudy/``` relative to the current working directory 
 
-The subfolders ```errorstudy/reconstruction_beam``` and ```errorstudy/reconstruction_atmo``` are created to contain reconsturction files to build the data samples.
+The subfolders ```errorstudy/reconstruction_beam``` and ```errorstudy/reconstruction_atmo``` are created to contain reconstruction files to build the data samples.
+The subfolders ```errorstudy/systematics_beam``` and ```errorstudy/systematics_atmo``` contain various systematic models that can be used straight away in the analysis.
 
 
+## Prepare the beam systematics **out of date**
 
-## Prepare the beam systematics
-**out of date**
-
-This step is not necessary if you have run ```setup.sh``` before.
+This step is not necessary if you have run ```download.sh``` before.
 
 Creates correlation matrix of systematic parameters by combining matrices found in files of matrixN.root.
 The script expects to find the systematics folder under root with the spline files to be processed (renaming of files and histograms).
@@ -127,7 +133,7 @@ directory. The nominal T2K 2018 systematic model is found under ```errorstudy/0`
 cp -r errorstudy /0/systematics errorstudy/first_run
 ```
 Finally, the fitter can be launched on the distributed computing system with the trisens_c.sh
-(HTCondor) or the trisens_s.sh (Slurm) utilities, with
+(HTCondor) or the trisens_s.sh (Slurm) utilities, with for example
 ```
 ./trisens.sh -r errorstudy/first_run -d comb -1 NH -2 NH -N 500
 ```
@@ -140,3 +146,8 @@ The full list of options can be shown with
 ```
 ./trisens.sh -h
 ```
+
+## Everything else
+
+Please refer to the documentation.
+Most of the scripts have the ```-h``` option to show usage.
