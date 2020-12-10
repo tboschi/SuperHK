@@ -33,35 +33,35 @@ int main(int argc, char** argv)
 
 	// main card
 	std::string cardFile = argv[3];
-	CardDealer *cd = new CardDealer(cardFile);
+	CardDealer cd(cardFile);
 
 	std::string osc_card, sample_card;
-	if (!cd->Get("oscillation_parameters", osc_card)) {
+	if (!cd.Get("oscillation_parameters", osc_card)) {
 		std::cerr << "Atmo_input: no oscillation options card defined, very bad!" << std::endl;
 		return 1;
 	}
-	Oscillator *osc = new Oscillator(osc_card);
-	ParameterSpace *parms = new ParameterSpace(osc_card);
+	std::shared_ptr<Oscillator> osc(new Oscillator(cd));
+	std::unique_ptr<ParameterSpace> parms(new ParameterSpace(cd));
 
-	if (!cd->Get("atmo_parameters", sample_card)) {
+	if (!cd.Get("atmo_parameters", sample_card)) {
 		std::cerr << "Atmo_input: no atmospheric sample card defined, very bad!" << std::endl;
 		return 1;
 	}
-	AtmoSample *as = new AtmoSample(sample_card, "RB");
+	std::unique_ptr<AtmoSample> as(new AtmoSample(sample_card, "RB"));
 
 
 	// parameters for the main script
 	int kVerbosity;
-	if (!cd->Get("verbose", kVerbosity))
+	if (!cd.Get("verbose", kVerbosity))
 		kVerbosity = 0;
 
 	std::string order;
-	if (!cd->Get("true_hierarchy", order))
+	if (!cd.Get("true_hierarchy", order))
 		order = "normal";
 
 	//open output file
 	std::string outName;
-	cd->Get("output", outName);	
+	cd.Get("output", outName);	
 	
 	//double *Epsilons = new double[fitter->NumSys()];
 	//double *Errors   = new double[fitter->NumSys()];
@@ -139,10 +139,6 @@ int main(int argc, char** argv)
 	outf->cd();
 	atmoT->Write();
 	outf->Close();
-
-	delete cd;
-	delete osc;
-	delete as;
 
 	return 0;
 }

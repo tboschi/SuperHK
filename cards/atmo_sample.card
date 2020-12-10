@@ -5,21 +5,23 @@ verbose	1
 # scale statistics
 stats	1.00
 
-density_profile		"/a/path"
-honda_production	"make/a/path"
+# atmospheric oscillation
+density_profile		"data/PREM_25pts.dat"
+honda_production	"data/prod_honda/kam-ally-aa-*.d"
 production_height	15
 
 # systematic information for atmospheric sample
 
 # if you want to exclude any systematic error
 # specify it here as a string
+# T2K errors are fitted with beam sample
 skip		"t2k_m23_error_fij", "t2k_s23_error_fij"
 
 
 # systematics are stored in root file
 # and TTree object with description information
-systematic_file	"/path/to/systematic.root"
-systematic_tree	"sigmatree"
+systematic_file		"errorstudy/example/systematics/atmo_fij.root"
+systematic_tree		"sigmatree"
 #stats_only	1
 
 
@@ -30,18 +32,21 @@ systematic_tree	"sigmatree"
 # MC information for buidling samples
 # they are root file with the same structure
 # so they can be chained by the same tree name
-MC_input	"/montecarlo/path/*.root"
-MC_tree_name	"mcStuff"
+MC_input	"errorstudy/reconstruction_atmo/*.sk4.*.root"
+MC_tree_name	"osc_tuple"
+# SK MC input are simulated for 500 years of operation
 
-pre_input_NH	"/path/to/pre/input/NH.root"
-pre_input_IH	"/path/to/pre/input/IH.root"
-pre_tree_name	"oscStuff"
+# atmospheric samples can be precomputed for a specific parameter space
+# they can be found in these two paths
+pre_input_NH	"errorstudy/reconstruction_amto/pre/NH/atmo.*.root"
+pre_input_IH	"errorstudy/reconstruction_amto/pre/NH/atmo.*.root"
+pre_tree_name	"atmoTree"
 
 # MC scaling from 500 years to HK esposure (10y * 188.4t / 22.5t)
-#MC_scale	8.37333333334	# (188.4 / 22.5)
-MC_scale	0.16746666667	# (10 / 500) * (188.4 / 22.5)
-#MC_scale	0.01708739726	# 3118.45 / (500 * 365)
+#MC_scale	8.37333333334	# (188.4t / 22.5t)
+MC_scale	0.16746666667	# (10y / 500y) * (188.4t / 22.5t)
 
+# MC weight for UP-mu events
 reduce		0.507106
 
 

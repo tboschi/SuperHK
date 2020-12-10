@@ -24,24 +24,39 @@
 class Sample
 {
 	public:
-		Sample(CardDealer *card) :
-			cd(std::unique_ptr<CardDealer>(card)),
+		Sample(const std::string &card) :
 			_nBin(-1),
 			_nSys(-1),
 			_nScale(0)
        		{
-			if (!cd->Get("verbose", kVerbosity))
+			CardDealer cd(card);
+
+			if (!cd.Get("verbose", kVerbosity))
 				kVerbosity = 0;
+			if (!cd.Get("stats", _stats))
+				_stats = 1.0;
 		}
 
-		Sample(std::string card) :
-			cd(std::unique_ptr<CardDealer>(new CardDealer(card))),
+		Sample(const CardDealer &cd) :
+			_nBin(-1),
+			_nSys(-1),
+			_nScale(0)
+       		{
+			if (!cd.Get("verbose", kVerbosity))
+				kVerbosity = 0;
+			if (!cd.Get("stats", _stats))
+				_stats = 1.0;
+		}
+
+		Sample(CardDealer *cd) :
 			_nBin(-1),
 			_nSys(-1),
 			_nScale(0)
        		{
 			if (!cd->Get("verbose", kVerbosity))
 				kVerbosity = 0;
+			if (!cd->Get("stats", _stats))
+				_stats = 1.0;
 		}
 
 		virtual ~Sample() = default;
@@ -148,13 +163,10 @@ class Sample
 
 		// same for every one
 		// BuildSpectrum and then collates everything on a Eigen::Vector
-		virtual Eigen::VectorXd ConstructSamples(Oscillator *osc = 0) {
+		virtual Eigen::VectorXd ConstructSamples(std::shared_ptr<Oscillator> osc = nullptr) {
 
 			std::map<std::string, Eigen::VectorXd> samples = BuildSamples(osc);
 
-			double stats;	//for scaling
-			if (!cd->Get("stats", stats))
-				stats = 1.0;
 
 			Eigen::VectorXd vect(_nBin);
 
@@ -176,15 +188,16 @@ class Sample
 				//}
 			//}
 
-			return vect;
+			return _stats * vect;
 		}
 
 		// must be defined in derived
-		virtual void LoadReconstruction() = 0;
-		virtual void LoadSystematics() = 0;
+		virtual void LoadReconstruction(const CardDealer &cd) = 0;
+		virtual void LoadSystematics(const CardDealer &cd) = 0;
 
 		// must be defined in derived
-		virtual std::map<std::string, Eigen::VectorXd> BuildSamples(Oscillator *osc = 0) = 0;
+		virtual std::map<std::string, Eigen::VectorXd>
+			BuildSamples(std::shared_ptr<Oscillator> osc = nullptr) = 0;
 
 
 		// energy bin scaling routines
@@ -293,7 +306,6 @@ class Sample
 
 
 	protected:
-		std::unique_ptr<CardDealer> cd;
 		int kVerbosity;
 		bool zeroEpsilons;
 
@@ -314,6 +326,7 @@ class Sample
 		std::map<std::string, std::vector<double> > _global;
 		// store point for pre computed bins
 		int _point;
+		double _stats;
 
 		// for systematics
 		int _nSys;

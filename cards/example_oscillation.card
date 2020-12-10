@@ -1,0 +1,23 @@
+verbose	1
+
+# if Point is specified in main card
+# then that point of the space is fitted
+# otherwise the nominal one is used
+
+# the format for the oscillation space is
+#
+#parm_VAR	low_end		high_end	points	nominal_point
+#
+# and the interval [low_end:high_end] is divided in the specified points 
+# where the first point is low_end and the last one is high_end
+# if no nominal_point is specified, the point = (points-1)/2 is assumed
+# (the middle one)
+#
+#asim space
+#
+parm_M12	0.0000753,	0.0000753,	1
+parm_S12	0.307,		0.307,		1
+parm_M23	0.002509,	0.002509,	1
+parm_S13	0.0218,		0.0218,		1
+parm_S23	0.528,		0.528,		1
+parm_CP		-3.14159265359,	3.14159265359,	101

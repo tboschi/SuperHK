@@ -5,12 +5,12 @@ verbose	1
 # scale statistics
 stats	1.00
 
-# specify which samples to fit
-# if not specified the default 
-# "E_FHC", "E_RHC", "M_FHC", "M_RHC"
-# will be used
+# uncomment to specify which samples to fit
 
-#sample	"E_FHC", "E_RHC", "M_FHC", "M_RHC"
+#sample	"E_FHC", "E_RHC"
+
+# if commented, the default samples ("E_FHC", "E_RHC", "M_FHC", "M_RHC")
+# will be used
 
 
 #energy scale error for E or M
@@ -19,50 +19,42 @@ scale_error	0.024	#if just one
 #scale_error_M	0.024
 
 
-#restrict systematics
-#flux  from [0, 50)
-#xsec  from [50, 74)
-#skdet from [74, 119)
+# to skip systematics set a range
+# or give specific number.
+# Last 8 errors are for 1Re + 1decay sample, not included here!
+# so it can be safely skipped
+# For T2K
+#	flux errors are from  from [0, 50)
+#	xsec errors are from [50, 74)
+#	skdet errors are from [74, 119)
+# For HK
+#	flux errors are from  from [0, 50)
+#	xsec errors are from [50, 72)
+#	skdet errors are from [72, 117)
 syst_first	0
 syst_last	110
 #syst_last	108
-skip		55, 56, 73	# Eb error
-#skip		71	# Eb error
 
-#systematic informations
-corr_file	"/data/tboschi/HKsens/errorstudy/0/systematics/combinedmatrix.root"
+# 55 and 56 (SCCA and SCCV) are not fitted anymore
+# 73 (71 on HK) (Eb on O) is not correct
+# For T2K skip like this ->
+skip		55, 56, 73
+# For HK skip like this ->
+#skip		71
+
+# correlation matrix is here
+corr_file	"errorstudy/example/systematics/matrix.root"
 corr_name	"correlation"
 
-systematic_E_FHC "/data/tboschi/HKsens/errorstudy/0/systematics/FHC1Re.fij.t2k_spline.root"
-systematic_E_RHC "/data/tboschi/HKsens/errorstudy/0/systematics/RHC1Re.fij.t2k_spline.root"
-systematic_M_FHC "/data/tboschi/HKsens/errorstudy/0/systematics/FHC1Rmu.fij.t2k_spline.root"
-systematic_M_RHC "/data/tboschi/HKsens/errorstudy/0/systematics/RHC1Rmu.fij.t2k_spline.root"
+# systematics are provided for each sample
+systematic_E_FHC "errorstudy/example/systematics/FHC1Re.fij.spline.root"
+systematic_E_RHC "errorstudy/example/systematics/RHC1Re.fij.spline.root"
+systematic_M_FHC "errorstudy/example/systematics/FHC1Rmu.fij.spline.root"
+systematic_M_RHC "errorstudy/example/systematics/RHC1Rmu.fij.spline.root"
 
 
-
-reco_input	"/somewhere/in/reconstruction_atmo"
-
-# OOOOOO LLLLLL DDDDDD
-# these are needed to build observables
-#
-#reconstruction file cards - neutrino mode
-#reco_nuE0_nuE0_FHC	"global/reconstruction/syst_nuE0_nuE0_FHC.card"
-#reco_nuM0_nuM0_FHC	"global/reconstruction/syst_nuM0_nuM0_FHC.card"
-#reco_nuM0_nuE0_FHC	"global/reconstruction/syst_nuM0_nuE0_FHC.card"
-#reco_nuEB_nuEB_FHC	"global/reconstruction/syst_nuEB_nuEB_FHC.card"
-#reco_nuMB_nuMB_FHC	"global/reconstruction/syst_nuMB_nuMB_FHC.card"
-#reco_nuMB_nuEB_FHC	"global/reconstruction/syst_nuMB_nuEB_FHC.card"
-#
-#reconstruction file cards - antineutrino mode
-#reco_nuE0_nuE0_RHC	"global/reconstruction/syst_nuE0_nuE0_RHC.card"
-#reco_nuM0_nuM0_RHC	"global/reconstruction/syst_nuM0_nuM0_RHC.card"
-#reco_nuM0_nuE0_RHC	"global/reconstruction/syst_nuM0_nuE0_RHC.card"
-#reco_nuEB_nuEB_RHC	"global/reconstruction/syst_nuEB_nuEB_RHC.card"
-#reco_nuMB_nuMB_RHC	"global/reconstruction/syst_nuMB_nuMB_RHC.card"
-#reco_nuMB_nuEB_RHC	"global/reconstruction/syst_nuMB_nuEB_RHC.card"
-
-
-
+# reconstruction is handled by other cards in these path
+reco_input	"errorstudy/reconstruction_beam/syst_*.card"
 
 # density profile for beamline
 density_profile	"data/DensityProfileTochibora.dat"

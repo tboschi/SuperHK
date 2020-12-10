@@ -1,43 +1,35 @@
 #include "Atmosphere.h"
 
-Atmosphere::Atmosphere(CardDealer *card) :
+Atmosphere::Atmosphere(const std::string &card) :
 	gen(std::random_device()())
 {
-	cd = card;
-	LoadDensityProfile();
-	LoadProductionHeights();
+	CardDealer cd(card),
+	LoadDensityProfile(cd);
+	LoadProductionHeights(cd);
 
-	if (!cd->Get("verbosity", kVerbosity))
+	if (!cd.Get("verbosity", kVerbosity))
 		kVerbosity = 0;
-
-	// initialise Earth densities
-	//_density = { std::make_pair(Const::Rearth,  3.3),	//6371
-	//	     std::make_pair(5701.0,  5.0),
-	//	     std::make_pair(3480.0, 11.3),
-	//	     std::make_pair(1220.0, 13.0),
-	//	     std::make_pair(0 ,     13.0) };
-	//_profile load from file;
 }
 
-Atmosphere::Atmosphere(std::string card) :
+Atmosphere::Atmosphere(const CardDealer &cd) :
 	gen(std::random_device()())
 {
-	cd = new CardDealer(card),
-	LoadDensityProfile();
-	LoadProductionHeights();
+	LoadDensityProfile(cd);
+	LoadProductionHeights(cd);
+
+	if (!cd.Get("verbosity", kVerbosity))
+		kVerbosity = 0;
+}
+
+
+Atmosphere::Atmosphere(CardDealer *cd) :
+	gen(std::random_device()())
+{
+	LoadDensityProfile(*cd);
+	LoadProductionHeights(*cd);
 
 	if (!cd->Get("verbosity", kVerbosity))
 		kVerbosity = 0;
-
-	delete cd;
-
-	// initialise Earth densities
-	//_density = { std::make_pair(Const::Rearth,  3.3),	//6371
-	//	     std::make_pair(5701.0,  5.0),
-	//	     std::make_pair(3480.0, 11.3),
-	//	     std::make_pair(1220.0, 13.0),
-	//	     std::make_pair(0 ,     13.0) };
-	//_profile load from file;
 }
 
 // loads production heights calculated by Honda (HKKM2014) 
@@ -51,9 +43,9 @@ Atmosphere::Atmosphere(std::string card) :
 // a random number [0, 1] and find the equivalent index in
 // _problibs vector -> the respective entry in the (zenith, energy)
 // vector gives the production height
-void Atmosphere::LoadProductionHeights()
+void Atmosphere::LoadProductionHeights(const CardDealer &cd)
 {
-	if (!cd->Get("production_height", _atm))
+	if (!cd.Get("production_height", _atm))
 		_atm = 15.0;	// default 15 km altitude
 
 	// vector with the discretised probabilities
@@ -65,7 +57,7 @@ void Atmosphere::LoadProductionHeights()
 	std::ifstream it(".production_files");
 	if (!it || it.peek() == std::ifstream::traits_type::eof()) {
 		std::string prod_file;
-		if (!cd->Get("honda_production", prod_file)) {
+		if (!cd.Get("honda_production", prod_file)) {
 			std::cout << "Atmosphere: no production heights in card, please specify production height yourself" << std::endl;
 			return;
 		}
@@ -165,12 +157,12 @@ void Atmosphere::LoadProductionHeights()
 // 	radius, which can be normalised
 // 	density 
 // 	electron density (optional, default 0.5)
-void Atmosphere::LoadDensityProfile(std::string table_file)
+void Atmosphere::LoadDensityProfile(const CardDealer &cd, std::string table_file)
 {
 	_profile.clear();
 
 	if (table_file.empty())
-		if (!cd->Get("density_profile", table_file))
+		if (!cd.Get("density_profile", table_file))
 			throw std::invalid_argument("Atmosphere: you have not defined any density profile. Too bad!");
 
 	std::ifstream it(table_file.c_str());

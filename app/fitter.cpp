@@ -19,7 +19,8 @@ int main(int argc, char** argv)
 {
 	if (argc < 4)
 	{
-		std::cerr << "Fitter: need three parameters: id cpu card" << std::endl;
+		std::cerr << "Fitter: need at least three parameters: id jobs card [point]"
+			  << std::endl;
 		return 1;
 	}
 
@@ -34,28 +35,26 @@ int main(int argc, char** argv)
 	}
 
 	// main card
-	std::string cardFile = argv[3];
-	CardDealer *cd = new CardDealer(cardFile);
+	CardDealer cd(argv[3]);
 
 	std::string fit_card, osc_card, sample_card;
-	if (!cd->Get("oscillation_parameters", osc_card)) {
+	if (!cd.Get("oscillation_parameters", osc_card)) {
 		std::cerr << "Fitter: no oscillation options card defined, very bad!" << std::endl;
 		return 1;
 	}
-	Oscillator *osc = new Oscillator(osc_card);
-	ParameterSpace *parms = new ParameterSpace(osc_card);
+	std::shared_ptr<Oscillator> osc(new Oscillator(cd));
+	std::unique_ptr<ParameterSpace> parms(new ParameterSpace(cd));
 
-
-	if (!cd->Get("fit_parameters", fit_card)) {
+	if (!cd.Get("fit_parameters", fit_card)) {
 		std::cerr << "Fitter: no fit options card defined, very bad!" << std::endl;;
 		return 1;
 	}
-	ChiSquared *fitter = new ChiSquared(fit_card);
+	std::unique_ptr<ChiSquared> fitter(new ChiSquared(cd));
 
 
-	if (cd->Get("beam_parameters", sample_card))
+	if (cd.Get("beam_parameters", sample_card))
 		fitter->Add<BeamSample>(sample_card);
-	if (cd->Get("atmo_parameters", sample_card))
+	if (cd.Get("atmo_parameters", sample_card))
 		fitter->Add<AtmoSample>(sample_card);
 
 	// combining samples
@@ -67,29 +66,29 @@ int main(int argc, char** argv)
 
 	// parameters for the main script
 	int kVerbosity;
-	if (!cd->Get("verbose", kVerbosity))
+	if (!cd.Get("verbose", kVerbosity))
 		kVerbosity = 0;
 	std::string scan;
-	if (!cd->Get("scan", scan))
+	if (!cd.Get("scan", scan))
 		scan = "";
 
 	std::string trueOrder, fitOrder;
-	if (!cd->Get("true_hierarchy", trueOrder))
+	if (!cd.Get("true_hierarchy", trueOrder))
 		trueOrder = "normal";
-	if (!cd->Get("fit_hierarchy", fitOrder))
+	if (!cd.Get("fit_hierarchy", fitOrder))
 		fitOrder = "normal";
 
 
 	//open output file
 	std::string outName;
-	cd->Get("output", outName);	//path for out file with extension
+	cd.Get("output", outName);	//path for out file with extension
 	
 	int NumSys;
 	double Epsilons[3000], Errors[3000];
 	double X2, ObsX2, SysX2;
 	double Time;
 	int Point, tPoint;
-	if (!cd->Get("point", tPoint))
+	if (!cd.Get("point", tPoint))
 		tPoint = parms->GetNominalEntry();
 
 	double M12, tM12;
@@ -172,6 +171,13 @@ int main(int argc, char** argv)
 			  << " ( " << fpp << " ) " << std::endl;
 
 	auto t_start = std::chrono::high_resolution_clock::now();
+
+	if (argc > 3) {
+		nstart = std::stoi(argv[4]);
+		nend = nstart + 1;
+		std::cout << "Fitter: OVERRIDE fitting only point " << nstart << "\n";
+	}
+		
 	for (int i = nstart; i < nend; ++i)
 	{
 		Point = i;
@@ -247,10 +253,6 @@ int main(int argc, char** argv)
 	outf->cd();
 	stepX2->Write();
 	outf->Close();
-
-	delete cd;
-	delete osc;
-	delete fitter;
 
 	return 0;
 }

@@ -25,25 +25,25 @@ int main(int argc, char** argv)
 
 	// main card
 	std::string cardFile = argv[1];
-	CardDealer *cd = new CardDealer(cardFile);
+	CardDealer cd(cardFile);
 
 	std::string fit_card, osc_card, sample_card;
-	if (!cd->Get("oscillation_parameters", osc_card)) {
+	if (!cd.Get("oscillation_parameters", osc_card)) {
 		std::cerr << "Fitter: no oscillation options card defined, very bad!" << std::endl;
 		return 1;
 	}
-	Oscillator *osc = new Oscillator(osc_card);
-	ParameterSpace *parms = new ParameterSpace(osc_card);
+	std::shared_ptr<Oscillator> osc(new Oscillator(cd));
+	std::unique_ptr<ParameterSpace> parms(new ParameterSpace(cd));
 
-	if (!cd->Get("fit_parameters", fit_card)) {
+	if (!cd.Get("fit_parameters", fit_card)) {
 		std::cerr << "Fitter: no fit options card defined, very bad!" << std::endl;;
 		return 1;
 	}
-	ChiSquared *fitter = new ChiSquared(fit_card);
+	std::unique_ptr<ChiSquared> fitter(new ChiSquared(cd));
 
-	if (cd->Get("beam_parameters", sample_card))
+	if (cd.Get("beam_parameters", sample_card))
 		fitter->Add<BeamSample>(sample_card);
-	if (cd->Get("atmo_parameters", sample_card))
+	if (cd.Get("atmo_parameters", sample_card))
 		fitter->Add<AtmoSample>(sample_card);
 
 	// combining samples
@@ -53,26 +53,26 @@ int main(int argc, char** argv)
 	}
 
 	std::string outfile;
-	if (!cd->Get("output", outfile))
+	if (!cd.Get("output", outfile))
 		outfile = "validation.dat";
 	else if (outfile.find(".dat") == std::string::npos)
 		outfile += ".dat";
 
 	// parameters for the main script
 	int kVerbosity;
-	if (!cd->Get("verbose", kVerbosity))
+	if (!cd.Get("verbose", kVerbosity))
 		kVerbosity = 0;
 
 	std::string trueOrder, fitOrder;
-	if (!cd->Get("true_hierarchy", trueOrder))
+	if (!cd.Get("true_hierarchy", trueOrder))
 		trueOrder = "normal";
-	if (!cd->Get("fit_hierarchy", fitOrder))
+	if (!cd.Get("fit_hierarchy", fitOrder))
 		fitOrder = "normal";
 
 	int truePoint, fitPoint;
-	if (!cd->Get("point", truePoint))
+	if (!cd.Get("point", truePoint))
 		truePoint = parms->GetNominalEntry();
-	if (!cd->Get("fit_point", fitPoint))
+	if (!cd.Get("fit_point", fitPoint))
 		fitPoint = -1;
 
 	std::map<std::string, Eigen::VectorXd> nooscSpectra = fitter->BuildSamples();
@@ -135,10 +135,6 @@ int main(int argc, char** argv)
 				fout << "\n";
 		}
 	}
-
-	delete cd;
-	delete osc;
-	delete fitter;
 
 	return 0;
 }

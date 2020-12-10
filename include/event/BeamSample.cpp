@@ -1,45 +1,53 @@
 #include "BeamSample.h"
 
 //ctor
-BeamSample::BeamSample(CardDealer *card, std::string process) :
+BeamSample::BeamSample(const std::string &card, std::string process) :
 	Sample(card)
 {
-	Init(process);
+	CardDealer cd(card);
+	Init(cd, process);
 }
 
-BeamSample::BeamSample(std::string card, std::string process) :
-	Sample(card)
+BeamSample::BeamSample(const CardDealer &cd, std::string process) :
+	Sample(cd)
 {
-	Init(process);
+	Init(cd, process);
 }
 
-void BeamSample::Init(std::string process)
+
+BeamSample::BeamSample(CardDealer *cd, std::string process) :
+	Sample(cd)
+{
+	Init(*cd, process);
+}
+
+void BeamSample::Init(const CardDealer &cd, std::string process)
 {
 	//_mode = {"nuE0_nuE0", "nuM0_nuM0", "nuM0_nuE0",
 	//	 "nuEB_nuEB", "nuMB_nuMB", "nuMB_nuEB"};
 	//_chan = {"E_CCQE", "M_CCQE", "E_CCnQE", "M_CCnQE", "E_NC", "M_NC"};
 	//_horn = {"FHC", "RHC"};
 	//std::map<std::string, std::pair<flavour, flavour> >
-	_oscf = { {"nuE0_nuE0", std::make_pair(Nu::E_, Nu::E_)},
-		  {"nuM0_nuM0", std::make_pair(Nu::M_, Nu::M_)},
-		  {"nuM0_nuE0", std::make_pair(Nu::M_, Nu::E_)},
-		  {"nuEB_nuEB", std::make_pair(Nu::Eb, Nu::Eb)},
-		  {"nuMB_nuMB", std::make_pair(Nu::Mb, Nu::Mb)},
-		  {"nuMB_nuEB", std::make_pair(Nu::Mb, Nu::Eb)} };
+	_oscf = { {"nuE0_nuE0", {Nu::E_, Nu::E_}},
+		  {"nuM0_nuM0", {Nu::M_, Nu::M_}},
+		  {"nuM0_nuE0", {Nu::M_, Nu::E_}},
+		  {"nuEB_nuEB", {Nu::Eb, Nu::Eb}},
+		  {"nuMB_nuMB", {Nu::Mb, Nu::Mb}},
+		  {"nuMB_nuEB", {Nu::Mb, Nu::Eb}} };
 	// _fin = {Nu::E_, Nu::M_, Nu::M_, Nu::Eb, Nu::Mb, Nu::Mb};
 	//_fout = {Nu::E_, Nu::M_, Nu::E_, Nu::Eb, Nu::Mb, Nu::Eb};
 
 	// if sample beam is not defined..
-	if (!cd->Get("sample_beam", _type))
+	if (!cd.Get("sample_beam", _type))
 		// default value
 		_type = {"E_FHC", "E_RHC", "M_FHC", "M_RHC"};
 
 	// get scale error which is now defined manually
-	if (!cd->Get("scale_error_", _scale)) {
+	if (!cd.Get("scale_error_", _scale)) {
 		// check first for a map, if not look for a scalar
 		double err;
 		_scale.clear();
-		if (cd->Get("scale_error", err)) {
+		if (cd.Get("scale_error", err)) {
 			_nScale = 1;
 			for (const std::string &it : _type) {
 				_scale[it] = err;
@@ -60,7 +68,7 @@ void BeamSample::Init(std::string process)
 				else {
 					if (kVerbosity)
 						std::cout << "No scale_E in card"
-							  << cd->CardName() << std::endl;
+							  << cd.CardName() << std::endl;
 					//default to
 					err[it] = 0.024;
 				}
@@ -72,7 +80,7 @@ void BeamSample::Init(std::string process)
 				else {
 					if (kVerbosity)
 						std::cout << "No scale_M in card"
-							  << cd->CardName() << std::endl;
+							  << cd.CardName() << std::endl;
 					// default to
 					err[it] = 0.024;
 				}
@@ -84,7 +92,7 @@ void BeamSample::Init(std::string process)
 	}
 
 
-	if (!cd->Get("verbose", kVerbosity))
+	if (!cd.Get("verbose", kVerbosity))
 		kVerbosity = 0;
 
 	if (kVerbosity) {
@@ -98,7 +106,7 @@ void BeamSample::Init(std::string process)
 	}
 
 	std::string profile;
-	if (!cd->Get("density_profile", profile) && kVerbosity)
+	if (!cd.Get("density_profile", profile) && kVerbosity)
 		std::cout << "BeamSample: density profile not set in card, please set it yourself" << std::endl;
 	else
 		_lens_dens = Oscillator::GetMatterProfile(profile);
@@ -112,20 +120,20 @@ void BeamSample::Init(std::string process)
 				[](unsigned char c){ return std::toupper(c); });
 
 	if (process.find('R') != std::string::npos)
-		LoadReconstruction();
+		LoadReconstruction(cd);
 	if (process.find('B') != std::string::npos)
-		DefineBinning();
+		DefineBinning();	// from Sample.h
 	if (process.find('S') != std::string::npos)
-		LoadSystematics();
+		LoadSystematics(cd);
 }
 
 
-void BeamSample::LoadReconstruction()
+void BeamSample::LoadReconstruction(const CardDealer &cd)
 {
 	std::ifstream it(".reconstruction_files");
 	if (!it || it.peek() == std::ifstream::traits_type::eof()) {
 		std::string reco_files;
-		if (!cd->Get("reco_input", reco_files))
+		if (!cd.Get("reco_input", reco_files))
 			throw std::invalid_argument("BeamSample: no reconstruction files in card,"
 						    "very bad!");
 
@@ -252,7 +260,8 @@ void BeamSample::LoadReconstruction(std::string reco_file)
 }
 
 
-std::map<std::string, Eigen::VectorXd> BeamSample::BuildSamples(Oscillator *osc)
+std::map<std::string, Eigen::VectorXd>
+	BeamSample::BuildSamples(std::shared_ptr<Oscillator> osc)
 {
 	if (osc)
 		osc->SetMatterProfile(_lens_dens);
@@ -319,12 +328,12 @@ std::map<std::string, Eigen::VectorXd> BeamSample::BuildSamples(Oscillator *osc)
  * If no systematic file is specified in the card, then the matrices are all empty 
  * and it should be like fitting for the stats only, i.e. no fit at all.
  */
-void BeamSample::LoadSystematics()
+void BeamSample::LoadSystematics(const CardDealer &cd)
 {
 	// but first, let me take the correlation matrix!
 
 	std::string mat_file, mat_name;
-	if (!cd->Get("corr_file", mat_file) && !_nScale) {
+	if (!cd.Get("corr_file", mat_file) && !_nScale) {
 		std::cerr << "No correlation matrix file or scale error specified\n\n"
 			  << "~~~ FITTING WITHOUT SYSTEMATICS ~~~\n\n";
 		_nSys = 0;
@@ -338,7 +347,7 @@ void BeamSample::LoadSystematics()
 		return;
 	}
 
-	if (!cd->Get("corr_name", mat_name))
+	if (!cd.Get("corr_name", mat_name))
 		mat_name = "correlation";
 
 	TFile * mf = new TFile(mat_file.c_str());
@@ -349,11 +358,11 @@ void BeamSample::LoadSystematics()
 	TMatrixT<double> * cmat = static_cast<TMatrixT<double>*>(mf->Get(mat_name.c_str()));
 
 	int sysA, sysB;
-	if (!cd->Get("syst_first", sysA))
+	if (!cd.Get("syst_first", sysA))
 		sysA = 0;
 	else
 		sysA = std::max(0, sysA);
-	if (!cd->Get("syst_last", sysB))
+	if (!cd.Get("syst_last", sysB))
 		sysB = cmat->GetNcols();
 	else
 		sysB = std::min(cmat->GetNcols(), sysB);
@@ -396,14 +405,14 @@ void BeamSample::LoadSystematics()
 		_sysMatrix[sigma] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
 
 	std::set<int> skip_sys;
-	cd->Get("skip", skip_sys);	// errors to skip
+	cd.Get("skip", skip_sys);	// errors to skip
 
 	zeroEpsilons = true;
 	//int off = 0;	// offset for global bin
 	for (const std::string &it : _type) {
 		// it is sample type name
 		std::string file_name;
-		if (!cd->Get("systematic_" + it, file_name)) {
+		if (!cd.Get("systematic_" + it, file_name)) {
 			std::cout << "BeamSample: no systematic for " << it << " sample,"
 				  << " parameters will be set to zero and not fitted\n";
 			continue;

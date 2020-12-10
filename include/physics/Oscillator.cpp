@@ -41,33 +41,37 @@ Oscillator::Oscillator(const std::string &densityFile,
 
 Oscillator::Oscillator(const std::string &card)
 {
-	CardDealer *cd = new CardDealer(card);
+	CardDealer cd(card);
 	FromCard(cd);
-	delete cd;
 }
 
 Oscillator::Oscillator(CardDealer *cd)
 {
+	FromCard(*cd);
+}
+
+Oscillator::Oscillator(const CardDealer &cd)
+{
 	FromCard(cd);
 }
 
-void Oscillator::FromCard(CardDealer *cd)
+void Oscillator::FromCard(const CardDealer &cd)
 {
 	std::string densityFile;
-	if (cd->Get("density_profile", densityFile))
+	if (cd.Get("density_profile", densityFile))
 		SetMatterProfile(GetMatterProfile(densityFile));
 	else {	//default  vacuum oscillation
 		_lens_dens.clear();
 		_lens_dens.push_back({295., 0, 0.5});
 	}
 
-	if (!cd->Get("neutrinos", _dim))
+	if (!cd.Get("neutrinos", _dim))
 		_dim = 3;		// default neutrinos
 
-	if (!cd->Get("threshold", _thr))
+	if (!cd.Get("threshold", _thr))
 		_thr = 1e-9;	// default value
 
-	if (!cd->Get("LUT", kLUT))	//look up table stores matrices
+	if (!cd.Get("LUT", kLUT))	//look up table stores matrices
 		kLUT = false;
 }
 
@@ -374,24 +378,24 @@ Eigen::VectorXd Oscillator::MatterStates(double ff, int off)	//density factor
 	return vMat;
 }
 
-void Oscillator::AutoSet(CardDealer *cd) {
+void Oscillator::AutoSet(const CardDealer &cd) {
 
 	double M12, M23, S12, S13, S23, dCP;
-	if (!cd->Get("M12", M12))
+	if (!cd.Get("M12", M12))
 		M12 = 7.6e-5;
-	if (!cd->Get("M23", M23))
+	if (!cd.Get("M23", M23))
 		M23 = 2.4e-3;
-	if (!cd->Get("S12", S12))
+	if (!cd.Get("S12", S12))
 		S12 = 0.32;
-	if (!cd->Get("S13", S13))
+	if (!cd.Get("S13", S13))
 		S13 = 0.0256584;
-	if (!cd->Get("S23", S23))
+	if (!cd.Get("S23", S23))
 		S23 = 0.5;
-	if (!cd->Get("dCP", dCP))
+	if (!cd.Get("dCP", dCP))
 		dCP = 0;
 
 	std::string mh;
-	if (!cd->Get("mass_hierarchy", mh))
+	if (!cd.Get("mass_hierarchy", mh))
 		mh = "normal";
 
 	if (mh == "normal")

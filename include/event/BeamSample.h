@@ -36,17 +36,18 @@
 class BeamSample : public Sample
 {
 	public:
-		BeamSample(CardDealer *card, std::string process = "");
-		BeamSample(std::string card, std::string process = "");
-		void Init(std::string process = "");
+		BeamSample(const std::string &card, std::string process = "");
+		BeamSample(const CardDealer &cd, std::string process = "");
+		BeamSample(CardDealer *cd, std::string process = "");
+		void Init(const CardDealer &cd, std::string process = "");
 
 		void LoadReconstruction(std::string reco_file);
 
-		void LoadReconstruction() override;
-		void LoadSystematics() override;
+		void LoadReconstruction(const CardDealer &cd) override;
+		void LoadSystematics(const CardDealer &cd) override;
 
-		std::map<std::string, Eigen::VectorXd> BuildSamples(Oscillator *osc = 0)
-		override;
+		std::map<std::string, Eigen::VectorXd>
+			BuildSamples(std::shared_ptr<Oscillator> osc = nullptr) override;
 
 		std::vector<Eigen::ArrayXd> AllScale(FactorFn factor,
 					std::string it, double skerr);

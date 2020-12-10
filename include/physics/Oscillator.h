@@ -71,9 +71,10 @@ class Oscillator
 		Oscillator(const std::string &densityFile,
 			   bool lut, double threshold);
 		Oscillator(const std::string &cd);
+		Oscillator(const CardDealer &cd);
 		Oscillator(CardDealer *cd);
 
-		void FromCard(CardDealer *cd);
+		void FromCard(const CardDealer &cd);
 
 		double Probability(Nu::Flavour in, Nu::Flavour out,
 				double energy, bool force = false);
@@ -90,7 +91,7 @@ class Oscillator
 				    double ff);
 		Eigen::VectorXd MatterStates(double ff, int off = 0);
 
-		void AutoSet(CardDealer *cd);
+		void AutoSet(const CardDealer &cd);
 
 		template<masses type>
 		void SetMasses(double m1, double m2)
