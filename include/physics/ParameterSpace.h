@@ -19,12 +19,13 @@ class ParameterSpace
 {
 	public:
 
-		typedef std::map<std::string, std::vector<double> > Binning;
+		using Binning = std::map<std::string, std::vector<double> >;
 
-		ParameterSpace(CardDealer *card);
-		ParameterSpace(std::string card);
+		ParameterSpace(const std::string &card);
+		ParameterSpace(const CardDealer &cd);
+		ParameterSpace(CardDealer *cd);
 
-		void Init();
+		void Init(const Binning &parms);
 
 		Binning GetHistogramBinning();
 		Binning GetBinning();
@@ -42,12 +43,10 @@ class ParameterSpace
 		std::vector<int> GetScanEntries(const std::vector<std::string> &p);
 
 	private:
-		std::unique_ptr<CardDealer> cd;
-
 		//std::map<std::string, double*> varmap;	//map to address of variables
 		//std::map<std::string, double*>::iterator iv;
-		Binning binning, penals;	//map of bins
-		std::map<std::string, int> nominal;
+		Binning _binning, _penals;	//map of bins
+		std::map<std::string, int> _nominal;
 };
 
 #endif

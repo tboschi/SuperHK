@@ -210,6 +210,7 @@ If this is not possible for any node, then the \texttt{cross-compile.sh} script 
 The script creates a generic version of the binaries \texttt{bin/fitter} and \texttt{bin/atmo\_input} anyway.
 
 \subsection{Retrieving the input files}
+\label{sec:download}
 
 After a successful compilation, the input files should be downloaded by running the utility
 \begin{lstlisting}[language=bash]
@@ -239,11 +240,173 @@ The user should assure that there is sufficient quota for running the analysis.
 A single fit can take up around 5\,GB of space in output files, whereas a CPV scan %
 as much as 25\,GB.
 
+\section{Learning the framework}
+
+The framework consists of many executables (or binaries) and bash scripts, %
+found respectively in the \texttt{bin/} folder after compilation and in the top folder.
+It can be daunting for first time users, but there are a few exercises that can be performed %
+to get acquainted with it.
+
+\subsection{The \emph{card} system}
+
+The utilities of the framework were written to be as much as configurable as possible and %
+virtually all the options and parameters are loaded at run time.
+This means that modifying input values does not require any compilation of the binaries.
+It also means that the sheer number of parameters makes it unfeasible to pass the parameters %
+directly to the binaries.
+To overcome this issue, the \emph{card} system was devised in the original \texttt{osc3++} %
+framework and improved in this version.
+
+A card file is nothing but a text file where the parameters are listed as key--value pairs.
+It is then only necessary to pass the card file to the binary at run time.
+A card file looks like this
+\begin{lstlisting}[language=bash]
+	# this is a comment
+
+	parameter	3.14156		# this is also a comment
+	path		"/home/user"
+	array		"a", "b", "c"
+	...
+\end{lstlisting}
+Lines, or parts of lines, starting with ``\texttt{\#}'' are comments and ignored.
+The first element of each line is treated as a \emph{keys} which will be implemented %
+as a string variable.
+Everything else, a part from comments, is \emph{value}.
+All fundamentals C++ types are supported and most of the Standard Library containers are too!
+This means the user can specify an array of floats or strings and load it in the code as a \texttt{std::vector} for example.
+More details on the card system can be found in \refsec{sec:tools}.
+
+\subsection{Beam and atmospheric oscillation}
+
+Being a neutrino oscillation analysis (OA) framework, neutrino oscillation is a core component of %
+\texttt{osc3++}.
+The oscillation process is explained in detail \refsec{sec:oscillator} %
+and the generation of the matter profile for atmospheric neutrinos is in %
+\refsec{sec:atmosphere}.
+There are two binaries that are used to test the oscillation classes
+\begin{lstlisting}[language=bash]
+	./bin/beam_oscillation cards/osc_beam.card
+	./bin/atmo_oscillation cards/osc_atmo.card
+\end{lstlisting}
+Both of them will create an output file, specified in the card, with oscillation %
+probabilities in a range of energies and angles.
+Other options that can be specified in the card file are the oscillation parameters, %
+the mass hierarchy, and the density profile.
+
+\subsection{Oscillation parameter space}
+
+One of the key concept of the OA is that the oscillation parameters are scanned over %
+a pre-determined, equally spaced grid in a $N$ dimensional space, %
+where each dimension corresponds to an oscillation parameter.
+The grid is configured via a card file, like \texttt{cards/oscillation.card}, which %
+is extensivle described in \refsec{sec:parameter_space}.
+Each point in the grid, i.e.\ each combination of oscillation parameters, is used in %
+the analysis to build the event samples at the far detector.
+A specific point is chosen to be the \emph{true} value of oscillation parameters %
+--- also defined in the card file --- and a $\chi^2$ between the true combination %
+and any other combination is computed by the fitter.
+
+The points of the grid are represented by a unique integral number, %
+which is lazily evaluated during run time.
+To see what the unique number of the true point is, the following binary can be used
+\begin{lstlisting}[language=bash]
+	./bin/oscillation_point cards/oscillation.card
+\end{lstlisting}
+To see which points of the grid correspond to a scan on certain parameters, 
+the command would be
+\begin{lstlisting}[language=bash]
+	./bin/oscillation_point cards/oscillation.card <parm1> [<parm2> ...]
+\end{lstlisting}
+where \texttt{<parmX>} can typically be any of \texttt{"M12"}, \texttt{"M23"}, \texttt{"S12"}, \texttt{"S13"}, \texttt{"S23"}, or \texttt{"CP"}.
+Specifying all the oscillation parameters would show all the points on the grid.
+
+The typical parameter space spans on four dimensions, the parameters %
+$|\Delta m^2_{32}|$, $\sin^2 \theta_{13}$, $\sin^2 \theta_{23}$, and $\delta_\text{CP}$.
+Since the value of the CP phase is poorly constrained, this parameter is usually %
+allowed to live on its full range, $[-\pi:\pi]$.
+The others parameters are better known and so their ranges are more limited.
+The number of equally spaced points for each dimension should be adequate such that %
+an acceptable resolution on the parameter can be obtained.
+However, the user should keep in mind the \emph{curse of dimensionality}: %
+if 20 points are deemed necessary for each of the four parameters, the resulting %
+grid will be made of $\np{20e4} = \np{160000}$ points!
+Assuming it takes 1\,s on each point to build the event samples and compute the $\chi^2$, %
+the parameter space is fully scanned in a bit more than 44 hours.
+
 \subsection{Running the fitter}
 
 The fitter is the most important tool of the framework; %
 the other executables are used for validation or plotting.
-Before running it, the user has to decide which sample to fit:
+As explained in the previous section, the parameter space grid is scanned on which the event %
+distributions are built and the $\chi^2$ computed.
+Due to the potentially large parameter space, the fitting process should be parallelised %
+by means of a distributed computing system.
+The idea of the original \texttt{osc3++} framework is maintained in this new version: %
+divide the parameter space in equal chunks of oscillation points and process them in %
+different jobs.
+Each job knows the total number of jobs and it is assigned a unique number such that %
+the chunks of parameter space are not processed more than once.
+This process is taken care of by the fitter binary which can be launched as
+\begin{lstlisting}[language=bash]
+	./bin/fitter <id> <jobs> <cards>
+\end{lstlisting}
+where \texttt{<id>} is the unique job ID, a number between 0 and \texttt{<jobs>}$-1$, and %
+\texttt{<card>} is the configuration card.
+The fitter card is slightly different in concept than the other card files, as it contains %
+paths to other configuration cards.
+The ones needes are for
+\begin{itemize}
+	\item fitter options, such as parameters for the Levenberg-Marquared algorithm, %
+		maximum number of iterations, and exit conditions (see \refsec{sec:});
+	\item oscillation parameter space, as described above (see \refsec{sec:});
+	\item beam sample options, if the beam sample is to be fitted;
+	\item atmospheric sample options, if the atmospheric sample is to be fitted.
+\end{itemize}
+An example of card can be found in \texttt{cards/multi.card}.
+The true point can be set with the \texttt{point} key; if omitted, the nominal value is used %
+as true point.
+Other options are the mass hierarchy for the true sample and the sample to fit, %
+as this degree of freedom is not parameterised.
+The cards for the two samples contain paths to the reconstruction systematic input files, %
+as well further options on systematic parameters and density file for computing the %
+oscillation probability.
+
+A quick start to see if the fitter works can be done with the following instructions.
+A new subfolder in the the analysis directory (see \refsec{sec:download}) should be created like this
+\begin{lstlisting}[language=bash]
+	mkdir <prefix>/example
+	mkdir <prefix>/example/systematics
+\end{lstlisting}
+For this test, the T2K 2018 error model will be used and only the beam sample fitted.
+\begin{lstlisting}[language=bash]
+	cp <prefix>/systematics_beam/T2K/* <prefix>/example/systematics/
+\end{lstlisting}
+If the \texttt{<prefix>} path is set to default one, there is no need to change the provided card files.  
+If this is not the case, the user should change the cards accordingly.
+The following command should work without any problem
+\begin{lstlisting}[language=bash]
+	sed -i 's:errorstudy:<prefix>:' cards/*.card
+\end{lstlisting}
+where \texttt{<prefix>} is the correct analysis directory path.
+The parameter space card linked in the default \texttt{cards/multi.card} is a one-dimensional space in %
+$\delta_\text{CP}$, made of 101 points between $-\pi$ and $\pi$.
+The nominal point is at $\delta_\text{CP} = 0$.
+Given the small space, the fitter can be then run as a single process
+\begin{lstlisting}[language=bash]
+	./bin/fitter 0 1 cards/multi.card
+\end{lstlisting}
+and the output will be saved to \texttt{<prefix>/example/SpaghettiSens.0.root}.
+If the displayed messages do not show any ciritical error and the output file %
+is correctly created, the fitter finished successfully.
+The result can be plotted with root
+\begin{lstlisting}[language=bash]
+	root -l <prefix>/example/SpaghettiSens.0.root
+	root [1] stepX2Tree->Draw("X2:CP", "", "L");
+\end{lstlisting}
+
+\section{Oscillation analysis pipeline}
+
+Before running the fitter, the user has to decide which sample to fit:
 \begin{itemize}
 	\item the beam sample;
 	\item the atmospheric sample;
@@ -271,8 +434,9 @@ Then, a folder called \texttt{systematics} should be created under this new dire
 which will contain systematic files needed for this specific run.
 The user can select only one error model for each sample and copy it to the new input directory.%
 \footnote{There is exactly one for the atmospheric sample at the moment.}
-Finally, the fitter can be launched on the distributed computing system with %
-the \texttt{trisens.sh} utility.
+The card files should be finally edited accordingly.
+As this can easily become a tedious job, the \texttt{trisens.sh} utility was devised to %
+completely automatize this process and submit the processes on the distributed computing system.
 
 For example, if the user is interested in doing a combined fit between atmospheric and beam data %
 using the T2K 2018 error model and normal hierarcies, they should do
@@ -310,22 +474,25 @@ The full list of options and the usage can be shown with
 \begin{lstlisting}[language=bash]
 	./trisens.sh -h
 \end{lstlisting}
-This utility automatically edits the card files in the \texttt{cards} folder and place copies %
+This utility automatically edits the card files in the \texttt{cards} folder and place copies them %
 in the output folder
 \begin{lstlisting}[language=bash]
 	<prefix>/first_run/NH_NH/sensitivity/
 \end{lstlisting}
-An \texttt{.info} file will be created as well with a name determined by the scan type.
+An \texttt{.info} file will be created as well in the output folder with a name determined %
+by the scan type.
 A single fit creates a \texttt{point.info} file containing the number of the fitted point, %
 whereas a fit scan for CPV creates a \texttt{CPV\_scan.info} file with a list of all the %
 fitted points.
-Once the fitter is finished the output results will be stored in the folder %
+The points are generated with the \texttt{bin/oscillation\_point} binary.
+Once the fitter is finished the output results are stored in the folder %
 \begin{lstlisting}[language=bash]
 	<prefix>/first_run/NH_NH/sensitivity/point_<p>
 \end{lstlisting}
 where \texttt{<p>} is the point in the oscillation space.
 For example, \np{49773} is the nominal (\emph{true}) fit point of the default oscillation %
-parameter space, defined in \texttt{cards/oscillation.card}.
+parameter space, defined in \texttt{cards/oscillation.card}, %
+which describes a grid space of \np{195871} points.
 When the jobs are finished, the output folder will contain
 \begin{itemize}
 		\small
@@ -356,11 +523,11 @@ Once the jobs are done, it is worth checking whether they were successful, %
 as it may occur that some job fails.
 This could be due to many reasons, e.g.\ missing input files or job requests rejected by the manager.
 The log files will usually contain an error message explaining what went wrong.
-The user should understand the reason for failed jobs and fix it.
+The user should understand the reason for the failure and fix it.
 
 As a full fit requires many resources and can take a long time to complete, %
-an utility to fix broken or missing jobs it is provided.
-Using the previous example, this is done with
+an utility to fix broken or missing jobs is then provided.
+Following the previous example, this is done with
 \begin{lstlisting}[]
 	./complete.sh <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info
 \end{lstlisting}
@@ -373,7 +540,8 @@ simply by launching the script with the \texttt{-f} option
 \begin{lstlisting}[]
 	./complete.sh -f <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info
 \end{lstlisting}
-The other option is to repeat the full fit with the \texttt{trisens.sh} utility.
+The other option is to repeat the full fit with the \texttt{trisens.sh} utility %
+or launch the fits manually.
 
 \subsection{Extracting the results}
 
@@ -406,7 +574,7 @@ For mass hierarchies studies, the \texttt{exclude.sh} utility can accepts two pa
 	./exclude.sh <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info \
 		     <prefix>/first_run/NH_IH/sensitivity/CPV_scan.info
 \end{lstlisting}
-Since the true mass hierarchy is identical in both inputs, the script will make CPV sensitivity curves %
+Since the true mass hierarchy is identical for both inputs, the script will make CPV sensitivity curves %
 for an unknown mass hierarchy fit and save it to a new directory
 \begin{lstlisting}[language=bash]
 	<prefix>/first_run/NH/CPV_scan.dat
@@ -553,6 +721,7 @@ utility and the CPV sensitivity curves from the text file created by the \texttt
 
 
 \section{Tools module}
+\label{sec:tools}
 
 This module contains a configuration file parser, done by the \texttt{CardDealer} class.
 Given the large number of input parameters needed in the analysis, it is advised to use this class as much as possible.
@@ -606,7 +775,8 @@ There are many implementation of the same function, depending on the signature
 
 (6) bool Get(const std::string &key);
 \end{lstlisting}
-The function always \texttt{true} if the key exists and retrieval was successful, \texttt{false} otherwise.
+The function returns \texttt{true} if the key exists and retrieval was successful, %
+\texttt{false} otherwise.
 The actual value associated to the key is returned by reference.
 The last implementation (\texttt{6}) only checks if the key exists.
 The key must be a \texttt{std::string}, but the value can be of any fundamental type compatible with the literals of the configuration file (\texttt{1}).
@@ -810,7 +980,7 @@ The right utility should be used to convert the flavour type into a \texttt{Nu} 
 
 
 \subsubsection{Parameter space class}
-\label{sec:paramater_space}
+\label{sec:parameter_space}
 
 The oscillation parameters are fixed parameters in the analysis, i.e.\ they are not allowed to vary when minimising the $\chi^2$.
 These parameters are instead changed at each iteration step, selecting the predetermined combinations on a fixed grid in %

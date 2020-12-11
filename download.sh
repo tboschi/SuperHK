@@ -48,24 +48,33 @@ fi
 
 echo "Bulding folder structure in $PREFIX"
 
-clone () { #1 is path, #2 is folder on web
-	if ls $PREFIX/$1/ >/dev/null 2>&1 && [ "$force" = false ] ; then
+clone () { #1 is path, #2 is folder on web, #3 is file type
+	if ls $1/ >/dev/null 2>&1 && [ "$force" = false ] ; then
 		echo Folder $1 not empty.
 		echo Call with -f option to force overwriting. Now skipping.
 		return 1
 	fi
 
 	echo Creating $1
-	mkdir -p $PREFIX/$1
+	mkdir -p $1
 
 	mkdir -p .tmp
 	cd .tmp
 	echo wget from $2
-	wget --quiet --accept="*.root" -r -l1 -nd -np -e robots=off $2/
-	mv *.* $PREFIX/$1
+	wget --quiet --accept="$3" -r -l1 -nd -np -e robots=off $2/
 	cd ..
+	mv .tmp/*.* $1
 	rm -rf .tmp
 }
+
+clone_prefix () {
+	clone $PREFIX/$1 $2 '*.root'
+}
+
+clone_honda () {
+	clone $1 $2 '*.d'
+}
+
 
 card () {
 #1 is card name, 2 is file name
@@ -94,11 +103,14 @@ combine () {	#1
 	./bin/addmatrix $out/matrix.root $out/*.root
 }
 
+# get honda production files
+clone_honda data/prod_honda $HK/honda
+
 # atmo reconstruction consists of only MC files
-clone reconstruction_atmo $HK/atmo/reco
+clone_prefix reconstruction_atmo $HK/atmo/reco
 
 # beam reconstruction consists of prediction files and card files
-clone reconstruction_beam $HK/beam/reco
+clone_prefix reconstruction_beam $HK/beam/reco
 card reconstruction_beam "syst_nuE0_nuE0_FHC.card" "enu_erec_nue_x_nue.root"
 card reconstruction_beam "syst_nuE0_nuE0_RHC.card" "enu_erec_nue_crs_nue_anu.root"
 card reconstruction_beam "syst_nuEB_nuEB_FHC.card" "enu_erec_nuebar_x_nuebar.root"
@@ -113,31 +125,31 @@ card reconstruction_beam "syst_nuMB_nuMB_FHC.card" "enu_erec_numubar_x_numubar.r
 card reconstruction_beam "syst_nuMB_nuMB_RHC.card" "enu_erec_numubar_crs_numubar_anu.root"
 
 # clone main error models
-clone systematics_beam/T2K $HK/beam/syst/T2K
+clone_prefix systematics_beam/T2K $HK/beam/syst/T2K
 combine systematics_beam/T2K	#make correlation matrix
-clone systematics_beam/HK  $HK/beam/syst/HK
+clone_prefix systematics_beam/HK  $HK/beam/syst/HK
 combine systematics_beam/HK	#make correlation matrix
-clone systematics_beam/HK_1  $HK/beam/syst/HK_1
+clone_prefix systematics_beam/HK_1  $HK/beam/syst/HK_1
 combine systematics_beam/HK_1	#make correlation matrix
-clone systematics_beam/HK_1_new  $HK/beam/syst/HK_1_new
+clone_prefix systematics_beam/HK_1_new  $HK/beam/syst/HK_1_new
 combine systematics_beam/HK_1_new	#make correlation matrix
-clone systematics_beam/HK_2  $HK/beam/syst/HK_2
+clone_prefix systematics_beam/HK_2  $HK/beam/syst/HK_2
 combine systematics_beam/HK_2	#make correlation matrix
-clone systematics_beam/HK_4  $HK/beam/syst/HK_4
+clone_prefix systematics_beam/HK_4  $HK/beam/syst/HK_4
 combine systematics_beam/HK_4	#make correlation matrix
 
-clone systematics_atmo/SK  $HK/atmo/syst/SK
+clone_prefix systematics_atmo/SK  $HK/atmo/syst/SK
 # no need for correlation matrix for atmo atm
 
 # clone nuenorm models
-clone systematics_beam/NUENORM/anti/1 $HK/beam/syst/NUENORM/anti/1
-clone systematics_beam/NUENORM/anti/2 $HK/beam/syst/NUENORM/anti/2
-clone systematics_beam/NUENORM/anti/3 $HK/beam/syst/NUENORM/anti/3
-clone systematics_beam/NUENORM/anti/4 $HK/beam/syst/NUENORM/anti/4
-clone systematics_beam/NUENORM/anti/5 $HK/beam/syst/NUENORM/anti/5
+clone_prefix systematics_beam/NUENORM/anti/1 $HK/beam/syst/NUENORM/anti/1
+clone_prefix systematics_beam/NUENORM/anti/2 $HK/beam/syst/NUENORM/anti/2
+clone_prefix systematics_beam/NUENORM/anti/3 $HK/beam/syst/NUENORM/anti/3
+clone_prefix systematics_beam/NUENORM/anti/4 $HK/beam/syst/NUENORM/anti/4
+clone_prefix systematics_beam/NUENORM/anti/5 $HK/beam/syst/NUENORM/anti/5
 
-clone systematics_beam/NUENORM/corr/1 $HK/beam/syst/NUENORM/corr/1
-clone systematics_beam/NUENORM/corr/2 $HK/beam/syst/NUENORM/corr/2
-clone systematics_beam/NUENORM/corr/3 $HK/beam/syst/NUENORM/corr/3
-clone systematics_beam/NUENORM/corr/4 $HK/beam/syst/NUENORM/corr/4
-clone systematics_beam/NUENORM/corr/5 $HK/beam/syst/NUENORM/corr/5
+clone_prefix systematics_beam/NUENORM/corr/1 $HK/beam/syst/NUENORM/corr/1
+clone_prefix systematics_beam/NUENORM/corr/2 $HK/beam/syst/NUENORM/corr/2
+clone_prefix systematics_beam/NUENORM/corr/3 $HK/beam/syst/NUENORM/corr/3
+clone_prefix systematics_beam/NUENORM/corr/4 $HK/beam/syst/NUENORM/corr/4
+clone_prefix systematics_beam/NUENORM/corr/5 $HK/beam/syst/NUENORM/corr/5

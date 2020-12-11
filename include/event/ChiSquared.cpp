@@ -10,47 +10,48 @@
 
 #include "ChiSquared.h"
 
-ChiSquared::ChiSquared(CardDealer *card) :
-	cd(std::unique_ptr<CardDealer>(card)),
+ChiSquared::ChiSquared(const std::string &card) :
 	_nBin(-1),
 	_nSys(-1)
 {
-	Init();
+	CardDealer cd(card),
+	Init(cd);
 }
 
-ChiSquared::ChiSquared(std::string card) :
-	cd(std::unique_ptr<CardDealer>(new CardDealer(card))),
+ChiSquared::ChiSquared(const CardDealer &cd) :
 	_nBin(-1),
 	_nSys(-1)
 {
-	Init();
-}
-
-ChiSquared::~ChiSquared()
-{
-	for (auto &is : _sample)
-		delete is;
+	Init(cd);
 }
 
 
-void ChiSquared::Init()
+ChiSquared::ChiSquared(CardDealer *cd) :
+	_nBin(-1),
+	_nSys(-1)
 {
-	if (!cd->Get("lm_0", lm_0))
+	Init(*cd);
+}
+
+
+void ChiSquared::Init(const CardDealer &cd)
+{
+	if (!cd.Get("lm_0", lm_0))
 		lm_0 = 1;		//default value
-	if (!cd->Get("lm_up", lm_up))
+	if (!cd.Get("lm_up", lm_up))
 		lm_up = 5;		//default value
-	if (!cd->Get("lm_down", lm_down))
+	if (!cd.Get("lm_down", lm_down))
 		lm_down = 10;		//default value
 
-	if (!cd->Get("max_iterations", maxIteration))
+	if (!cd.Get("max_iterations", maxIteration))
 		maxIteration = 10;
-	if (!cd->Get("max_random_trials", maxTrials))
+	if (!cd.Get("max_random_trials", maxTrials))
 		maxTrials = 1e4;
-	if (!cd->Get("fit_error", fitErr))
+	if (!cd.Get("fit_error", fitErr))
 		fitErr = 1e-9;
 
 
-	if (!cd->Get("verbose", kVerbosity))
+	if (!cd.Get("verbose", kVerbosity))
 		kVerbosity = 0;
 }
 
@@ -108,7 +109,7 @@ int ChiSquared::DOF() {
 // defines nBin too
 void ChiSquared::CombineBinning() {
 	_nBin = std::accumulate(_sample.begin(), _sample.end(), 0,
-		[&](double sum, Sample* is)
+		[](double sum, std::shared_ptr<Sample> is)
 		{ return sum + is->_nBin; });
 }
 
@@ -117,7 +118,7 @@ void ChiSquared::CombineCorrelation()
 {
 	if (_nSys < 0)
 		_nSys = std::accumulate(_sample.begin(), _sample.end(), 0,
-			[&](double sum, Sample* is)
+			[](double sum, std::shared_ptr<Sample> is)
 			{ return sum + is->_nSys; });
 
 	_corr = Eigen::MatrixXd::Identity(_nSys, _nSys);
@@ -134,8 +135,8 @@ void ChiSquared::CombineCorrelation()
 
 void ChiSquared::CombineSystematics()
 {
-	zeroEpsilons = std::accumulate(_sample.begin(), _sample.end(), true,
-			[&](bool res, Sample *is) { return res && is->zeroEpsilons; });
+	zeroEpsilons = std::all_of(_sample.begin(), _sample.end(),
+			[](std::shared_ptr<Sample> is) { return is->zeroEpsilons; } );
 
 	_sysMatrix[0] = Eigen::ArrayXXd::Zero(_nBin, _nSys);
 	for (int sigma = -3; sigma < 4; sigma += 2) {
@@ -156,7 +157,7 @@ void ChiSquared::SetPoint(int p) {
 }
 
 
-std::map<std::string, Eigen::VectorXd> ChiSquared::BuildSamples(Oscillator *osc) {
+std::map<std::string, Eigen::VectorXd> ChiSquared::BuildSamples(std::shared_ptr<Oscillator> osc) {
 	std::map<std::string, Eigen::VectorXd> samples;
 	for (const auto &is : _sample) {
 		std::map<std::string, Eigen::VectorXd> sample = is->BuildSamples(osc);
@@ -166,7 +167,7 @@ std::map<std::string, Eigen::VectorXd> ChiSquared::BuildSamples(Oscillator *osc)
 	return samples;
 }
 
-Eigen::VectorXd ChiSquared::ConstructSamples(Oscillator *osc) {
+Eigen::VectorXd ChiSquared::ConstructSamples(std::shared_ptr<Oscillator> osc) {
 	Eigen::VectorXd vect(_nBin);
 	int off = 0;
 	for (const auto &is : _sample) {

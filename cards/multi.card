@@ -9,17 +9,19 @@
 fit_parameters	"cards/fit_options.card"
 
 # oscillation space definition
-oscillation_parameters	"cards/oscillation.card"
+oscillation_parameters	"cards/example_oscillation.card"
 
 
 # beam contains path to systmatics, reconstruction files
 # and also density profile for oscillation
-#beam_parameters	"cards/beam_sample.card"
+# if commented, it won't be fitted
+beam_parameters	"cards/beam_sample.card"
 
 
 # atmo contains path to systematics, reconstruction binning
 # and also files for atmospheric oscillation 
-atmo_parameters	"cards/test_atmo_sample.card"
+# if commented, it won't be fitted
+#atmo_parameters	"cards/atmo_sample.card"
 
 
 
@@ -40,7 +42,7 @@ fit_hierarchy	"normal"
 scan	0
 
 # output result of fit will be saved here
-output	"/data/tboschi/HKsens/OscAna/SuperHK/test/atmoinput_nh.root"
+output	"errorstudy/example/SpaghettiSens.root"
 
 # verbosity level is integer, (0) = off
-verbose	2
+verbose	1

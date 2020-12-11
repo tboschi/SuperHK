@@ -34,23 +34,23 @@
 class ChiSquared
 {
 	public:
-		ChiSquared(CardDealer *card);
-		ChiSquared(std::string card);
-		~ChiSquared();
+		ChiSquared(const std::string &card);
+		ChiSquared(const CardDealer &cd);
+		ChiSquared(CardDealer *cd);
 
 		template <class S>
 		void Add(std::string card) {
-			_sample.push_back(new S(card));
+			_sample.push_back(std::shared_ptr<Sample>(new S(card)));
 		}
 		void SetPoint(int p);
 
-		void Init();
+		void Init(const CardDealer &cd);
 		bool Combine();
 		void CombineBinning();
 		void CombineCorrelation();
 		void CombineSystematics();
-		std::map<std::string, Eigen::VectorXd> BuildSamples(Oscillator *osc = 0);
-		Eigen::VectorXd ConstructSamples(Oscillator *osc = 0);
+		std::map<std::string, Eigen::VectorXd> BuildSamples(std::shared_ptr<Oscillator> osc = nullptr);
+		Eigen::VectorXd ConstructSamples(std::shared_ptr<Oscillator> osc = nullptr);
 
 		int NumSys();
 		int NumBin();
@@ -117,8 +117,6 @@ class ChiSquared
 
 
 	private:
-		std::unique_ptr<CardDealer> cd;
-
 		//global parameters
 		int kVerbosity;
 		int badFitThreshold;
@@ -129,7 +127,7 @@ class ChiSquared
 
 		double lm_0, lm_up, lm_down;	//control fit parameters
 
-		std::vector<Sample*> _sample;
+		std::vector<std::shared_ptr<Sample> > _sample;
 
 		int _nBin, _nSys;
 		std::map<int, Eigen::ArrayXXd> _sysMatrix;

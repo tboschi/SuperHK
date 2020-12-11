@@ -83,24 +83,25 @@ if [ -s \$tgt ] && [ \$(date +%s -r \$tgt) -gt $begin ] ; then
 fi
 echo compiling for \$arch
 make clean
-make APP=fitter
+make -j2 APP=fitter
 mv bin/fitter \$tgt
-make APP=atmo_input
+make -j2 APP=atmo_input
 mv bin/atmo_input bin/arch/atmo_input_\$arch
 EOF
 done
 
 echo on localhost
-make clean
 
 # compile fitter and atmo_input with generic architecture
-# if it wasn't possible to compile on the cluster
-if ls bin/arch/fitter_* &> /dev/null ; then
-	make APP=fitter ARCH=
-fi
-if ls bin/arch/atmo_input_* &> /dev/null ; then
-	make APP=atmo_input ARCH=
-fi
+# in case it wasn't possible to compile them on the cluster
+make clean
+make -j2 APP=fitter ARCH=
+mv bin/fitter bin/arch/fitter
+
+make clean
+make -j2 APP=atmo_input ARCH=
+mv bin/fitter bin/arch/fitter
 
 #compile the rest
-make
+make clean
+make -j2

@@ -13,5 +13,5 @@ echo Running on $arch
 if [ -s $PWD/bin/arch/"$exe"_$arch ] ; then
 	$PWD/bin/arch/"$exe"_$arch "$@"
 else
-	$PWD/bin/"$exe" "$@"
+	$PWD/bin/arch/"$exe" "$@"
 fi

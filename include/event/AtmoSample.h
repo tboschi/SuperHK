@@ -52,21 +52,22 @@
 class AtmoSample : public Sample
 {
 	public:
-		AtmoSample(CardDealer *card, std::string process = "");
-		AtmoSample(std::string card, std::string process = "");
-		void Init(std::string process = "");
+		AtmoSample(const std::string card, std::string process = "");
+		AtmoSample(const CardDealer &cd, std::string process = "");
+		AtmoSample(CardDealer *cd, std::string process = "");
+		void Init(const CardDealer &cd, std::string process = "");
 
 		void LoadSimulation();
 
-		void LoadReconstruction(std::string channel);
+		//void LoadReconstruction(std::string channel);
 
-		void LoadReconstruction() override;
-		void LoadSystematics() override;
+		void LoadReconstruction(const CardDealer &cd) override;
+		void LoadSystematics(const CardDealer &cd) override;
 
-		std::map<std::string, Eigen::VectorXd> BuildSamples(Oscillator *osc = 0)
-		override;
+		std::map<std::string, Eigen::VectorXd>
+			BuildSamples(std::shared_ptr<Oscillator> osc = nullptr) override;
 
-		Eigen::VectorXd ConstructSamples(Oscillator *osc = 0);
+		Eigen::VectorXd ConstructSamples(std::shared_ptr<Oscillator> osc = nullptr);
 
 
 	private:
@@ -87,6 +88,8 @@ class AtmoSample : public Sample
 		double data[3000];
 
 		std::map<int, int> pre_point_NH, pre_point_IH;
+
+		double _weight, _reduce;
 };
 
 void CreateTensor(CardDealer *cd);
