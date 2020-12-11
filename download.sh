@@ -3,8 +3,7 @@
 PREFIX=errorstudy
 HK="https://pprc.qmul.ac.uk/~tboschi/HK"
 usage="$0 [options]
-[-f] [-p <prefix>=\"errorstudy\"]
-Download systeamtic and reconstruction input files from
+Download systematic and reconstruction input files from
 database at \"$HK\"
 and save them in \"$PREFIX\"
 

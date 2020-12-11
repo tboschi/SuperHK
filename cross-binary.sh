@@ -9,7 +9,7 @@ arch=$(gcc -march=native -Q --help=target | grep march | cut -f3)
 exe=$1
 shift 
 
-echo Running on $arch
+echo Running on $hostname with $arch
 if [ -s $PWD/bin/arch/"$exe"_$arch ] ; then
 	$PWD/bin/arch/"$exe"_$arch "$@"
 else
