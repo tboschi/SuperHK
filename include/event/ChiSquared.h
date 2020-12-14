@@ -119,9 +119,7 @@ class ChiSquared
 	private:
 		//global parameters
 		int kVerbosity;
-		int badFitThreshold;
-		int maxIteration;
-		int maxTrials;
+		size_t maxIteration, maxTrials;
 		double fitErr;
 		bool zeroEpsilons;
 

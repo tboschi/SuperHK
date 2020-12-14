@@ -248,7 +248,7 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 		}
 
 		// find a better point
-		int rands = 0;
+		size_t rands = 0;
 		do {
 			epsil.setRandom();
 			epsil = best_eps + epsil * step;
@@ -309,6 +309,7 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 	if (kVerbosity > 2)
 		std::cout << "Minimising fit from x2: " << x2 << std::endl;
 
+	// default lm_min = 0, cause if lambda == 0 risk of infinite loop
 	while (lambda > lm_min && std::abs(diff / DOF()) > fitErr
 	      && delta.norm() / _nSys > fitErr) {
 	//while (std::abs(diff) > fitErr
