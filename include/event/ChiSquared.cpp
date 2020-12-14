@@ -14,7 +14,7 @@ ChiSquared::ChiSquared(const std::string &card) :
 	_nBin(-1),
 	_nSys(-1)
 {
-	CardDealer cd(card),
+	CardDealer cd(card);
 	Init(cd);
 }
 
@@ -42,6 +42,8 @@ void ChiSquared::Init(const CardDealer &cd)
 		lm_up = 5;		//default value
 	if (!cd.Get("lm_down", lm_down))
 		lm_down = 10;		//default value
+	if (!cd.Get("lm_min", lm_down))
+		lm_down = 0;		//default value
 
 	if (!cd.Get("max_iterations", maxIteration))
 		maxIteration = 10;
@@ -187,6 +189,13 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 	Eigen::VectorXd epsil = Eigen::VectorXd::Zero(_nSys);
 	double x2 = X2(On, En, epsil);
 
+	if (std::isnan(x2)) {
+		std::cerr << "ChiSquared: ERROR - X2 is nan - dumping vectors on stdout\n";
+		std::cout << "ChiSquared: On " << On.transpose() << "\n\n";
+		std::cout << "ChiSquared: En " << En.transpose() << "\n\n";
+		throw std::logic_error("ChiSquared: starting X2 is nan and it shouldn't be\n");
+	}
+
 	if (zeroEpsilons)
 		return epsil;
 
@@ -300,7 +309,7 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 	if (kVerbosity > 2)
 		std::cout << "Minimising fit from x2: " << x2 << std::endl;
 
-	while (std::abs(diff / DOF()) > fitErr
+	while (lambda > lm_min && std::abs(diff / DOF()) > fitErr
 	      && delta.norm() / _nSys > fitErr) {
 	//while (std::abs(diff) > fitErr
 	      //&& delta.norm() > fitErr) {
@@ -339,7 +348,7 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 			epsil = nextp;
 			x2 = obs_x2 + sys_x2;
 		}
-		else if (std::abs(delta.norm()) > 0)	//next x2 is worse
+		else if (lambda > 0 && delta.norm() > 0)	//next x2 is worse
 			lambda *= lm_up;	//nothing changes but lambda
 						//if step is nonnull
 
@@ -356,8 +365,8 @@ unsigned int ChiSquared::MinimumX2(const Eigen::VectorXd &On,
 		}
 	}
 
-	//if (std::abs(diff / DOF()) < 10*fitErr
-	      //&& delta.norm() / _nSys < 10*fitErr) 	//convergence was reached
+	if (lambda <= lm_min)
+		return 1;	// no convergence
 	return (lambda <= lm_0) ? 0 : 1;
 }
 

@@ -125,7 +125,7 @@ class ChiSquared
 		double fitErr;
 		bool zeroEpsilons;
 
-		double lm_0, lm_up, lm_down;	//control fit parameters
+		double lm_0, lm_up, lm_down, lm_min;	//control fit parameters
 
 		std::vector<std::shared_ptr<Sample> > _sample;
 
