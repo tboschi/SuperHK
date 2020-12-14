@@ -1,5 +1,6 @@
 #! /bin/bash
 
+record="bin/arch/nodes_arches"
 usage="usage: $0 [<options>]
 
 Compile the fitter and the atmo_input binaries on some nodes on the cluster.
@@ -7,21 +8,30 @@ The script runs through all the nodes and compiles a new version of the binary
 only if a new architecture is found. If it was not possible to ssh into any
 node, then a generic version of the two binaries will be compiled, otherwise
 a highly optimized version is creted.
+After running the first time, the script will create the minimal list of nodes
+for a thorough compilation in
+	$PWD/$record
+and ssh only into those nodes in subsequent compilations.
 
 Works with HTCondor or Slurm and requires shared file system between nodes.
 
 Optional parameters
+   -a			 visit all nodes on the cluster. This updates the list
+   			 of nodes and architectures as well.
+
    -x <node>[,<nodes>]	 specify a node or list of nodes to exclude
    			 from compilation. For a list use commas and
 			 not white spaces. Wildcards are supported.
 
-   -h			 print this message and quits.
+   -h			 print this message and quit.
 
 "
 
+all=false
 exclude=""
-while getopts 'x:h' flag; do
+while getopts 'ax:h' flag; do
 	case "${flag}" in
+		a) all=true ;;
 		x) exclude="${OPTARG}" ;;
 		h) echo "$usage" >&2
 		   exit 0 ;;
@@ -49,6 +59,16 @@ else
 	exit 1
 fi
 
+if [ "$all" == "true" ] ; then
+	rm -r $record
+fi
+
+if [ -s $record ] ; then
+	hpc=$(cat $record | cut -f1 -d' ')
+else
+	touch $record
+fi
+
 hpc=(${hpc})
 if [ -n "$exclude" ]; then
 	exclude=(${exclude//,/ })
@@ -57,9 +77,16 @@ if [ -n "$exclude" ]; then
 	done
 fi
 
-echo Hosts found in cluster:
+echo Beginning compilation on the following nodes:
 echo "    " "${hpc[@]}"
 begin=$(date +%s)
+
+if [ -n "$visit" ]; then
+	hpc=(${visit//,/ })
+	echo "Visiting:"
+	echo "    " "${hpc[@]}"
+fi
+
 
 for host in "${hpc[@]}"
 do
@@ -81,11 +108,14 @@ edit=$(date +%s)
 if [ -s \$tgt ] && [ \$(date +%s -r \$tgt) -gt $begin ] ; then
 	exit
 fi
+if ! grep -q "\$arch" $record ; then
+	echo \$(hostname)  "\$arch" >> $record
+fi
 echo compiling for \$arch
 make clean
-make -j2 APP=fitter
+make -j4 APP=fitter
 mv bin/fitter \$tgt
-make -j2 APP=atmo_input
+make -j4 APP=atmo_input
 mv bin/atmo_input bin/arch/atmo_input_\$arch
 EOF
 done
@@ -95,13 +125,13 @@ echo on localhost
 # compile fitter and atmo_input with generic architecture
 # in case it wasn't possible to compile them on the cluster
 make clean
-make -j2 APP=fitter ARCH=
+make -j4 APP=fitter ARCH=
 mv bin/fitter bin/arch/fitter
 
 make clean
-make -j2 APP=atmo_input ARCH=
+make -j4 APP=atmo_input ARCH=
 mv bin/fitter bin/arch/fitter
 
 #compile the rest
 make clean
-make -j2
+make -j4
