@@ -54,17 +54,10 @@ void Atmosphere::LoadProductionHeights(const CardDealer &cd)
 	_energies.clear();
 
 	// calling system ls such that table_file can contain wildcards
-	std::ifstream it(".production_files");
-	if (!it || it.peek() == std::ifstream::traits_type::eof()) {
-		std::string prod_file;
-		if (!cd.Get("honda_production", prod_file)) {
-			std::cout << "Atmosphere: no production heights in card, please specify production height yourself" << std::endl;
-			return;
-		}
-
-		std::string cmd = "ls " + prod_file + " > .production_files";
-		system(cmd.c_str());
-		it.open(".production_files");
+	std::vector<std::string> prod_files;
+	if (!cd.Get("honda_production", prod_files)) {
+		std::cerr << "Atmosphere: no production heights in card, please specify production height yourself" << std::endl;
+		return;
 	}
 
 
@@ -75,12 +68,11 @@ void Atmosphere::LoadProductionHeights(const CardDealer &cd)
 			[](double b) { return -0.1 * b; }); 
 	// now zenith_bin is 0.9, 0.8, ... -0.9, -1.0	according to Honda binning
 
-	std::string file;
 	std::map<int, std::vector<double> > *table;	// "reference"
-	while (std::getline(it, file)) {
-		std::ifstream ip(file.c_str());
+	for (const std::string &prod : prod_files) {
+		std::ifstream ip(prod.c_str());
 		if (kVerbosity)
-			std::cout << "Loading production file " << file << std::endl;
+			std::cout << "Loading production file " << prod << std::endl;
 		std::string line;
 
 		//int iz = 0;	// zenith index
@@ -143,7 +135,6 @@ void Atmosphere::LoadProductionHeights(const CardDealer &cd)
 		}
 		ip.close();
 	}
-	it.close();
 
 	//cmd = "rm .production_files";
 	//system(cmd.c_str());

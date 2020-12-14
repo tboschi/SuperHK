@@ -5,7 +5,8 @@ ParameterSpace::ParameterSpace(const std::string &card)
 	CardDealer cd(card);
 
 	Binning parms;
-	cd.Get("parm_", parms);
+	if (!cd.Get("parm_", parms))
+		throw std::invalid_argument("ParameterSpace: no parameters in oscillation card\n");
 	cd.Get("penalty_", _penals);
 
 	Init(parms);
@@ -14,7 +15,8 @@ ParameterSpace::ParameterSpace(const std::string &card)
 ParameterSpace::ParameterSpace(const CardDealer &cd)
 {
 	Binning parms;
-	cd.Get("parm_", parms);
+	if (!cd.Get("parm_", parms))
+		throw std::invalid_argument("ParameterSpace: no parameters in oscillation card\n");
 	cd.Get("penalty_", _penals);
 
 	Init(parms);
@@ -191,7 +193,7 @@ int ParameterSpace::GetNominalEntry()
 	int n = 0, q = 1;
 	Binning::reverse_iterator ir;
 	for (ir = _binning.rbegin(); ir != _binning.rend(); ++ir) {
-		std::cout << ir->first << "\t" << ir->second.size() << "\t" << _nominal[ir->first] << std::endl;
+		//std::cout << ir->first << "\t" << ir->second.size() << "\t" << _nominal[ir->first] << std::endl;
 		n += _nominal[ir->first] * q;
 		q *= ir->second.size();
 	}

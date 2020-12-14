@@ -42,14 +42,14 @@ int main(int argc, char** argv)
 		std::cerr << "Fitter: no oscillation options card defined, very bad!" << std::endl;
 		return 1;
 	}
-	std::shared_ptr<Oscillator> osc(new Oscillator(cd));
-	std::unique_ptr<ParameterSpace> parms(new ParameterSpace(cd));
+	std::shared_ptr<Oscillator> osc(new Oscillator(osc_card));
+	std::unique_ptr<ParameterSpace> parms(new ParameterSpace(osc_card));
 
 	if (!cd.Get("fit_parameters", fit_card)) {
 		std::cerr << "Fitter: no fit options card defined, very bad!" << std::endl;;
 		return 1;
 	}
-	std::unique_ptr<ChiSquared> fitter(new ChiSquared(cd));
+	std::unique_ptr<ChiSquared> fitter(new ChiSquared(fit_card));
 
 
 	if (cd.Get("beam_parameters", sample_card))
@@ -172,7 +172,7 @@ int main(int argc, char** argv)
 
 	auto t_start = std::chrono::high_resolution_clock::now();
 
-	if (argc > 3) {
+	if (argc > 4) {
 		nstart = std::stoi(argv[4]);
 		nend = nstart + 1;
 		std::cout << "Fitter: OVERRIDE fitting only point " << nstart << "\n";

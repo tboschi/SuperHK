@@ -130,22 +130,13 @@ void BeamSample::Init(const CardDealer &cd, std::string process)
 
 void BeamSample::LoadReconstruction(const CardDealer &cd)
 {
-	std::ifstream it(".reconstruction_files");
-	if (!it || it.peek() == std::ifstream::traits_type::eof()) {
-		std::string reco_files;
-		if (!cd.Get("reco_input", reco_files))
-			throw std::invalid_argument("BeamSample: no reconstruction files in card,"
-						    "very bad!");
-
-		std::string cmd = "ls " + reco_files + " > .reconstruction_files";
-		system(cmd.c_str());
-
-		it.open(".reconstruction_files");
-	}
-
-	std::string file;
-	while (std::getline(it, file))
-		LoadReconstruction(file);
+	// open it if already exists
+	std::vector<std::string> reco_files;
+	if (!cd.Get("reco_input", reco_files))
+		throw std::invalid_argument("BeamSample: no reconstruction files in card,"
+					    "very bad!");
+	for (const std::string &reco : reco_files)
+		LoadReconstruction(reco);
 
 //	for (const std::string &ih : _horn)	//FHC, RHC
 //		for (const std::string &im : _mode)	//nuE->nuE, nuM->nuE, nuM->nuM
