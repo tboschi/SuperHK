@@ -161,8 +161,10 @@ while read -r point ; do
 		elif [ "$out" -ot "$script" ] ; then
 			echo Detected: $out is older than $script
 			bad=true  # at this stage output file is newer than script
-		elif [ -s "$log" ] && ! tail "$log" | grep -q Finished ; then
-			echo Detected: $log did not finish
+		elif [ -s "$log" ] && ! tail -n1 "$log" | grep -q Finished ; then
+			echo Detected: $log did not finish. Last lines are
+			tail "$log"
+			echo ""
 			bad=true
 		fi
 
