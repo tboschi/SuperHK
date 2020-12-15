@@ -2,6 +2,7 @@
 lm_0	1
 lm_up	5
 lm_down	10
+lm_min  0
 
 max_iterations	10
 max_random_trials	1e4

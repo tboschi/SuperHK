@@ -42,8 +42,8 @@ void ChiSquared::Init(const CardDealer &cd)
 		lm_up = 5;		//default value
 	if (!cd.Get("lm_down", lm_down))
 		lm_down = 10;		//default value
-	if (!cd.Get("lm_min", lm_down))
-		lm_down = 0;		//default value
+	if (!cd.Get("lm_min", lm_min))
+		lm_min = 0;		//default value
 
 	if (!cd.Get("max_iterations", maxIteration))
 		maxIteration = 10;
