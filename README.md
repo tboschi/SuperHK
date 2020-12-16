@@ -37,7 +37,7 @@ The requirements for the code to be compiled and run are
 * **gcc-c++** version 4.8 or higher (for C++11);
 * **ROOT** version 5.34/38 or higher;
 * **Eigen** version 3.3 or higher;
-* for running on the cluster **HTCondor** or *SLURM* as workload managers, for distributed computing.
+* for running on the cluster **HTCondor** or **SLURM** as workload managers, for distributed computing; if you use another manager you should change the script accordingly
 
 [ROOT](https://root.cern.ch/) should be installed and properly linked. To test if true, simply run
 ```
@@ -56,9 +56,13 @@ make
 will create the executables in the ```bin/``` folder.
 If only one binary is needed, then this can be compiled alone with
 ```
-make APP = <main>
+make APP=<main>
 ```
 where main any main file under the local app folder. The .cpp extensions must be omitted. 
+By default, copmilation flags for high optimization are turned on. To deactivate them compile like this
+```
+make ARCH=
+```
 
 If using a distributed computing  cluster, its nodes could have all different architectures.
 Specific compilation on each node can be achieved by using
