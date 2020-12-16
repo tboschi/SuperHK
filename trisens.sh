@@ -281,7 +281,7 @@ else # must build folders and card files
 	pre_IH=$upper'/../reconstruction_atmo/pre/IH/atmo.*.root'
 	#pre computed inputs
 	sed -i "s:^pre_input_NH.*:pre_input_NH\t\"$pre_NH\":" $atmo
-	sed -i "s:^pre_input_IH.*:pre_input_IH\t\"$pre_NH\":" $atmo
+	sed -i "s:^pre_input_IH.*:pre_input_IH\t\"$pre_IH\":" $atmo
 	sed -i "s:^pre_tree_name.*:pre_tree_name\t\"atmoTree\":" $atmo
 
 	dens=$PWD'/data/PREM_25pts.dat'
