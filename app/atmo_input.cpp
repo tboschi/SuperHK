@@ -40,8 +40,8 @@ int main(int argc, char** argv)
 		std::cerr << "Atmo_input: no oscillation options card defined, very bad!" << std::endl;
 		return 1;
 	}
-	std::shared_ptr<Oscillator> osc(new Oscillator(cd));
-	std::unique_ptr<ParameterSpace> parms(new ParameterSpace(cd));
+	std::shared_ptr<Oscillator> osc(new Oscillator(osc_card));
+	std::unique_ptr<ParameterSpace> parms(new ParameterSpace(osc_card));
 
 	if (!cd.Get("atmo_parameters", sample_card)) {
 		std::cerr << "Atmo_input: no atmospheric sample card defined, very bad!" << std::endl;
