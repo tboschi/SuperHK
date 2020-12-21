@@ -202,7 +202,7 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 	Eigen::VectorXd best_eps = epsil, prev_eps = epsil;
 	double best_x2 = x2;
 
-	int tries = 0;
+	size_t tries = 0;
 	double step = 1e-3;
 	//double stepSize = 1.0/maxIteration;
 
