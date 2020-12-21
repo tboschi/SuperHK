@@ -27,7 +27,7 @@ Differences with SuperHK v2.0:
 
 ## Getting started
 
-The information here are aimed at a quick installation of the code and how to lunch the fitter rapidly.
+The information here is aimed at a quick installation of the code and how to lunch the fitter rapidly.
 The user is advised to look at the documentation first.
 
 ## Requirements
