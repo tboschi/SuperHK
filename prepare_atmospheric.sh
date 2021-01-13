@@ -25,8 +25,10 @@ if condor_q &> /dev/null ; then
 	SCHED="HTCONDOR"
 elif squeue &> /dev/null ; then
 	SCHED="SLURM"
+elif qstat &> /dev/null ; then
+    SCHED="qsub"
 else
-	echo There is neither HTCondor nor Slurm on this machine. I am sorry, I cannot help you
+	echo There is neither HTCondor nor Slurm nor qsub on this machine. I am sorry, I cannot help you
 	exit 1
 fi
 
@@ -207,6 +209,17 @@ srun $Atmo atmo_input \$SLURM_ARRAY_TASK_ID $NJOBS $card
 
 EOF
 	echo Launching $NJOBS jobs with Slurm
+elif [ "$SCHED" == "qsub" ] ; then
+    sub="qsub -t 1-$NJOBS -l sps=1 -o ${logr}/Logfile$nameExec.\$TASK_ID.log -e ${logr}/Logfile$nameExec.\$TASK_ID.log"
+    cat > $scriptname << EOF
+
+#script submission for qsub
+#submit with qsub -t 0-$NJOBS $scriptname
+cd /sps/t2k/lmuntean/HyperK/SuperHK/
+$Atmo atmo_input \$((SGE_TASK_ID-1)) $NJOBS $card 2>&1 | tee ${logr}/L$nameExec.\$((SGE_TASK_ID-1)).log
+
+EOF
+
 fi
 
 echo Submitting jobs
