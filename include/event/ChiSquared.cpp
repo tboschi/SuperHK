@@ -616,6 +616,89 @@ Eigen::ArrayXd ChiSquared::ObsX2n(const Eigen::VectorXd &On,
 	return chi2;
 }
 
+Eigen::ArrayXd ChiSquared::VarySpectrumSystematics(const Eigen::VectorXd &On,
+				  const Eigen::VectorXd &En,
+				  const Eigen::VectorXd &epsil)
+{
+	// modified expected events with systematics
+	Eigen::ArrayXd gam = Gamma(En, epsil);
+	Eigen::ArrayXd chi2(_nBin);
+	Eigen::ArrayXd en_prime(_nBin);
+	std::cout << "Finished applying systematics" <<std::endl;
+
+	int err_off = 0, bin_off = 0;
+	for (const auto &is : _sample) {	// beam or atmo
+		for (const std::string &it: is->_type) {	// 1Re, 1Rmu, ...
+			if (kVerbosity > 4)
+				std::cout << "type " << it << std::endl;
+			int t = is->ScaleError(it) + err_off;
+			double skerr = is->_nScale ? epsil(t) : 0;
+			/*std::cout << "skerr is " << skerr << std::endl;
+			std::cout << "t is " << t << std::endl;
+			std::cout << "is->_nScale is " << is->_nScale << std::endl;
+			std::cout << "is->ScaleError(it) is " << is->ScaleError(it) << std::endl;
+			std::cout << epsil.transpose() << "\n";*/
+
+			std::vector<std::pair<int, int> > slices = is->AllSlices(it, skerr);
+			std::vector<Eigen::ArrayXd> scales = is->AllScale(&Sample::Nor, it, skerr);
+			/*std::cout << "err_off is " << err_off <<std::endl;
+			std::cout << "bin_off is " << bin_off <<std::endl;
+			std::cout << "_offset[it] is " << is->_offset[it] <<std::endl;*/
+
+			//for (int m = 0, n = is->_offset[it]; m < is->_binpos[it].size(); ++m, ++n) {
+			for (size_t m = 0, n = is->_offset[it] + bin_off;
+					   m < is->_binpos[it].size(); ++m, ++n) {
+				//if (On(n) == 0)
+				//	continue;
+				int m0 = slices[m].first, dm = slices[m].second - m0;
+				m0 += bin_off;
+				//std::cout << "m0 is " << m0 <<std::endl;
+				//std::cout << "dm is " << dm <<std::endl;
+				
+				double en = (scales[m] * gam.segment(m0, dm)).sum();
+				chi2(n) = 2 * en - 2 * On(n) * (1 + log(en / On(n)));
+				en_prime(n) = en;
+
+				if (kVerbosity > 5)
+					std::cout << "x2 @ " << m << ", " << n << " = " << chi2(n)
+						  << " (" << en << ", " << En(n) << ", " << On(n) << ")" << std::endl;
+			}
+		}
+		err_off += is->_nSys;
+		bin_off += is->_nBin;
+	}
+
+	return en_prime;
+}
+
+std::vector<double> ChiSquared::GetErecVect(std::string type){
+	std::vector<double> erec_vect;
+	for (const auto &is : _sample) {
+		erec_vect = is->_global_reco[type];
+	}
+	return erec_vect;
+}
+
+	/*Eigen::VectorXd erec_vect(_nBin);
+	int bin_off = 0;
+	for (const auto &is : _sample) {	// beam or atmo
+		for (const std::string &it: is->_type) {	// 1Re, 1Rmu, ...
+			for (size_t m = 0, n = is->_offset[it] + bin_off;
+					   m < is->_binpos[it].size(); ++m, ++n) {
+				std::cout << "m is " << m << std::endl;
+				std::cout << "n is " << n << std::endl;
+				std::cout << "is->_offset[it] is " << is->_offset[it] << std::endl;
+				std::cout << "is->_binpos[it] is " << is->_binpos[it].size() << std::endl;
+				std::cout << "it is " << it << std::endl;
+				std::cout << "is is " << is << std::endl;
+				std::cout << "bin_off is " << bin_off << std::endl;
+				std::cout << "is->_nBin is " << is->_nBin << std::endl;
+				erec_vect(n) = is->_global[it][m];
+			}
+		}
+		bin_off += is->_nBin;
+	}*/
+
 double ChiSquared::RawX2(const Eigen::VectorXd &On,
 				 const Eigen::VectorXd &En)
 {
@@ -645,18 +728,12 @@ double ChiSquared::SysX2(const Eigen::VectorXd &epsil) {
 Eigen::ArrayXd ChiSquared::Gamma(const Eigen::VectorXd &En,
 				 const Eigen::VectorXd &epsil)
 {
-	Eigen::ArrayXd gam = En.array();
-
+	Eigen::ArrayXd gam = En.array();		
 	int err_off = 0;
 	for (const auto &is : _sample) {	// beam or atmo
 		for (int k = err_off; k < err_off + is->_nSys - is->_nScale; ++k) {
 			auto oneFk = one_Fk(epsil(k), k);
 			gam *= oneFk;//(epsil(k + off), k + off);
-			//for (int n = 0; n < gam.size(); ++n)
-			//	if (oneFk(n) < 0)
-			//		std::cout << gam(n) << " with err " << k << " is " << epsil(k) << " at " << n << " : " << oneFk(n) << std::endl;
-
-			//std::cout << k << ": " << one_Fk(epsil(k+off), k+off).transpose() << std::endl;
 		}
 		err_off += is->_nSys;
 	}
