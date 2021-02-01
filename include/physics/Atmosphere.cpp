@@ -1,7 +1,7 @@
 #include "Atmosphere.h"
 
 Atmosphere::Atmosphere(const std::string &card) :
-	gen(std::random_device()())
+	gen(0)
 {
 	CardDealer cd(card),
 	LoadDensityProfile(cd);
@@ -12,7 +12,7 @@ Atmosphere::Atmosphere(const std::string &card) :
 }
 
 Atmosphere::Atmosphere(const CardDealer &cd) :
-	gen(std::random_device()())
+	gen(0)
 {
 	LoadDensityProfile(cd);
 	LoadProductionHeights(cd);
@@ -23,7 +23,7 @@ Atmosphere::Atmosphere(const CardDealer &cd) :
 
 
 Atmosphere::Atmosphere(CardDealer *cd) :
-	gen(std::random_device()())
+	gen(0)
 {
 	LoadDensityProfile(*cd);
 	LoadProductionHeights(*cd);
