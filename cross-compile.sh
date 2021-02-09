@@ -113,9 +113,9 @@ if ! grep -q "\$arch" $record ; then
 fi
 echo compiling for \$arch
 make clean
-make -j4 APP=fitter
+make -j4 APP=fitter ARCH="-march=native"
 mv bin/fitter \$tgt
-make -j4 APP=atmo_input
+make -j4 APP=atmo_input ARCH="-march=native"
 mv bin/atmo_input bin/arch/atmo_input_\$arch
 EOF
 done
@@ -124,14 +124,8 @@ echo on localhost
 
 # compile fitter and atmo_input with generic architecture
 # in case it wasn't possible to compile them on the cluster
-make clean
-make -j4 APP=fitter ARCH=
-mv bin/fitter bin/arch/fitter
-
-make clean
-make -j4 APP=atmo_input ARCH=
-mv bin/fitter bin/arch/fitter
-
-#compile the rest
+# and compile the rest
 make clean
 make -j4
+cp bin/fitter bin/arch/fitter
+cp bin/atmo_input bin/arch/atmo_input

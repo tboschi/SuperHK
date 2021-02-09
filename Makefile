@@ -12,11 +12,11 @@ ROOTCXX	= $(shell root-config --cflags)
 EIGENINC = $(if $(EIGEN), -I$(EIGEN), )
 
 #optimization
-ARCH ?= -march=native
+ARCH ?= -mavx -msse
 
 WARNING := -Wall
 LDFLAGS  := -Wl,--no-as-needed $(LDFLAGS) $(ROOTLIB)
-CXXFLAGS := $(DEBUG) $(WARNING) -fPIC -std=c++11 -O3 $(ARCH) $(ROOTCXX) -I$(INCDIR) $(EIGENINC)
+CXXFLAGS := $(DEBUG) $(WARNING) -fPIC -std=c++11 -O2 $(ARCH) $(ROOTCXX) -I$(INCDIR) $(EIGENINC)
 
 
 #apps and exctuables
