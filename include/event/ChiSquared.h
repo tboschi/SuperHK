@@ -39,8 +39,9 @@ class ChiSquared
 		ChiSquared(CardDealer *cd);
 
 		template <class S>
-		void Add(std::string card) {
-			_sample.push_back(std::shared_ptr<Sample>(new S(card)));
+		void Add(std::string card, std::string proc = "") {
+			if (proc.std::string::empty()) _sample.push_back(std::shared_ptr<Sample>(new S(card)));
+			else _sample.push_back(std::shared_ptr<Sample>(new S(card, proc)));
 		}
 		void SetPoint(int p);
 
@@ -93,7 +94,10 @@ class ChiSquared
 		Eigen::ArrayXd ObsX2n(const Eigen::VectorXd &On,
 				      const Eigen::VectorXd &En,
 			     const Eigen::VectorXd &epsil);
-
+		Eigen::ArrayXd VarySpectrumSystematics(const Eigen::VectorXd &On,
+				      const Eigen::VectorXd &En,
+			     const Eigen::VectorXd &epsil);
+		std::vector<double> GetErecVect(std::string type);
 		double RawX2(const Eigen::VectorXd &On,
 			     const Eigen::VectorXd &En);
 		Eigen::ArrayXd RawX2n(const Eigen::VectorXd &On,

@@ -46,8 +46,10 @@ if condor_q &> /dev/null ; then
 	SCHED="HTCONDOR"
 elif squeue &> /dev/null ; then
 	SCHED="SLURM"
+elif qstat &> /dev/null ; then
+    SCHED="qsub"
 else
-	echo There is neither HTCondor nor Slurm on this machine. I am sorry, I cannot help you
+	echo There is neither HTCondor nor Slurm nor qsub on this machine. I am sorry, I cannot help you
 	exit 1
 fi
 
@@ -326,6 +328,10 @@ elif [ "$SCHED" == "SLURM" ] ; then
 	running="squeue -h -r -u $USER -o \"%u %t\" | grep R  | wc -l"
 	inqueue="squeue -h -r -u $USER -o \"%u %t\" | grep PD | wc -l"
 	echo Launching $NJOBS jobs with Slurm
+elif [ "$SCHED" == "qsub" ] ; then
+	sub=qsub
+	running="qstat -t -u $USER | grep \" r \" | wc -l"
+	inqueue="qstat -t -u $USER | grep \"qw\" | wc -l"
 fi
 
 #ready to loop over points
@@ -393,6 +399,18 @@ EOF
 #SBATCH --cpus-per-task=1
 
 srun $Sens fitter \$SLURM_ARRAY_TASK_ID $NJOBS $this
+
+EOF
+	else
+		sub=qsub -t 1-$NJOBS -l sps=1 -o ${outlog}/Logfile$nameExec.\$TASK_ID.log -e ${outlog}/Logfile$nameExec.\$TASK_ID.log
+		cat > $scriptname << EOF
+#! /bin/bash
+#script submission for qsub
+#submit with qsub -t 0-$NJOBS $scriptname
+
+#PBS -N point_$t
+#PBS -l walltime=36:00:00
+$Sens fitter \$((SGE_TASK_ID-1)) $NJOBS $this 2>&1 | tee ${outlog}/L$nameExec.\$((SGE_TASK_ID-1)).log
 
 EOF
 	fi

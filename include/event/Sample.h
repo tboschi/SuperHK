@@ -87,7 +87,7 @@ class Sample
 		}
 
 		// same for every one
-		virtual void DefineBinning() {
+		virtual void DefineBinning(int skipEmpty=1) {
 			_nBin = 0;
 			_allBin = 0;
 			_offset.clear(); _binpos.clear();
@@ -116,8 +116,12 @@ class Sample
 
 				// bpos has nonzero bins
 				for (int i = 0; i < is.second.size(); ++i)
-					if (is.second(i) > 0)
+					if (skipEmpty){
+						if (is.second(i) > 0)
 						bpos.push_back(size_t(i));
+					}
+					else bpos.push_back(size_t(i));
+					
 
 				// lims has start and end of nonzero bins
 				//lims.push_back(_nBin + lims.front());
@@ -223,22 +227,27 @@ class Sample
 
 		virtual size_t StartingBin(std::string it, double shift, int n)
 		{
-			auto im = std::lower_bound(_local[it].begin(),
-					_local[it].end(),
-					_local[it][n] / shift);
-			return std::distance(_local[it].begin(), im) - 1; // negative value?
-			//return std::max(int(std::distance(_local[it].begin(), im)) - 1,
+			auto im = std::lower_bound(_global_reco[it].begin(),
+					_global_reco[it].end(),
+					_global_reco[it][n] / shift);
+			//std::cout << "_global_reco[it]["<<n<<"] is " << _global_reco[it][n] <<std::endl;
+			return std::max(int(std::distance(_global_reco[it].begin(), im)) - 1, 0); // negative value?
+			//return std::max(int(std::distance(_global_reco[it].begin(), im)) - 1,
 			//		_limits[it].first);
 		}
 
 		virtual size_t EndingBin(std::string it, double shift, int n)
 		{
-			auto im = std::upper_bound(_local[it].begin(),
-					_local[it].end(),
-					_local[it][n+1] / shift);
-			return std::distance(_local[it].begin(), im);
-			//return std::min(int(std::distance(_local[it].begin(), im)),
+			auto im = std::upper_bound(_global_reco[it].begin(),
+					_global_reco[it].end(),
+					_global_reco[it][n+1] / shift);
+			return std::distance(_global_reco[it].begin(), im);
+			//return std::min(int(std::distance(_global_reco[it].begin(), im)),
 			//		_limits[it].second);
+		}
+
+		int GetErec(std::string it, int n){
+			return _global_reco[it][n];
 		}
 
 
@@ -323,7 +332,7 @@ class Sample
 		//std::map<std::string, std::pair<int, int> > _limits;
 		std::map<std::string, std::vector<size_t> > _binpos;
 		std::map<std::string, size_t> _offset;
-		std::map<std::string, std::vector<double> > _global, _local;
+		std::map<std::string, std::vector<double> > _global_true, _global_reco;
 		// store point for pre computed bins
 		int _point;
 		double _stats;

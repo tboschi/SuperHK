@@ -114,15 +114,17 @@ void BeamSample::Init(const CardDealer &cd, std::string process)
 
 
 	if (process.empty())
-		process = "RBS";
+		process = "RBSE";//by default skip empty bins, so keep 'E' option
 	else
 		std::transform(process.begin(), process.end(), process.begin(),
 				[](unsigned char c){ return std::toupper(c); });
 
 	if (process.find('R') != std::string::npos)
 		LoadReconstruction(cd);
-	if (process.find('B') != std::string::npos)
-		DefineBinning();	// from Sample.h
+	if (process.find('B') != std::string::npos){
+		if (process.find('E') != std::string::npos ) DefineBinning();
+		else DefineBinning(0);	// from Sample.h //if no E option, keep empty bins
+	}
 	if (process.find('S') != std::string::npos)
 		LoadSystematics(cd);
 }
@@ -135,8 +137,9 @@ void BeamSample::LoadReconstruction(const CardDealer &cd)
 	if (!cd.Get("reco_input", reco_files))
 		throw std::invalid_argument("BeamSample: no reconstruction files in card,"
 					    "very bad!");
-	for (const std::string &reco : reco_files)
+	for (const std::string &reco : reco_files){
 		LoadReconstruction(reco);
+	}
 
 //	for (const std::string &ih : _horn)	//FHC, RHC
 //		for (const std::string &im : _mode)	//nuE->nuE, nuM->nuE, nuM->nuM
@@ -241,10 +244,10 @@ void BeamSample::LoadReconstruction(std::string reco_file)
 
 			const double *bx = h2->GetXaxis()->GetXbins()->GetArray();
 			const double *by = h2->GetYaxis()->GetXbins()->GetArray();
-			if (!_global.count(type))
-				_global[type].assign(bx, bx + xs + 1);
-			if (!_local.count(type))
-				_local[type].assign(by, by + ys + 1);
+
+			if (!_global_true.count(type)) 
+				_global_true[type].assign(bx, bx + xs + 1);
+				_global_reco[type].assign(by, by + xs + 1);
 			//_binX[is.first].assign(bx, bx + xs + 1);
 			//_binY[is.first].assign(by, by + ys + 1);
 		}
@@ -258,7 +261,6 @@ std::map<std::string, Eigen::VectorXd>
 {
 	if (osc)
 		osc->SetMatterProfile(_lens_dens);
-
 	std::map<std::string, Eigen::VectorXd> samples;
 	for (const auto &ir : _reco) {
 
@@ -287,14 +289,14 @@ std::map<std::string, Eigen::VectorXd>
 					  << " (" << hname << ") with "
 					  << cname << "\n";
 			const auto &chan = _oscf[cname];
-			const auto &bins = _global[hname]; //type?
+			const auto &bins = _global_true[hname]; //type?
 
 			Eigen::VectorXd vb(bins.size() - 1);
 			for (int i = 0; i < vb.size(); ++i) {
 				probs(i) = osc->Probability(chan.first, chan.second,
 						(bins[i] + bins[i+1]) / 2.);
 			}
-
+			//std::cout<< "Number of bins " << bins.size() <<std::endl;
 			//probs = osc->Oscillate(chan.first, chan.second, _global[ir.first]);
 		}
 		else if (kVerbosity > 4)
@@ -498,14 +500,26 @@ std::vector<std::pair<int, int> > BeamSample::AllSlices(std::string it, double s
 
 	// energy shift
 	double shift = 1 + skerr * _scale[it];
+	/*std::cout << "shift is " << shift << std::endl;
+	std::cout << "skerr is " << skerr << std::endl;
+	std::cout << "_scale[it] is " << _scale[it] << std::endl;
+	*/	
 	// offset between global bin and energy bin
 	//int off = _binpos[it].first - _limits[it].first;
 	// absolute systematic error for this scale parameter
 
-	// returns absolute bin position 
+	// returns absolute bin position
+	//std::cout << "In all slices " <<std::endl; 
 	int i = _offset[it];
 	allslices.reserve(_binpos[it].size());
 	for (int n : _binpos[it]) {
+		/*std::cout << "n is " << n << std::endl;
+		std::cout << "i is " << i << std::endl;
+		std::cout << "StartingBin is " << StartingBin(it, shift, n) << std::endl;
+		std::cout << "EndingBin is " << EndingBin(it, shift, n) << std::endl;
+		std::cout << "_binpos[it].front() is " << _binpos[it].front() << std::endl;
+		std::cout << "_binpos[it].back()+1 is " << _binpos[it].back()+1 << std::endl;*/
+		
 		int m0 = std::max(StartingBin(it, shift, n), _binpos[it].front()) - n + i;
 		int m1 = std::min(EndingBin(it, shift, n), _binpos[it].back()+1) - n + i;
 		if (m0 > m1)
@@ -542,8 +556,8 @@ std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it
 	//int off = _binpos[it].first - _limits[it].first;
 	// absolute systematic error for this scale parameter
 
-	// alias to binning
-	std::vector<double> &local = _local[it];
+	// alias to reco binning
+	std::vector<double> &global = _global_reco[it];
 
 	//// loop over bins of this sample
 	//for (int n = _binpos[it].first; n < _binpos[it].second; ++n) {
@@ -634,8 +648,8 @@ double Scale(FactorFn factor,
 	//std::cout << "type " << it << " from " << _binpos[it].first << " to " << _binpos[it].second << std::endl;
 	//std::cout << "bin " << n << " : " << b0_n << " - " << b1_n << std::endl;
 	//std::cout << "starting from " << m0 << ": "
-	//<< shift * _local[it][m0] << " and " << shift * _local[it][m0 + 1] << "\n";
-	//std::cout << "offset " << off << " from " << m0 + off << std::endl;
+	//<< shift * _global[it][m0] << " and " << shift * _global[it][m0 + 1] << "\n";
+	//std::cout << "off_global
 
 	double ret = 0;
 	// Loop over unscaled/original edges only nonempty bins
