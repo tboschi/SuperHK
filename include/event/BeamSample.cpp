@@ -240,9 +240,11 @@ void BeamSample::LoadReconstruction(std::string reco_file)
 			_reco[is.first + "_" + channel] = rm;
 
 			const double *bx = h2->GetXaxis()->GetXbins()->GetArray();
-			//const double *by = h2->GetYaxis()->GetXbins()->GetArray();
+			const double *by = h2->GetYaxis()->GetXbins()->GetArray();
 			if (!_global.count(type))
 				_global[type].assign(bx, bx + xs + 1);
+			if (!_local.count(type))
+				_local[type].assign(by, by + ys + 1);
 			//_binX[is.first].assign(bx, bx + xs + 1);
 			//_binY[is.first].assign(by, by + ys + 1);
 		}
@@ -502,10 +504,13 @@ std::vector<std::pair<int, int> > BeamSample::AllSlices(std::string it, double s
 
 	// returns absolute bin position 
 	int i = _offset[it];
+	allslices.reserve(_binpos[it].size());
 	for (int n : _binpos[it]) {
 		int m0 = std::max(StartingBin(it, shift, n), _binpos[it].front()) - n + i;
 		int m1 = std::min(EndingBin(it, shift, n), _binpos[it].back()+1) - n + i;
-		allslices.push_back(std::make_pair(m0, m1));
+		if (m0 > m1)
+			m0 = m1;
+		allslices.emplace_back(m0, m1);
 		++i;
 	}
 
@@ -538,7 +543,7 @@ std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it
 	// absolute systematic error for this scale parameter
 
 	// alias to binning
-	std::vector<double> &global = _global[it];
+	std::vector<double> &local = _local[it];
 
 	//// loop over bins of this sample
 	//for (int n = _binpos[it].first; n < _binpos[it].second; ++n) {
@@ -552,23 +557,23 @@ std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it
 		// this is just relative bin position
 		int m0 = std::max(StartingBin(it, shift, n), _binpos[it].front());
 		int m1 = std::min(EndingBin(it, shift, n), _binpos[it].back()+1);
-		//std::cout << "nonzero bin " << n << " is " << global[n]
-		//	  << " - " << global[n+1]
+		//std::cout << "nonzero bin " << n << " is " << local[n]
+		//	  << " - " << local[n+1]
 		//	  << ", between " << m0 << " and " << m1 << std::endl;
 
 		// unscaled/original bins
-		//double b0_n = global[n - off];
-		//double b1_n = global[n - off + 1];
+		//double b0_n = local[n - off];
+		//double b1_n = local[n - off + 1];
 		//
 		// bin edges
-		double b0_n = global[n];
-		double b1_n = global[n + 1];
+		double b0_n = local[n];
+		double b1_n = local[n + 1];
 
 		std::vector<double> thisfact;
 		for (int m = m0; m < m1; ++m) {
 
-			double b0_m = global[m];
-			double b1_m = std::min(global[m + 1], 30 / shift);
+			double b0_m = local[m];
+			double b1_m = std::min(local[m + 1], 30 / shift);
 			//std::cout << "\tshift " << shift * b0_m << " - " << shift * b1_m << std::endl;
 			// scaled bins
 			//continue/break computation because there is no overlap
@@ -623,21 +628,21 @@ double Scale(FactorFn factor,
 	int off = _binpos[it].first - _limits[it].first;
 
 	// unscaled/original bins
-	double b0_n = _global[it][n - off];
-	double b1_n = _global[it][n - off + 1];
+	double b0_n = _local[it][n - off];
+	double b1_n = _local[it][n - off + 1];
 
 	//std::cout << "type " << it << " from " << _binpos[it].first << " to " << _binpos[it].second << std::endl;
 	//std::cout << "bin " << n << " : " << b0_n << " - " << b1_n << std::endl;
 	//std::cout << "starting from " << m0 << ": "
-	//<< shift * _global[it][m0] << " and " << shift * _global[it][m0 + 1] << "\n";
+	//<< shift * _local[it][m0] << " and " << shift * _local[it][m0 + 1] << "\n";
 	//std::cout << "offset " << off << " from " << m0 + off << std::endl;
 
 	double ret = 0;
 	// Loop over unscaled/original edges only nonempty bins
-	for (int m = m0; m < _global[it].size()-1; ++m) {
+	for (int m = m0; m < _local[it].size()-1; ++m) {
 		// scaled bins
-		double b0_m = _global[it][m];
-		double b1_m = std::min(_global[it][m + 1], 30 / shift);
+		double b0_m = _local[it][m];
+		double b1_m = std::min(_local[it][m + 1], 30 / shift);
 		//continue/break computation because there is no overlap
 		if (shift * b0_m > b1_n)
 			break;

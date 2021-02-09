@@ -223,21 +223,21 @@ class Sample
 
 		virtual size_t StartingBin(std::string it, double shift, int n)
 		{
-			auto im = std::lower_bound(_global[it].begin(),
-					_global[it].end(),
-					_global[it][n] / shift);
-			return std::distance(_global[it].begin(), im) - 1; // negative value?
-			//return std::max(int(std::distance(_global[it].begin(), im)) - 1,
+			auto im = std::lower_bound(_local[it].begin(),
+					_local[it].end(),
+					_local[it][n] / shift);
+			return std::distance(_local[it].begin(), im) - 1; // negative value?
+			//return std::max(int(std::distance(_local[it].begin(), im)) - 1,
 			//		_limits[it].first);
 		}
 
 		virtual size_t EndingBin(std::string it, double shift, int n)
 		{
-			auto im = std::upper_bound(_global[it].begin(),
-					_global[it].end(),
-					_global[it][n+1] / shift);
-			return std::distance(_global[it].begin(), im);
-			//return std::min(int(std::distance(_global[it].begin(), im)),
+			auto im = std::upper_bound(_local[it].begin(),
+					_local[it].end(),
+					_local[it][n+1] / shift);
+			return std::distance(_local[it].begin(), im);
+			//return std::min(int(std::distance(_local[it].begin(), im)),
 			//		_limits[it].second);
 		}
 
@@ -257,7 +257,7 @@ class Sample
 
 			// energy shift
 			//double shift = 1 + skerr * _scale[it];
-			// offset between global bin and energy bin
+			// offset between local bin and energy bin
 			//int off = _binpos[it].first - _limits[it].first;
 			// absolute systematic error for this scale parameter
 
@@ -323,7 +323,7 @@ class Sample
 		//std::map<std::string, std::pair<int, int> > _limits;
 		std::map<std::string, std::vector<size_t> > _binpos;
 		std::map<std::string, size_t> _offset;
-		std::map<std::string, std::vector<double> > _global;
+		std::map<std::string, std::vector<double> > _global, _local;
 		// store point for pre computed bins
 		int _point;
 		double _stats;
