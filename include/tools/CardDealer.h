@@ -8,8 +8,10 @@
 
 #include <cstdlib>
 #include <map>
+#include <unordered_map>
 #include <vector>
 #include <set>
+#include <unordered_set>
 #include <list>
 #include <deque>
 #include <fstream>
@@ -17,8 +19,6 @@
 #include <sstream>
 #include <algorithm>
 #include <type_traits>
-
-#include "tools/ic.h"
 
 //// trim from start (in place)
 //static inline void ltrim(std::string &s)
@@ -147,11 +147,41 @@ class CardDealer
 		struct is_sequence <std::set<Args...> > : std::true_type {};
 
 		template <typename ... Args>
+		struct is_sequence <std::unordered_set<Args...> > : std::true_type {};
+
+		template <typename ... Args>
 		struct is_sequence <std::list<Args...> > : std::true_type {};
 
 		template <typename ... Args>
 		struct is_sequence <std::deque<Args...> > : std::true_type {};
 
+		// for collection of containers
+		template <typename T>
+		struct is_map : std::false_type {};
+
+		template <typename ... Args>
+		struct is_map <std::map<Args...> > : std::true_type {};
+
+		template <typename ... Args>
+		struct is_map <std::unordered_map<Args...> > : std::true_type {};
+
+
+		// to determine if collection of std::string
+		//template <typename C>
+		//struct has_string : std::false_type {};
+
+		template <typename C, typename std::enable_if<is_sequence<C>::value>::type* = nullptr>
+		struct has_string {
+			static constexpr bool value = std::is_same<typename C::value_type, std::string>::value;
+		};
+
+
+		/*
+		template <typename T, typename std::enable_if<std::is_fundamental<T>::value>::type* = nullptr>
+		bool Get(const std::string &&key, T &ret) const {
+			return Get(key, ret);
+		}
+		*/
 
 		// generic one, uses stringstream to cast string to correct type
 		// good for fundamental type
@@ -159,24 +189,48 @@ class CardDealer
 		bool Get(const std::string &key, T &ret) const {
 			auto id = _entries.find(key);
 			if (id != _entries.end()) {
-				std::stringstream st(id->second.front());
-				return static_cast<bool>(st >> ret);	// successful casting
+				try {
+					double tmp = std::stod(id->second.front());
+					ret = static_cast<T>(tmp);
+				}
+				catch (const std::exception &e) {
+					if (kVerbosity)
+						std::cerr << e.what();
+					return false;
+				}
+				return true;
+				//std::stringstream st(id->second.front());
+				//return static_cast<T>(st >> ret);	// successful casting
 			}
 			else
 				return false;
 		}
 
 		// good for insert types
+		/*
+		template <typename C, typename std::enable_if<is_sequence<C>::value>::type* = nullptr>
+		bool Get(const std::string &&key, C &ret) const {
+			return Get(key, ret);
+		}
+		*/
+
 		template <typename C, typename std::enable_if<is_sequence<C>::value>::type* = nullptr>
 		bool Get(const std::string &key, C &ret) const {
 			auto id = _entries.find(key);
 			if (id != _entries.end()) {
 				ret.clear();
 				for (const std::string &it : id->second) {
-					typename C::value_type ty;
-					std::stringstream st(it);
-					if (st >> ty)
+					try {
+						double tmp = std::stod(it);
+						typename C::value_type ty =
+							static_cast<typename C::value_type>(tmp);
 						ret.insert(ret.end(), ty);
+					}
+					catch (const std::exception &e) {
+						if (kVerbosity)
+							std::cerr << e.what();
+						return false;
+					}
 				}
 				return bool(ret.size());
 			}
@@ -184,10 +238,12 @@ class CardDealer
 				return false;
 		}
 
+		// special get method that returns map/unordered_map
+		template <typename M, typename std::enable_if<is_map<M>::value>::type* = nullptr>
+		bool _get_map(const std::string &key, M &ret) const {
+			//using K = typename M::key_type;
+			using T = typename M::mapped_type;
 
-		// return pieces of maps
-		template <typename T>
-		bool Get(const std::string &key, std::map<std::string, T> &ret) const {
 			ret.clear();
 			for (const auto &id : _entries) {
 				if (id.first.find(key) != std::string::npos) {
@@ -200,6 +256,19 @@ class CardDealer
 
 			return bool(ret.size());
 		}
+
+		// return pieces of maps
+
+		template <typename T>
+		bool Get(const std::string &key, std::map<std::string, T> &ret) const {
+			return _get_map(key, ret);
+		}
+
+		template <typename T>
+		bool Get(const std::string &key, std::unordered_map<std::string, T> &ret) const {
+			return _get_map(key, ret);
+		}
+
 
 		// for strings, there is no need to cast
 
@@ -215,6 +284,7 @@ class CardDealer
 
 		// for vectors of strings, there is no need to cast
 
+		/*
 		bool Get(const std::string &key, std::vector<std::string> &ret) const {
 			auto id = _entries.find(key);
 			if (id != _entries.end()) {
@@ -224,11 +294,57 @@ class CardDealer
 			else
 				return false;
 		}
+		*/
 
+		// special method for sequences of strings
+		template <typename C, typename std::enable_if<has_string<C>::value>::type* = nullptr>
+		bool _get_string_seq(const std::string &key, C &ret) const {
+			auto id = _entries.find(key);
+			if (id != _entries.end()) {
+				ret = C(id->second.begin(), id->second.end());
+				return bool(ret.size());
+			}
+			else
+				return false;
+		}
+
+		bool Get(const std::string &key, std::vector<std::string> &ret) const {
+			return _get_string_seq(key, ret);
+		}
+
+		bool Get(const std::string &key, std::set<std::string> &ret) const {
+			return _get_string_seq(key, ret);
+		}
+
+		bool Get(const std::string &key, std::unordered_set<std::string> &ret) const {
+			return _get_string_seq(key, ret);
+		}
+
+		bool Get(const std::string &key, std::list<std::string> &ret) const {
+			return _get_string_seq(key, ret);
+		}
+
+		bool Get(const std::string &key, std::deque<std::string> &ret) const {
+			return _get_string_seq(key, ret);
+		}
+
+
+		// just say if key exists in dictionary
 		bool Get(const std::string &key) const {
 			return (_entries.find(key) != _entries.end());
 		}
 
+
+
+		// get functions for rvalues
+		bool Get(const std::string &&key) const {
+			return Get(key);
+		}
+
+		template <typename Any>
+		bool Get(const std::string &&key, Any &ret) {
+			return Get(key, ret);
+		}
 
 		std::vector<std::string> ListKeys() const {
 			std::vector<std::string> keys;
@@ -239,10 +355,8 @@ class CardDealer
 		}
 
 
-
 	private:
-		std::map<std::string, int, ic> st;
-		std::map<std::string, std::vector<std::string>, ic> _entries;
+		std::unordered_map<std::string, std::vector<std::string> > _entries;
 
 		std::string _cardFile;
 		bool kVerbosity;
