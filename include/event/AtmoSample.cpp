@@ -25,7 +25,7 @@ AtmoSample::AtmoSample(CardDealer *cd, std::string process) :
 
 void AtmoSample::Init(const CardDealer &cd, std::string process)
 {
-	atm_path = std::unique_ptr<Atmosphere>(new Atmosphere(cd));
+	_atm_path = std::unique_ptr<Atmosphere>(new Atmosphere(cd));
 
 	_oscf = { {"nuE0_nuE0", {Nu::E_, Nu::E_}},
 		  {"nuE0_nuM0", {Nu::E_, Nu::M_}},
@@ -78,24 +78,14 @@ void AtmoSample::Init(const CardDealer &cd, std::string process)
 		std::cout << std::endl;
 		std::cout << "AtmoSample: number of scale systematics " << _nScale << std::endl;
 		for (const auto &it : _scale)
-			std::cout << "\t" << it.first << " -> " << it.second << std::endl;
+			std::cout << "\t" << it.first << " -> " << it.second.first << std::endl;
 	}
 
 	_point = -1;
 
 
-	if (process.empty())
-		process = "RBS";
-	else
-		std::transform(process.begin(), process.end(), process.begin(),
-				[](unsigned char c){ return std::toupper(c); });
-
-	if (process.find('R') != std::string::npos)
-		LoadReconstruction(cd);
-	if (process.find('B') != std::string::npos)
-		DefineBinning();
-	if (process.find('S') != std::string::npos)
-		LoadSystematics(cd);
+	// dispatch method from base class
+	Load(cd, process);
 }
 
 
@@ -198,63 +188,43 @@ void AtmoSample::LoadSystematics(const CardDealer &cd)
 void AtmoSample::LoadReconstruction(const CardDealer &cd) {
 
 	// check first if precomputed files exist
-	std::string chain, tree_name; //, friends, friend_name;
-	if (cd.Get("pre_input_NH", chain)) {
+	std::map<std::string, std::string> pre_inputs;
+	if (cd.Get("pre_input_", pre_inputs)) {
+		std::string tree_name;
 		if (!cd.Get("pre_tree_name", tree_name))
 			tree_name = "atmoTree";
 
-		if (kVerbosity)
-			std::cout << "AtmoSample: opening NH input\n";
-		nh = std::unique_ptr<TChain>(new TChain(tree_name.c_str()));
+		for (const auto & pi : pre_inputs) {
+			if (kVerbosity)
+				std::cout << "AtmoSample: opening " << pi.first << " input\n";
 
-		nh->Add(chain.c_str());
+			_pre_tree[pi.first] = std::unique_ptr<TChain>(new TChain(tree_name.c_str()));
 
-		nh->SetBranchAddress("Point", &point);
-		nh->SetBranchAddress("Bins",  &bins);
-		nh->SetBranchAddress("Data",  data);
+			_pre_tree[pi.first]->Add(pi.second.c_str());
 
-		nh->SetBranchStatus("*", 0);
-		nh->SetBranchStatus("Point", 1);
-		//linking fitting point to position in tree
-		//as they may not be ordered
-		for (int i = 0; i < nh->GetEntries(); ++i) {
-			nh->GetEntry(i);
-			pre_point_NH[point] = i;
+			_pre_tree[pi.first]->SetBranchAddress("Point", &point);
+			_pre_tree[pi.first]->SetBranchAddress("Bins",  &bins);
+			_pre_tree[pi.first]->SetBranchAddress("Data",  data);
+
+			_pre_tree[pi.first]->SetBranchStatus("*", 0);
+			_pre_tree[pi.first]->SetBranchStatus("Point", 1);
+
+			//linking fitting point to position in tree
+			//as they may not be ordered
+			for (int i = 0; i < _pre_tree[pi.first]->GetEntries(); ++i) {
+				_pre_tree[pi.first]->GetEntry(i);
+				_pre_point[pi.first].emplace(point, i);
+			}
 		}
 	}
-
-	if (cd.Get("pre_input_IH", chain)) {
-		if (!cd.Get("pre_tree_name", tree_name))
-			tree_name = "atmoTree";
-		ih = std::unique_ptr<TChain>(new TChain(tree_name.c_str()));
-
-		if (kVerbosity)
-			std::cout << "AtmoSample: opening IH input\n";
-		
-		ih->Add(chain.c_str());
-
-		ih->SetBranchAddress("Point", &point);
-		ih->SetBranchAddress("Bins",  &bins);
-		ih->SetBranchAddress("Data",  data);
-
-		ih->SetBranchStatus("*", 0);
-		ih->SetBranchStatus("Point", 1);
-		//linking fitting point to position in tree
-		//as they may not be ordered
-		for (int i = 0; i < ih->GetEntries(); ++i) {
-			ih->GetEntry(i);
-			pre_point_IH[point] = i;
-		}
-	}
-
 
 	// extract bining from recostruction matrices
 	// binning is compressed, such that nonempty bins are not stored
 
 	// type of histogram, they are numbered with integer
 	// to identify the event type in the MC files
-	std::map<std::string, int> hist_types;
-	std::map<std::string, std::vector<double> > hist_axes;
+	std::unordered_map<std::string, int> hist_types;
+	std::unordered_map<std::string, std::vector<double> > hist_axes;
 	cd.Get("bintype_", hist_types);
 	cd.Get("binaxis_", hist_axes);
 
@@ -268,13 +238,17 @@ void AtmoSample::LoadReconstruction(const CardDealer &cd) {
 		_reco_hist[ih.first] = new TH2D (hname.c_str(), hname.c_str(),
 				hist_axes[ax0].size()-1, &hist_axes[ax0][0],
 				hist_axes[ax1].size()-1, &hist_axes[ax1][0]);
+		_global_true[ih.first] = std::move(hist_axes[ax0]);
+		_global_reco[ih.first] = std::move(hist_axes[ax1]);
 		// reverse lookup
 		_type_names[ih.second] = ih.first;
 	}
 
+	std::string chain;
 	if (!cd.Get("MC_input", chain))
 		throw std::invalid_argument("AtmoSample: no reconstruction files in card,"
 			       		    "very bad!");
+	std::string tree_name;
 	if (!cd.Get("MC_tree_name", tree_name))
 		tree_name = "osc_tuple";
 	//cd.Get("friend_input", friends);
@@ -305,6 +279,9 @@ void AtmoSample::LoadReconstruction(const CardDealer &cd) {
 	dm->SetBranchAddress("amom",    &amom);
 	dm->SetBranchAddress("flxho",   &flxho);
 	dm->SetBranchAddress("weightx", &weightx);
+
+	dm->GetEntry(0);
+	_nentries = dm->GetEntries();
 
 	// only if friends
 	//dm->SetBranchAddress("ErmsHax",  ErmsHax  );
@@ -363,9 +340,9 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 }
 */
 
-std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(std::shared_ptr<Oscillator> osc)
+std::unordered_map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(std::shared_ptr<Oscillator> osc)
 {
-	std::map<std::string, Eigen::VectorXd> samples;
+	std::unordered_map<std::string, Eigen::VectorXd> samples;
 
 	for (const auto &ih : _reco_hist)
 		ih.second->Reset("ICES");
@@ -391,9 +368,16 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(std::shared_ptr<
 	//tt->Branch("pE",   &pE, "pE/D");
 	//tt->Branch("pM",   &pM, "pM/D");
 	
+	if (_nentries != dm->GetEntries())
+		throw std::logic_error("AtmoSample: number off entires changed, file system error");
+	// keep updating _nentries to check status of file system
+	_nentries = dm->GetEntries();
 
-	std::cout << "AtmoSample: reading " << dm->GetEntries() << " entries" << std::endl;
-	for (int i = 0; i < dm->GetEntries(); ++i) {
+	if (kVerbosity)
+		std::cout << "AtmoSample: reading " << _nentries << " entries" << std::endl;
+	
+
+	for (int i = 0; i < _nentries; ++i) {
 	//for (int i = 0; i < 1000; ++i) {
 		//std::cout << "entry " << i << std::endl;
 		dm->GetEntry(i);	// all branches
@@ -414,7 +398,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(std::shared_ptr<
 		std::string type = _type_names[itype];
 
 		// bin is not in range, just skip it
-		int bin = _reco_hist[type]->FindBin(log10(amom), -dir[2]);
+		int bin = _reco_hist[type]->FindBin(std::log10(amom), -dir[2]);
 		if ( _reco_hist[type]->IsBinOverflow(bin)
 		  || _reco_hist[type]->IsBinUnderflow(bin))
 			continue;
@@ -447,7 +431,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(std::shared_ptr<
 			// this automatically get production height
 			// if honda flux is defined in card then height is generted
 			// otherwise is fixed to value defiend in card
-			osc->SetMatterProfile(atm_path->MatterProfile(nu_out, -dirnu[2], pnu));
+			osc->SetMatterProfile(_atm_path->MatterProfile(nu_out, -dirnu[2], pnu));
 
 			// but thanks to LUT, probability is computed only once
 			if (ipnu > 0)	// neutrino
@@ -476,7 +460,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(std::shared_ptr<
 				  	//<< "\t" << weightx << std::endl; 
 		}
 
-		_reco_hist[type]->Fill(log10(amom), -dir[2], weightx);
+		_reco_hist[type]->Fill(std::log10(amom), -dir[2], weightx);
 	}
 
 	//tt->Write();
@@ -503,32 +487,39 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(std::shared_ptr<
 
 Eigen::VectorXd AtmoSample::ConstructSamples(std::shared_ptr<Oscillator> osc)
 {
-	if (osc && osc->GetHierarchy() == Oscillator::normal &&
-	    pre_point_NH.count(_point)) {
+	if (osc) {
+		std::string type = osc->GetHierarchy() == Oscillator::normal ? "NH" : "IH";
+		if (_pre_point.count(type) && _pre_point[type].count(_point)) {
+			if (kVerbosity > 1)
+				std::cout << "AtmoSample: using precomputed " << type
+					  << " NH at point " << _point << std::endl;
 
-		if (kVerbosity > 1)
-			std::cout << "AtmoSample: using precomputed NH at point " << _point << std::endl;
+			_pre_tree[type]->SetBranchStatus("*", 1);
+			_pre_tree[type]->GetEntry(_pre_point[type][_point]);
 
-		nh->SetBranchStatus("*", 1);
-		nh->GetEntry(pre_point_NH[_point]);
-
-		Eigen::VectorXd samples = Eigen::Map<Eigen::VectorXd>(data, bins);
-		return _stats * samples;
+			Eigen::VectorXd samples = Eigen::Map<Eigen::VectorXd>(data, bins);
+			return _stats * samples;
+		}
 	}
-	if (osc && osc->GetHierarchy() == Oscillator::inverted &&
-	    pre_point_IH.count(_point)) {
 
-		if (kVerbosity > 1)
-			std::cout << "AtmoSample: using precomputed IH at point " << _point << std::endl;
+	if (kVerbosity > 1)
+		std::cout << "AtmoSample: computing from scratch\n";
+	return Sample::ConstructSamples(osc);
+}
 
-		ih->SetBranchStatus("*", 1);
-		ih->GetEntry(pre_point_IH[_point]);
-
-		Eigen::VectorXd samples = Eigen::Map<Eigen::VectorXd>(data, bins);
-		return _stats * samples;
+// decompress spectrum vector
+std::unordered_map<std::string, Eigen::VectorXd> AtmoSample::Unfold(const Eigen::VectorXd &En)
+{
+	std::unordered_map<std::string, Eigen::VectorXd> samples;
+	for (const std::string it : _type) {
+		int xs = _global_true[it].size() - 1;
+		int ys = _global_reco[it].size() - 1;
+		samples[it] = Eigen::VectorXd::Zero(xs * ys);
+		for (size_t m = 0, n = _offset[it]; m < _binpos[it].size(); ++m, ++n)
+			samples[it](_binpos[it][m]) = En(n);
 	}
-	else	// no precomputation
-		return Sample::ConstructSamples(osc);
+
+	return samples;
 }
 
 

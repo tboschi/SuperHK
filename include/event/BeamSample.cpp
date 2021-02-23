@@ -42,54 +42,30 @@ void BeamSample::Init(const CardDealer &cd, std::string process)
 		// default value
 		_type = {"E_FHC", "E_RHC", "M_FHC", "M_RHC"};
 
-	// get scale error which is now defined manually
-	if (!cd.Get("scale_error_", _scale)) {
-		// check first for a map, if not look for a scalar
+	std::map<std::string, double> scale;
+	if (!cd.Get("scale_error_", scale)) {
 		double err;
-		_scale.clear();
 		if (cd.Get("scale_error", err)) {
+			for (const std::string &it : _type)
+				_scale.emplace(it, std::make_pair(err, 0));
 			_nScale = 1;
-			for (const std::string &it : _type) {
-				_scale[it] = err;
-				_type_scale[it] = 0;
-			}
 		}
 		else
 			_nScale = 0;
 	}
-	else {	// there should be scale_E and scale_M
-		// map scale contains "E" and "M"	
-		std::map<std::string, double> err;
-		for (const std::string &it : _type) {
-			//E_FHC or E_RHC
-			if (it.find_first_of('E') != std::string::npos) {
-				if (_scale.count("E"))
-					err[it] = _scale["E"];
-				else {
-					if (kVerbosity)
-						std::cout << "No scale_E in card"
-							  << cd.CardName() << std::endl;
-					//default to
-					err[it] = 0.024;
-				}
-				_type_scale[it] = 0;
+	else { // length of scale is number of errors
+		_nScale = 0;
+		for (const auto &s : scale) {
+			for (const std::string &it : _type) {
+				if (it.find(s.first) != std::string::npos)
+					_scale.emplace(it, std::make_pair(s.second, _nScale));
+				else
+					throw std::invalid_argument("BeamSample: not accepted string for scale error \"" + s.first + "\"");
 			}
-			else if (it.find_first_of('M') != std::string::npos) {
-				if (_scale.count("M"))
-					err[it] = _scale["M"];
-				else {
-					if (kVerbosity)
-						std::cout << "No scale_M in card"
-							  << cd.CardName() << std::endl;
-					// default to
-					err[it] = 0.024;
-				}
-				_type_scale[it] = 1;
-			}
+			++_nScale;	// <- contains right number
 		}
-		_nScale = _scale.size();	//of size 1, 2, or 4
-		_scale = err;			// reassign new map
 	}
+
 
 
 	if (!cd.Get("verbose", kVerbosity))
@@ -99,34 +75,19 @@ void BeamSample::Init(const CardDealer &cd, std::string process)
 		std::cout << "BeamSample: types: ";
 		for (const auto &it : _type)
 			std::cout << "\t" << it;
-		std::cout << std::endl;
-		std::cout << "BeamSample: number of scale systematics " << _nScale << std::endl;
+		std::cout << "\nBeamSample: number of scale systematics " << _nScale << "\n";
 		for (const auto &it : _scale)
-			std::cout << "\t" << it.first << " -> " << it.second << std::endl;
+			std::cout << "\t" << it.first << " -> " << it.second.first << "\n";
 	}
 
 	std::string profile;
 	if (!cd.Get("density_profile", profile) && kVerbosity)
-		std::cout << "BeamSample: density profile not set in card, please set it yourself" << std::endl;
+		std::cout << "BeamSample: density profile not set in card, please set it yourself" << "\n";
 	else
 		_lens_dens = Oscillator::GetMatterProfile(profile);
 
-
-
-	if (process.empty())
-		process = "RBSE";//by default skip empty bins, so keep 'E' option
-	else
-		std::transform(process.begin(), process.end(), process.begin(),
-				[](unsigned char c){ return std::toupper(c); });
-
-	if (process.find('R') != std::string::npos)
-		LoadReconstruction(cd);
-	if (process.find('B') != std::string::npos){
-		if (process.find('E') != std::string::npos ) DefineBinning();
-		else DefineBinning(0);	// from Sample.h //if no E option, keep empty bins
-	}
-	if (process.find('S') != std::string::npos)
-		LoadSystematics(cd);
+	// dispatch method from base class
+	Load(cd, process);
 }
 
 
@@ -198,7 +159,7 @@ void BeamSample::LoadReconstruction(std::string reco_file)
 		return;
 	}
 
-	std::map<std::string, std::string> mSD;
+	std::unordered_map<std::string, std::string> mSD;
 	//look if there is a particular event
 	if (cd.Get("ring_", mSD))
 		for (const auto &is : mSD) {
@@ -245,9 +206,10 @@ void BeamSample::LoadReconstruction(std::string reco_file)
 			const double *bx = h2->GetXaxis()->GetXbins()->GetArray();
 			const double *by = h2->GetYaxis()->GetXbins()->GetArray();
 
-			if (!_global_true.count(type)) 
+			if (!_global_true.count(type))  {
 				_global_true[type].assign(bx, bx + xs + 1);
-				_global_reco[type].assign(by, by + xs + 1);
+				_global_reco[type].assign(by, by + ys + 1);
+			}
 			//_binX[is.first].assign(bx, bx + xs + 1);
 			//_binY[is.first].assign(by, by + ys + 1);
 		}
@@ -256,12 +218,13 @@ void BeamSample::LoadReconstruction(std::string reco_file)
 }
 
 
-std::map<std::string, Eigen::VectorXd>
+std::unordered_map<std::string, Eigen::VectorXd>
 	BeamSample::BuildSamples(std::shared_ptr<Oscillator> osc)
 {
 	if (osc)
 		osc->SetMatterProfile(_lens_dens);
-	std::map<std::string, Eigen::VectorXd> samples;
+
+	std::unordered_map<std::string, Eigen::VectorXd> samples;
 	for (const auto &ir : _reco) {
 
 		if (kVerbosity > 4)
@@ -291,8 +254,7 @@ std::map<std::string, Eigen::VectorXd>
 			const auto &chan = _oscf[cname];
 			const auto &bins = _global_true[hname]; //type?
 
-			Eigen::VectorXd vb(bins.size() - 1);
-			for (int i = 0; i < vb.size(); ++i) {
+			for (size_t i = 0; i < bins.size() - 1; ++i) {
 				probs(i) = osc->Probability(chan.first, chan.second,
 						(bins[i] + bins[i+1]) / 2.);
 			}
@@ -470,7 +432,7 @@ void BeamSample::LoadSystematics(const CardDealer &cd)
 
 			int i = _offset[it];
 			for (int n : _binpos[it]) {
-				if (std::abs(hsys->GetBinContent(n+1) - 1) > 1)
+				if (kVerbosity && std::abs(hsys->GetBinContent(n+1) - 1) > 1)
 					std::cout << k_err << ", " << n << " out of scale\n";
 				if (sigma)	// it is a spline file, i.e. sigma != 0
 					_sysMatrix[sigma](i, k_err - sysA)
@@ -488,8 +450,96 @@ void BeamSample::LoadSystematics(const CardDealer &cd)
 		}
 		sysf->Close();
 	}
+
+	// update scale systematic position
+	for (auto &s : _scale)
+		s.second.second += _nSys - _nScale;
 }
 
+// decompress spectrum vector
+std::unordered_map<std::string, Eigen::VectorXd> BeamSample::Unfold(const Eigen::VectorXd &En)
+{
+	assert(En.size() == _nBin);
+	std::unordered_map<std::string, Eigen::VectorXd> samples;
+	for (const std::string it : _type) {
+		samples[it] = Eigen::VectorXd::Zero(_global_true[it].size() - 1);
+		for (size_t m = 0, n = _offset[it]; m < _binpos[it].size(); ++m, ++n)
+			samples[it](_binpos[it][m]) = En(n);
+	}
+
+	return samples;
+}
+
+
+Eigen::SparseMatrix<double> BeamSample::ScaleMatrix(Xi xi, const Eigen::VectorXd &epsil)
+{
+	if (!_nScale) {
+		return Sample::ScaleMatrix(xi, epsil);
+	}
+
+	// n, m matrix 
+	Eigen::SparseMatrix<double> scale(_nBin, _nBin);
+	scale.reserve(Eigen::VectorXi::Constant(_nBin, 5));
+
+	for (const std::string it : _type) {
+		// scale error value
+		double skerr = epsil(_scale[it].second);
+		double shift = 1 + skerr * _scale[it].first;
+
+		// alias to reco binning
+		std::vector<double> &reco = _global_reco[it];
+
+		int i = _offset[it];
+		for (size_t n : _binpos[it]) {
+
+			// this is just relative bin position
+			//int m0 = std::max(StartingBin(it, shift, n), _binpos[it].front());
+			//int m1 = std::min(EndingBin(it, shift, n), _binpos[it].back()+1);
+			//
+			// unscaled/original bins
+			//double b0_n = local[n - off];
+			//double b1_n = local[n - off + 1];
+			//
+			// bin edges
+			double b0_n = reco[n];
+			double b1_n = reco[n + 1];
+
+			auto im = std::lower_bound(reco.begin(), reco.end(), b0_n / shift);
+			size_t m0 = std::max(size_t(std::distance(reco.begin(), im)),
+					  _binpos[it][0] + 1) - 1;
+
+			for (size_t m = m0; m < reco.size() - 1; ++m) {
+				double b0_m = reco[m];
+				double b1_m = std::min(reco[m + 1], 30 / shift);
+				// scaled bins
+				//continue/break computation because there is no overlap
+				if (shift * b0_m > b1_n)
+					break;
+
+				double f = (b1_n - b0_n + shift * (b1_m - b0_m)
+						- std::abs(b0_n - shift * b0_m)
+						- std::abs(b1_n - shift * b1_m)) / 2.;
+
+				int s0 = b0_n - shift * b0_m < 0 ? -1 : 1;
+				int s1 = b1_n - shift * b1_m < 0 ? -1 : 1;
+				double ss = f > 0 ? 1 : 0.5;	//continuity factor
+				double fd = ss * (b1_m - b0_m + s0 * b0_m + s1 * b1_m) / 2.;
+
+				std::array<double, 5> terms{{_scale[it].first, shift,
+							     f, fd, b1_m - b0_m}};
+				//std::cout << " at " << i << ", " << m - n + i << " = " << (this->*xi)(terms) << "\n";
+				scale.insert(i, m - n + i) = (this->*xi)(terms);
+			}
+			++i;
+		}
+	}
+	// not necessary to compress!
+	//scale.makeCompressed();
+
+	return scale;
+}
+
+/*
 std::vector<std::pair<int, int> > BeamSample::AllSlices(std::string it, double skerr)
 {
 	if (!_nScale) {
@@ -499,11 +549,11 @@ std::vector<std::pair<int, int> > BeamSample::AllSlices(std::string it, double s
 	std::vector<std::pair<int, int> > allslices;
 
 	// energy shift
-	double shift = 1 + skerr * _scale[it];
-	/*std::cout << "shift is " << shift << std::endl;
+	double shift = 1 + skerr * _scale[it].first;
+	std::cout << "shift is " << shift << std::endl;
 	std::cout << "skerr is " << skerr << std::endl;
 	std::cout << "_scale[it] is " << _scale[it] << std::endl;
-	*/	
+		
 	// offset between global bin and energy bin
 	//int off = _binpos[it].first - _limits[it].first;
 	// absolute systematic error for this scale parameter
@@ -513,18 +563,18 @@ std::vector<std::pair<int, int> > BeamSample::AllSlices(std::string it, double s
 	int i = _offset[it];
 	allslices.reserve(_binpos[it].size());
 	for (int n : _binpos[it]) {
-		/*std::cout << "n is " << n << std::endl;
+		std::cout << "n is " << n << std::endl;
 		std::cout << "i is " << i << std::endl;
 		std::cout << "StartingBin is " << StartingBin(it, shift, n) << std::endl;
 		std::cout << "EndingBin is " << EndingBin(it, shift, n) << std::endl;
 		std::cout << "_binpos[it].front() is " << _binpos[it].front() << std::endl;
-		std::cout << "_binpos[it].back()+1 is " << _binpos[it].back()+1 << std::endl;*/
+		std::cout << "_binpos[it].back()+1 is " << _binpos[it].back()+1 << std::endl;
 		
-		int m0 = std::max(StartingBin(it, shift, n), _binpos[it].front()) - n + i;
-		int m1 = std::min(EndingBin(it, shift, n), _binpos[it].back()+1) - n + i;
+		int m0 = std::max(StartingBin(it, shift, n), _binpos[it].front());
+		int m1 = std::min(EndingBin(it, shift, n), _binpos[it].back()+1);
 		if (m0 > m1)
 			m0 = m1;
-		allslices.emplace_back(m0, m1);
+		allslices.emplace_back(m0 - n + i, m1 - n + i);
 		++i;
 	}
 
@@ -540,16 +590,16 @@ std::vector<std::pair<int, int> > BeamSample::AllSlices(std::string it, double s
 
 
 // FactorFn needs ChiSquared object to call
-std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it, double skerr)
+std::vector<Eigen::ArrayXd> BeamSample::AllScale(Xi xi, std::string it, double skerr)
 {
 	if (!_nScale) {
-		return Sample::AllScale(factor, it, skerr);
+		return Sample::AllScale(xi, it, skerr);
 	}
 
 	std::vector<Eigen::ArrayXd> allfacts;
 
 	// scale error value
-	double scale_err = _scale[it];
+	double scale_err = _scale[it].first;
 	// energy shift
 	double shift = 1 + skerr * scale_err;
 	// offset between global bin and energy bin
@@ -557,7 +607,7 @@ std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it
 	// absolute systematic error for this scale parameter
 
 	// alias to reco binning
-	std::vector<double> &global = _global_reco[it];
+	std::vector<double> &reco = _global_reco[it];
 
 	//// loop over bins of this sample
 	//for (int n = _binpos[it].first; n < _binpos[it].second; ++n) {
@@ -580,14 +630,14 @@ std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it
 		//double b1_n = local[n - off + 1];
 		//
 		// bin edges
-		double b0_n = local[n];
-		double b1_n = local[n + 1];
+		double b0_n = reco[n];
+		double b1_n = reco[n + 1];
 
 		std::vector<double> thisfact;
 		for (int m = m0; m < m1; ++m) {
 
-			double b0_m = local[m];
-			double b1_m = std::min(local[m + 1], 30 / shift);
+			double b0_m = reco[m];
+			double b1_m = std::min(reco[m + 1], 30 / shift);
 			//std::cout << "\tshift " << shift * b0_m << " - " << shift * b1_m << std::endl;
 			// scaled bins
 			//continue/break computation because there is no overlap
@@ -606,9 +656,8 @@ std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it
 			double ss = f > 0 ? 1 : 0.5;	//continuity factor
 			double fd = ss * (b1_m - b0_m + s0 * b0_m + s1 * b1_m) / 2.;
 
-			std::vector<double> terms = {scale_err, shift,
-				f, fd, b1_m - b0_m};
-			thisfact.push_back((this->*factor)(terms));
+			std::array<double, 5> terms{{scale_err, shift, f, fd, b1_m - b0_m}};
+			thisfact.push_back((this->*xi)(terms));
 		}
 
 		Eigen::ArrayXd arr = Eigen::Map<Eigen::ArrayXd>
@@ -618,6 +667,7 @@ std::vector<Eigen::ArrayXd> BeamSample::AllScale(FactorFn factor, std::string it
 
 	return allfacts;
 }
+*/
 
 /*
 double Scale(FactorFn factor,
@@ -687,3 +737,4 @@ double Scale(FactorFn factor,
 	return ret;
 }
 */
+

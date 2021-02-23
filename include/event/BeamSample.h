@@ -46,15 +46,15 @@ class BeamSample : public Sample
 		void LoadReconstruction(const CardDealer &cd) override;
 		void LoadSystematics(const CardDealer &cd) override;
 
-		std::map<std::string, Eigen::VectorXd>
+		std::unordered_map<std::string, Eigen::VectorXd>
 			BuildSamples(std::shared_ptr<Oscillator> osc = nullptr) override;
+		virtual std::unordered_map<std::string, Eigen::VectorXd>
+			Unfold(const Eigen::VectorXd &En);
 
-		std::vector<Eigen::ArrayXd> AllScale(FactorFn factor,
-					std::string it, double skerr);
-		std::vector<std::pair<int, int> > AllSlices(std::string it, double skerr);
+		Eigen::SparseMatrix<double> ScaleMatrix(Xi factor, const Eigen::VectorXd &epsil);
 
 	private:
-		std::map<std::string, Eigen::MatrixXd> _reco;
+		std::unordered_map<std::string, Eigen::MatrixXd> _reco;
 		//std::map<std::string, std::vector<double> > _binX;
 		//std::map<std::string, std::vector<double> > _binY;
 

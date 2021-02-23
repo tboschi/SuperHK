@@ -27,6 +27,7 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <utility>
 
 #include "tools/CardDealer.h"
 #include "physics/Const.h"
@@ -64,35 +65,37 @@ class AtmoSample : public Sample
 		void LoadReconstruction(const CardDealer &cd) override;
 		void LoadSystematics(const CardDealer &cd) override;
 
-		std::map<std::string, Eigen::VectorXd>
+		std::unordered_map<std::string, Eigen::VectorXd>
 			BuildSamples(std::shared_ptr<Oscillator> osc = nullptr) override;
-
 		Eigen::VectorXd ConstructSamples(std::shared_ptr<Oscillator> osc = nullptr);
+		virtual std::unordered_map<std::string, Eigen::VectorXd>
+			Unfold(const Eigen::VectorXd &En);
 
 
 	private:
 		// atmospheric oscillation
-		std::unique_ptr<Atmosphere> atm_path;
+		std::unique_ptr<Atmosphere> _atm_path;
 
 		// binning information is stored as root histograms
-		std::map<std::string, TH2D*> _reco_hist, _true_hist;
-		std::map<std::string, Eigen::MatrixXd> _bin_contents;
-		std::map<int, std::string> _type_names;
+		std::unordered_map<std::string, TH2D*> _reco_hist, _true_hist;
+		//std::unordered_map<std::string, Eigen::MatrixXd> _bin_contents;
+		std::map<int, std::string> _type_names;	 // order important!
 
 		// For root stuff
-		std::unique_ptr<TChain> dm, nh, ih;
+		std::unique_ptr<TChain> dm; //, nh, ih;
 		int ipnu, mode, itype;
 		float dirnu[3], dir[3], flxho[3];
-		float pnu, amom, weightx, ErmsHax, nEAveHax;
+		float pnu, amom, weightx; //, ErmsHax, nEAveHax;
+		long int _nentries;
+
 		int point, bins;
 		double data[3000];
-
-		std::map<int, int> pre_point_NH, pre_point_IH;
+		std::unordered_map<std::string, std::shared_ptr<TChain> > _pre_tree;
+		std::unordered_map<std::string, std::map<size_t, size_t> > _pre_point;
 
 		double _weight, _reduce;
 };
 
-void CreateTensor(CardDealer *cd);
+//void CreateTensor(CardDealer *cd);
 
 #endif
-

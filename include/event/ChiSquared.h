@@ -9,7 +9,7 @@
 #include <fstream>
 #include <vector>
 #include <set>
-#include <map>
+#include <unordered_map>
 #include <cstring>
 #include <utility>
 #include <numeric>
@@ -48,14 +48,15 @@ class ChiSquared
 		void Init(const CardDealer &cd);
 		bool Combine();
 		void CombineBinning();
-		void CombineCorrelation();
-		void CombineSystematics();
-		std::map<std::string, Eigen::VectorXd> BuildSamples(std::shared_ptr<Oscillator> osc = nullptr);
+		void CombineCorrelation(std::string corrFile = "");
+		//void CombineSystematics();
+		std::unordered_map<std::string, Eigen::VectorXd> BuildSamples(std::shared_ptr<Oscillator> osc = nullptr);
 		Eigen::VectorXd ConstructSamples(std::shared_ptr<Oscillator> osc = nullptr);
 
 		int NumSys();
 		int NumBin();
 		int DOF();
+		int ScaleError(std::string it);
 
 		Eigen::VectorXd FitX2(const Eigen::VectorXd &On,
 				      const Eigen::VectorXd &En);
@@ -76,7 +77,6 @@ class ChiSquared
 				     const Eigen::VectorXd &On, const Eigen::VectorXd &En,
 				     const Eigen::VectorXd &epsil);
 
-
 		Eigen::MatrixXd Covariance(const Eigen::VectorXd &On,
 					   const Eigen::VectorXd &En,
 					   const Eigen::VectorXd &epsil);
@@ -91,30 +91,19 @@ class ChiSquared
 		double ObsX2(const Eigen::VectorXd &On,
 			     const Eigen::VectorXd &En,
 			     const Eigen::VectorXd &epsil);
-		Eigen::ArrayXd ObsX2n(const Eigen::VectorXd &On,
-				      const Eigen::VectorXd &En,
-			     const Eigen::VectorXd &epsil);
-		Eigen::ArrayXd VarySpectrumSystematics(const Eigen::VectorXd &On,
-				      const Eigen::VectorXd &En,
-			     const Eigen::VectorXd &epsil);
-		std::vector<double> GetErecVect(std::string type);
-		double RawX2(const Eigen::VectorXd &On,
-			     const Eigen::VectorXd &En);
-		Eigen::ArrayXd RawX2n(const Eigen::VectorXd &On,
-				      const Eigen::VectorXd &En);
 
-		Eigen::ArrayXd Gamma(const Eigen::VectorXd &En,
-				      const Eigen::VectorXd &epsil);
-//		Eigen::MatrixXd GammaJac(const Eigen::VectorXd &En,
-//				         const Eigen::VectorXd &epsil);
-//		Eigen::VectorXd GammaJac(const Eigen::VectorXd &En,
-//				         const Eigen::VectorXd &epsil, int j);
+		//Eigen::ArrayXd ObsX2n(const Eigen::VectorXd &On,
+				      //const Eigen::VectorXd &En,
+			     //const Eigen::VectorXd &epsil);
+
+		//Eigen::ArrayXd Gamma(const Eigen::VectorXd &En,
+		//		      const Eigen::VectorXd &epsil);
 
 
-		Eigen::ArrayXXd one_F(const Eigen::VectorXd &epsil);
-		Eigen::ArrayXd  one_Fk(double err, int k);
-		Eigen::ArrayXXd one_Fp(const Eigen::VectorXd &epsil);
-		Eigen::ArrayXd  one_Fpk(double err, int k);
+		//Eigen::ArrayXXd one_F(const Eigen::VectorXd &epsil);
+		//Eigen::MatrixXd one_Fk(double err, int k);
+		//Eigen::ArrayXXd one_Fp(const Eigen::VectorXd &epsil);
+		//Eigen::MatrixXd one_Fpk(double err, int k);
 		//double F(int k, int n, double eij);
 		//double Fp(int k, int n, double eij);
 		//double Fp(int k, int n, double dl, double du);
@@ -132,7 +121,6 @@ class ChiSquared
 		std::vector<std::shared_ptr<Sample> > _sample;
 
 		int _nBin, _nSys;
-		std::map<int, Eigen::ArrayXXd> _sysMatrix;
 		Eigen::MatrixXd _corr;
 };
 
