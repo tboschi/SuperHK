@@ -150,6 +150,9 @@ void ParameterSpace::GetEntry(int n, double &M12, double &M23,
 
 std::map<std::string, double> ParameterSpace::GetEntry(int n)
 {
+	if (n < 0 || n >= GetEntries())
+		throw std::invalid_argument("ParameterSpace: requested point that does not exist");
+
 	std::map<std::string, double> vars;
 
 	int a = 0, q = 1;

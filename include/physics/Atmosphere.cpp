@@ -3,33 +3,33 @@
 Atmosphere::Atmosphere(const std::string &card) :
 	gen(0)
 {
-	CardDealer cd(card),
+	CardDealer cd(card);
+	if (!cd.Get("verbose", kVerbosity))
+		kVerbosity = 0;
+
 	LoadDensityProfile(cd);
 	LoadProductionHeights(cd);
-
-	if (!cd.Get("verbosity", kVerbosity))
-		kVerbosity = 0;
 }
 
 Atmosphere::Atmosphere(const CardDealer &cd) :
 	gen(0)
 {
+	if (!cd.Get("verbose", kVerbosity))
+		kVerbosity = 0;
+
 	LoadDensityProfile(cd);
 	LoadProductionHeights(cd);
-
-	if (!cd.Get("verbosity", kVerbosity))
-		kVerbosity = 0;
 }
 
 
 Atmosphere::Atmosphere(CardDealer *cd) :
 	gen(0)
 {
+	if (!cd->Get("verbose", kVerbosity))
+		kVerbosity = 0;
+
 	LoadDensityProfile(*cd);
 	LoadProductionHeights(*cd);
-
-	if (!cd->Get("verbosity", kVerbosity))
-		kVerbosity = 0;
 }
 
 // loads production heights calculated by Honda (HKKM2014) 
