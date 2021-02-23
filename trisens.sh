@@ -46,16 +46,18 @@ if condor_q &> /dev/null ; then
 	SCHED="HTCONDOR"
 elif squeue &> /dev/null ; then
 	SCHED="SLURM"
-elif qstat &> /dev/null ; then
-    SCHED="qsub"
+elif qstat -Q &> /dev/null ; then
+    SCHED="PBS"
+elif qstat -sql &> /dev/null ; then
+    SCHED="SGE"
 else
-	echo There is neither HTCondor nor Slurm nor qsub on this machine. I am sorry, I cannot help you
+	echo "There is neither HTCondor nor Slurm nor qsub \(SGE or PBS\) on this machine. \
+		Iam sorry, I cannot help you"
 	exit 1
 fi
 
-Sens=$PWD/cross-binary.sh
+Sens="$PWD/cross-binary.sh fitter"
 Oscp=$PWD/bin/oscillation_point
-nameExec=fitter
 
 card=$PWD/cards/multi.card
 fitc=$PWD/cards/fit_options.card
@@ -279,15 +281,15 @@ else # must build folders and card files
 	sed -i "s:^MC_input.*:MC_input\t\"$reco_atmo\":"	$atmo
 	sed -i "s:^MC_tree_name.*:MC_tree_name\t\"osc_tuple\":"	$atmo
 
-	pre_NH=$upper'/../reconstruction_atmo/pre/NH/atmo.*.root'
-	pre_IH=$upper'/../reconstruction_atmo/pre/IH/atmo.*.root'
+	pre_NH=$upper'/../reconstruction_atmo/pre2/NH/atmo.*.root'
+	pre_IH=$upper'/../reconstruction_atmo/pre2/IH/atmo.*.root'
 	#pre computed inputs
 	sed -i "s:^pre_input_NH.*:pre_input_NH\t\"$pre_NH\":" $atmo
 	sed -i "s:^pre_input_IH.*:pre_input_IH\t\"$pre_IH\":" $atmo
 	sed -i "s:^pre_tree_name.*:pre_tree_name\t\"atmoTree\":" $atmo
 
 	dens=$PWD'/data/PREM_25pts.dat'
-	prod=$(ls $PWD'/data/prod_honda/kam-ally-aa-'*.d)
+	prod=$(ls $PWD'/data/prod_honda/'*.d)
 	prod=(${prod})
 	prod=(${prod[@]/#/\"})	# creates a nice list of files
 	prod=(${prod[@]/%/\",})	# really bad looking , but it works!
@@ -318,21 +320,32 @@ else
 fi
 point=(${point})
 
-if [ "$SCHED" == "HTCONDOR" ] ; then
-	sub=condor_submit
-	running="condor_q -autoformat owner jobstatus | grep 2 | wc -l"
-	inqueue="condor_q -autoformat owner jobstatus | grep 1 | wc -l"
-	echo Launching $NJOBS jobs with HTCondor
-elif [ "$SCHED" == "SLURM" ] ; then
-	sub=sbatch
-	running="squeue -h -r -u $USER -o \"%u %t\" | grep R  | wc -l"
-	inqueue="squeue -h -r -u $USER -o \"%u %t\" | grep PD | wc -l"
-	echo Launching $NJOBS jobs with Slurm
-elif [ "$SCHED" == "qsub" ] ; then
-	sub=qsub
-	running="qstat -t -u $USER | grep \" r \" | wc -l"
-	inqueue="qstat -t -u $USER | grep \"qw\" | wc -l"
-fi
+case "$SCHED" in 
+	"HTCONDOR")
+		sub=condor_submit
+		generate=$PWD/src/htcondor.submit
+		running="condor_q -autoformat owner jobstatus | grep 2 | wc -l"
+		inqueue="condor_q -autoformat owner jobstatus | grep 1 | wc -l"
+		;;
+	"SLURM")
+		sub=sbatch
+		generate=$PWD/src/slurm.submit
+		running="squeue -h -r -u $USER -o \"%u %t\" | grep R  | wc -l"
+		inqueue="squeue -h -r -u $USER -o \"%u %t\" | grep PD | wc -l"
+		;;
+	"PBS")
+		sub=qsub
+		generate=$PWD/src/pbs.submit
+		running="qstat -t -u $USER | grep \" r \" | wc -l"
+		inqueue="qstat -t -u $USER | grep \"qw\" | wc -l"
+		;;
+	"SGE")
+		sub=qsub
+		generate=$PWD/src/sge.submit
+		running="qstat -t -u $USER | grep \" r \" | wc -l"
+		inqueue="qstat -t -u $USER | grep \"qw\" | wc -l"
+		;;
+esac
 
 #ready to loop over points
 for t in "${point[@]}" ; do
@@ -362,60 +375,10 @@ for t in "${point[@]}" ; do
 		outlog=$output
 	fi
 
-	## send as many jobs as files
-	if [ "$SCHED" == "HTCONDOR" ] ; then
-		cat > $scriptname << EOF
-# script submission for condor
-# sumbit with --
-#	$sub $scriptname
+	# this should work for any script
+	$generate $Sens $NJOBS $this $output > $scriptname
 
-executable		= $Sens
-arguments		= fitter \$(Process) $NJOBS $this
-getenv			= True
-#requirements		= HasAVXInstructions
-should_transfer_files	= IF_NEEDED
-when_to_transfer_output	= ON_EXIT
-initialdir		= $PWD
-output			= $outlog/L$nameExec.\$(Process).log
-error			= $outlog/L$nameExec.\$(Process).log
-stream_output		= True
-stream_error		= True
-
-queue $NJOBS
-
-EOF
-	elif [ "$SCHED" == "SLURM" ] ; then
-		cat > $scriptname << EOF
-#! /bin/bash
-# script submission for SLURM
-# sumbit with --
-#	$sub $scriptname
-
-#SBATCH --array=0-$((NJOBS - 1))
-#SBATCH --job-name=$nameExec
-#SBATCH -o $outlog/L$nameExec.%a.log
-#SBATCH -p nms_research,shared
-#SBATCH --time=3-0
-#SBATCH --cpus-per-task=1
-
-srun $Sens fitter \$SLURM_ARRAY_TASK_ID $NJOBS $this
-
-EOF
-	else
-		sub=qsub -t 1-$NJOBS -l sps=1 -o ${outlog}/Logfile$nameExec.\$TASK_ID.log -e ${outlog}/Logfile$nameExec.\$TASK_ID.log
-		cat > $scriptname << EOF
-#! /bin/bash
-#script submission for qsub
-#submit with qsub -t 0-$NJOBS $scriptname
-
-#PBS -N point_$t
-#PBS -l walltime=36:00:00
-$Sens fitter \$((SGE_TASK_ID-1)) $NJOBS $this 2>&1 | tee ${outlog}/L$nameExec.\$((SGE_TASK_ID-1)).log
-
-EOF
-	fi
-
-	echo Submitting point $tname$t
+	echo Submitting point $tname$t \($NJOBS jobs\) with $SCHED
 	$sub $scriptname
 
 	#wait until jobs are finished before moving to next point
@@ -433,3 +396,60 @@ EOF
 	fi
 	sleep 10
 done
+
+## send as many jobs as files
+#if [ "$SCHED" == "HTCONDOR" ] ; then
+#	cat > $scriptname << EOF
+## script submission for condor
+## sumbit with --
+##	$sub $scriptname
+#
+#executable		= $Sens
+#arguments		= fitter \$(Process) $NJOBS $this
+#getenv			= True
+##requirements		= HasAVXInstructions
+#should_transfer_files	= IF_NEEDED
+#when_to_transfer_output	= ON_EXIT
+#initialdir		= $PWD
+#output			= $outlog/L$nameExec.\$(Process).log
+#error			= $outlog/L$nameExec.\$(Process).log
+#stream_output		= True
+#stream_error		= True
+#
+#queue $NJOBS
+#
+#EOF
+#elif [ "$SCHED" == "SLURM" ] ; then
+#	cat > $scriptname << EOF
+##! /bin/bash
+## script submission for SLURM
+## sumbit with --
+##	$sub $scriptname
+#
+##SBATCH --array=0-$((NJOBS - 1))
+##SBATCH --job-name=$nameExec
+##SBATCH -o $outlog/L$nameExec.%a.log
+##SBATCH -p nms_research,shared
+##SBATCH --time=3-0
+##SBATCH --cpus-per-task=1
+#
+#srun $Sens 
+#
+#EOF
+#else
+#	args="\$SGE_TASK_ID $NJOBS $this"
+#	outs="$outlog/L$nameExec.\$SGE_TASK_ID-1.log"
+#	./src/sge.submit $Sens $args $outs $((NJOBS - 1)) > $scriptname
+#
+#	sub=qsub -t 1-$NJOBS -l sps=1 -o ${outlog}/Logfile$nameExec.\$TASK_ID.log -e ${outlog}/Logfile$nameExec.\$TASK_ID.log
+#	cat > $scriptname << EOF
+##! /bin/bash
+##script submission for qsub
+##submit with qsub -t 0-$NJOBS $scriptname
+#
+##PBS -N point_$t
+##PBS -l walltime=36:00:00
+#$Sens fitter \$((SGE_TASK_ID-1)) $NJOBS $this 2>&1 | tee ${outlog}/L$nameExec.\$((SGE_TASK_ID-1)).log
+#
+#EOF
+#fi

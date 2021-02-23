@@ -53,9 +53,15 @@ EOF
 if condor_q &> /dev/null ; then
 	hpc=$(condor_status | awk '/@/ {sub(/.*@/, "", $1); print $1}' | sort -u)
 elif squeue &> /dev/null ; then
-	hpc=$(sinfo -h -N -p nms_research,shared -o "%n" | sort -u)
+	hpc=$(sinfo -h -N -o "%n" | sort -u)
+elif qconf -Q &> /dev/null ; then
+	# magic command which I don't know
+	hpc=$(qconf -Q -o "%n" | sort -u)
+elif qconf -sql &> /dev/null ; then
+	# magic command which I don't know
+	hpc=$(qconf -sql -o "%n" | sort -u)
 else
-	echo There is neither HTCondor nor Slurm on this machine. I am sorry, I cannot help you
+	echo There is neither HTCondor, Slurm, PBS, nor SGE on this machine. I am sorry, I cannot help you
 	exit 1
 fi
 

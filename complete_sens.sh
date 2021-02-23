@@ -4,7 +4,7 @@ usage="usage: $0 [<options>] <list>
 
 Check if jobs were completed and repair if needed where <list> is
 the file with the list of fitted points in the sensitivity folder.
-Works with HTCondor or Slurm.
+Works with HTCondor, Slurm, SGE or PBS.
 
 Options
     -f	      repair files, otherwise just display information
@@ -43,7 +43,7 @@ elif [ ! -s "$1" ] ; then
 fi
 
 Sens=$PWD/cross-binary.sh
-nameExec=fitter
+Name=fitter
 trisens=trisens.sh
 
 
@@ -58,13 +58,26 @@ queue=".queue_status"
 if condor_q &> /dev/null ; then
 	SCHED="HTCONDOR"
 	sub=condor_submit
+	generate=src/slurm.recover
 	condor_q -autoformat cmd args > $queue
 elif squeue &> /dev/null ; then
 	SCHED="SLURM"
 	sub=sbatch
+	generate=src/slurm.recover
 	squeue -h -r -u $USER -o "%o %K" > $queue
+elif qstat -Q &> /dev/null ; then
+	SCHED="PBS"
+	sub=qsub
+	generate=src/sge.recover
+	qstat -u $USER -f > $queue
+elif qstat -sql &> /dev/null ; then
+	SCHED="SGE"
+	sub=qsub
+	generate=src/sge.recover
+	qstat -u $USER -f > $queue
 else
-	echo There is neither HTCondor nor Slurm on this machine. I am sorry, I cannot help you
+	echo "There is neither HTCondor nor Slurm nor qsub \(SGE or PBS\) on this machine. \
+		Iam sorry, I cannot help you"
 	exit 1
 fi
 
@@ -106,12 +119,12 @@ while read -r point ; do
 		# check if job is still running
 		echo Detected: there are no output files in $outdir
 		if grep -q $point $queue; then 
-			echo $nameExec for point $point is still running. Just wait.
+			echo $Name for point $point is still running. Just wait.
 		elif [ "$rep" == "true" ] ; then
 			echo Point $point will be resubmitted
 			repeat=(${repeat[@]} $point)
 		else
-			echo $nameExec for point $point failed and never ran. You can resubmit with -f to repair
+			echo $Name for point $point failed and never ran. You can resubmit with -f to repair
 		fi
 		continue
 	fi 
@@ -119,10 +132,13 @@ while read -r point ; do
 
 	# find how many jobs there should be
 	if grep -q queue $script ; then
-		job=$(grep queue $script | cut -f2 -d' ')
-	elif grep -q array $script ; then
-		job=$(grep array $script | cut -f4 -d'-')
-		job=$((job + 1))	# arrays start from 0
+		njobs=$(grep queue $script | cut -f2 -d' ')
+	elif grep -q srun $script ; then
+		njobs=$(grep srun $script | cut -f5 -d' ')
+	elif grep -q "PBS" $script ; then
+		njobs=$(tail -n1 $script | cut -f4 -d' ')
+	else	# it is SGE
+		njobs=$(tail -n1 $script | cut -f4 -d' ')
 	fi
 
 	# now all known files
@@ -137,7 +153,7 @@ while read -r point ; do
 		num=${out%.root}
 		num=${num##*.}
 
-		if [ "$num" -ge "$job" ] ; then
+		if [ "$num" -ge "$njobs" ] ; then
 			echo Detected: file misplaced $out 
 			if [ "$rep" == "true" ] ; then
 				rm $out
@@ -149,7 +165,7 @@ while read -r point ; do
 	done
 
 	repair=()
-	for num in $(seq $((job - 1)) ) ; do 
+	for num in $(seq 0 $((njobs - 1)) ) ; do 
 
 		out=$outdir/SpaghettiSens.$num.root
 		log=$outlog/L$nameExec.$num.log
@@ -161,7 +177,10 @@ while read -r point ; do
 		elif [ "$out" -ot "$script" ] ; then
 			echo Detected: $out is older than $script
 			bad=true  # at this stage output file is newer than script
-		elif [ -s "$log" ] && ! tail -n1 "$log" | grep -q Finished ; then
+		elif ! [ -s "$log" ] ; then
+			echo Detected: $log does not exist
+			bad=true
+		elif ! tail -n1 "$log" | grep -q Finished ; then
 			echo Detected: $log did not finish. Last lines are
 			tail "$log"
 			echo ""
@@ -170,19 +189,19 @@ while read -r point ; do
 
 		if [ "$bad" == "true" ] ; then
 			if grep $point $queue | grep -q $num; then 
-				echo $nameExec for point $point at $num/$job is still running. Just wait.
+				echo $Name for point $point at $num/$njobs is still running. Just wait.
 			elif [ "$rep" == "true" ] ; then
 				repair=(${repair[@]} "$num")
-				echo Point $point will be repaired at $num/$job
+				echo Point $point will be repaired at $num/$njobs
 			else
-				echo $nameExec failed for point $point at $num/$job. You can resubmit with -f to repair
+				echo $Name failed for point $point at $num/$job. You can resubmit with -f to repair
 			fi
 		fi
 	done
 
 	for rr in "${repair[@]}" ; do
 
-		echo Repairing $point at $rr/$job
+		echo Repairing $point at $rr/$njobs
 
 		this=$outdir/this_sensitivity.card
 		if ! [ -s "$this" ] ; then
@@ -209,42 +228,9 @@ while read -r point ; do
 
 
 		recover=$outdir/Recover.$rr.sub
-		log=$outlog/L$nameExec.$rr.log
-		if [ "$SCHED" == "HTCONDOR" ] ; then
-			cat > $recover << EOF
-#! /bin/bash
-# script submission for SLURM
-# sumbit with --
-#	$sub $recover
+		#log=$outlog/L$nameExec.$rr.log
 
-executable		= $Sens
-arguments		= fitter $rr $job $this
-getenv			= True
-should_transfer_files	= IF_NEEDED
-when_to_transfer_output	= ON_EXIT
-initialdir		= $PWD
-output			= $log
-error			= $log
-
-queue
-EOF
-		elif [ "$SCHED" == "SLURM" ] ; then
-			cat > $recover << EOF
-#! /bin/bash
-# script submission for Slurm
-# sumbit with --
-#	$sub $recover
-
-#SBATCH --job-name=fixing
-#SBATCH -o $log
-#SBATCH -p nms_research,shared
-#SBATCH --time=3-0
-#SBATCH --cpus-per-task=1
-
-srun $Sens fitter $rr $job $this
-
-EOF
-		fi
+		$generate $Sens $Name $njobs $this $outlog $rr > $recover
 		$sub $recover
 	done
 done < $1
@@ -262,5 +248,44 @@ if [ "${#repeat[@]}" -gt 0 ] ; then
 	if [[ "$1" =~ .*CPV.* ]] ; then
 		scan="-f CPV"
 	fi
-	$PWD/$trisens -x $scan -r $root -p $point_file -N 500
+
+	$PWD/$trisens -x $scan -r $root -p $point_file
 fi
+
+
+#		if [ "$SCHED" == "HTCONDOR" ] ; then
+#			cat > $recover << EOF
+##! /bin/bash
+## script submission for HTCondor
+## sumbit with --
+##	$sub $recover
+#
+#executable		= $Sens
+#arguments		= fitter $rr $job $this
+#getenv			= True
+#should_transfer_files	= IF_NEEDED
+#when_to_transfer_output	= ON_EXIT
+#initialdir		= $PWD
+#output			= $log
+#error			= $log
+#
+#queue
+#EOF
+#		elif [ "$SCHED" == "SLURM" ] ; then
+#			cat > $recover << EOF
+##! /bin/bash
+## script submission for Slurm
+## sumbit with --
+##	$sub $recover
+#
+##SBATCH --job-name=fixing
+##SBATCH -o $log
+##SBATCH -p nms_research,shared
+##SBATCH --time=4-0
+##SBATCH --cpus-per-task=1
+##SBATCH --exclude=nodek50,nodek33
+#
+#srun $Sens fitter $rr $job $this
+#
+#EOF
+#		fi

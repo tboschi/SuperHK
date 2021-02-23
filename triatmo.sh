@@ -25,16 +25,18 @@ if condor_q &> /dev/null ; then
 	SCHED="HTCONDOR"
 elif squeue &> /dev/null ; then
 	SCHED="SLURM"
-elif qstat &> /dev/null ; then
-    SCHED="qsub"
+elif qstat -Q &> /dev/null ; then
+    SCHED="PBS"
+elif qstat -sql &> /dev/null ; then
+    SCHED="SGE"
 else
-	echo There is neither HTCondor nor Slurm nor qsub on this machine. I am sorry, I cannot help you
+	echo "There is neither HTCondor nor Slurm nor qsub \(SGE or PBS\) on this machine. \
+		Iam sorry, I cannot help you"
 	exit 1
 fi
 
 
-Atmo=$PWD/cross-binary.sh
-nameExec=atmo_input
+Atmo="$PWD/cross-binary.sh atmo_input"
 
 card=$PWD/cards/multi.card
 oscc=$PWD/cards/oscillation.card
@@ -169,58 +171,80 @@ sed -i "s:production_height.*:production_height\t15:"		$atmo
 
 scriptname=$root/R$nameExec.sub
 
-if [ "$SCHED" == "HTCONDOR" ] ; then
-	sub=condor_submit
-	cat > $scriptname << EOF
-# script submission for condor
-# sumbit with --
-#	$sub $scriptname
+case "$SCHED" in 
+	"HTCONDOR")
+		sub=condor_submit
+		generate=$PWD/src/htcondor.submit
+		;;
+	"SLURM")
+		sub=sbatch
+		generate=$PWD/src/slurm.submit
+		;;
+	"PBS")
+		sub=qsub
+		generate=$PWD/src/pbs.submit
+		;;
+	"SGE")
+		sub=qsub
+		generate=$PWD/src/sge.submit
+		;;
+esac
 
-executable		= $Atmo
-arguments		= atmo_input \$(Process) $NJOBS $card
-getenv			= True
-#requirements		= HasAVXInstructions
-should_transfer_files	= IF_NEEDED
-when_to_transfer_output	= ON_EXIT
-initialdir		= $PWD
-output			= $logr/L$nameExec.\$(Process).log
-error			= $logr/L$nameExec.\$(Process).log
+$generate $Atmo $NJOBS $card $logr > $scriptname
 
-queue $NJOBS
-
-EOF
-	echo Launching $NJOBS jobs with HTCondor
-elif [ "$SCHED" == "SLURM" ] ; then
-	sub=sbatch
-	cat > $scriptname << EOF
-#! /bin/bash
-# script submission for SLURM
-# sumbit with --
-#	$sub $scriptname
-
-#SBATCH --array=0-$((NJOBS - 1))
-#SBATCH --job-name=$nameExec
-#SBATCH -o $logr/L$nameExec.%a.log
-#SBATCH -p nms_research,shared
-#SBATCH --time=3-0
-#SBATCH --cpus-per-task=1
-
-srun $Atmo atmo_input \$SLURM_ARRAY_TASK_ID $NJOBS $card
-
-EOF
-	echo Launching $NJOBS jobs with Slurm
-elif [ "$SCHED" == "qsub" ] ; then
-    sub="qsub -t 1-$NJOBS -l sps=1 -o ${logr}/Logfile$nameExec.\$TASK_ID.log -e ${logr}/Logfile$nameExec.\$TASK_ID.log"
-    cat > $scriptname << EOF
-
-#script submission for qsub
-#submit with qsub -t 0-$NJOBS $scriptname
-cd /sps/t2k/lmuntean/HyperK/SuperHK/
-$Atmo atmo_input \$((SGE_TASK_ID-1)) $NJOBS $card 2>&1 | tee ${logr}/L$nameExec.\$((SGE_TASK_ID-1)).log
-
-EOF
-
-fi
-
-echo Submitting jobs
+echo Submitting $NJOBS jobs with $SCHED
 $sub $scriptname
+
+
+#if [ "$SCHED" == "HTCONDOR" ] ; then
+#	sub=condor_submit
+#	cat > $scriptname << EOF
+## script submission for condor
+## sumbit with --
+##	$sub $scriptname
+#
+#executable		= $Atmo
+#arguments		= atmo_input \$(Process) $NJOBS $card
+#getenv			= True
+##requirements		= HasAVXInstructions
+#should_transfer_files	= IF_NEEDED
+#when_to_transfer_output	= ON_EXIT
+#initialdir		= $PWD
+#output			= $logr/L$nameExec.\$(Process).log
+#error			= $logr/L$nameExec.\$(Process).log
+#
+#queue $NJOBS
+#
+#EOF
+#	echo Launching $NJOBS jobs with HTCondor
+#elif [ "$SCHED" == "SLURM" ] ; then
+#	sub=sbatch
+#	cat > $scriptname << EOF
+##! /bin/bash
+## script submission for SLURM
+## sumbit with --
+##	$sub $scriptname
+#
+##SBATCH --array=0-$((NJOBS - 1))
+##SBATCH --job-name=$nameExec
+##SBATCH -o $logr/L$nameExec.%a.log
+##SBATCH -p nms_research,shared
+##SBATCH --time=3-0
+##SBATCH --cpus-per-task=1
+#
+#srun $Atmo atmo_input \$SLURM_ARRAY_TASK_ID $NJOBS $card
+#
+#EOF
+#	echo Launching $NJOBS jobs with Slurm
+#elif [ "$SCHED" == "qsub" ] ; then
+#    sub="qsub -t 1-$NJOBS -l sps=1 -o ${logr}/Logfile$nameExec.\$TASK_ID.log -e ${logr}/Logfile$nameExec.\$TASK_ID.log"
+#    cat > $scriptname << EOF
+#
+##script submission for qsub
+##submit with qsub -t 0-$NJOBS $scriptname
+#cd /sps/t2k/lmuntean/HyperK/SuperHK/
+#$Atmo atmo_input \$((SGE_TASK_ID-1)) $NJOBS $card 2>&1 | tee ${logr}/L$nameExec.\$((SGE_TASK_ID-1)).log
+#
+#EOF
+#
+#fi

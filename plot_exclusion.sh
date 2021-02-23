@@ -34,7 +34,7 @@ usage="usage: $0 [-p output] [-h]
 Render plots out of the exclusion (see exclusion.sh) and save them to PDF.
 In order to use this script, the user should open it with their favourite editor
 and modify the first block accordingly. All the outputs will be saved under the 
-plot folder, where the plotting scripts are located.
+plot folder, where the plotting src are located.
 Please refer to the documentation if this is not clear.
 
 It requires gnuplot and texlive to produce the final PDF.
