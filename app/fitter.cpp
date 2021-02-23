@@ -110,6 +110,7 @@ int main(int argc, char** argv)
 	else if (trueOrder == "inverted")
 		osc->SetMasses<Oscillator::inverted>(tM12, tM23);
 	osc->SetPMNS<Oscillator::sin2>(tS12, tS13, tS23, tdCP);
+	fitter->SetPoint(tPoint);
 	//Eigen::VectorXd trueSpectra = fitter->ConstructSamples(osc);
 	Eigen::VectorXd trueSpectra;	// don't compute just now
 	bool trueLoad = true;
@@ -192,7 +193,6 @@ int main(int argc, char** argv)
 
 		// load trueSpectra now, osc has not changed yet
 		if (trueLoad) {
-			fitter->SetPoint(tPoint);
 			trueSpectra = fitter->ConstructSamples(osc);
 			trueLoad = false;
 		}

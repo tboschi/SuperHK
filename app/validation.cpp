@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 	if (!cd.Get("fit_point", fitPoint))
 		fitPoint = -1;
 
-	std::map<std::string, Eigen::VectorXd> nooscSpectra = fitter->BuildSamples();
+	std::unordered_map<std::string, Eigen::VectorXd> nooscSpectra = fitter->BuildSamples();
 
 	double tM12, fM12;
 	double tM23, fM23;
@@ -92,9 +92,10 @@ int main(int argc, char** argv)
 	else if (trueOrder == "inverted")
 		osc->SetMasses<Oscillator::inverted>(tM12, tM23);
 	osc->SetPMNS<Oscillator::sin2>(tS12, tS13, tS23, tdCP);
-	std::map<std::string, Eigen::VectorXd> trueSpectra = fitter->BuildSamples(osc);
-	std::map<std::string, Eigen::VectorXd> fitSpectra;
 
+	std::unordered_map<std::string, Eigen::VectorXd> trueSpectra = fitter->BuildSamples(osc);
+
+	std::unordered_map<std::string, Eigen::VectorXd> fitSpectra;
 	if (fitPoint >= 0) {
 		//get Fit point
 		parms->GetEntry(fitPoint, fM12, fM23, fS12, fS13, fS23, fdCP);
@@ -119,7 +120,7 @@ int main(int argc, char** argv)
 		     << ", s12 " << tS12 << ", s13 " << tS13
 		     << ", s23 " << tS23 << ", dcp " << tdCP << std::endl;
 		if (fitPoint >= 0) {
-			x2n = fitter->RawX2n(trueSpectra[is.first], fitSpectra[is.first]);
+			x2n = Sample::RawX2n(trueSpectra[is.first], fitSpectra[is.first]);
 			fout << "#  fit: m12 " << fM12 << ", m23 " << fM23
 			     << ", s12 " << fS12 << ", s13 " << fS13
 			     << ", s23 " << fS23 << ", dcp " << fdCP << std::endl;
