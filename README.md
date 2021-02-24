@@ -14,7 +14,7 @@ Please refer to the documentation for a full description of the software.
 
 ### Current version
 
-The latest release can be found in [releases](releases).
+The latest release can be found in [releases](https://github.com/tboschi/SuperHK/releases).
 
 Differences with previous version:
 * Sources and script have been moved to the `src` directory. This is in view of moving to an API+library style.
@@ -156,4 +156,4 @@ Most of the scripts have the ```-h``` option to show usage.
 
 ## Problems?
 
-If you spot anything off, please reach out to [boschi.tommaso@gmail.com](mailto:boschi.tommaso@gmail.com) or open an [issue](issues/new).
+If you spot anything off, please reach out to [boschi.tommaso@gmail.com](mailto:boschi.tommaso@gmail.com) or open an [issue](https://github.com/tboschi/SuperHK/issues/new).
