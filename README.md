@@ -16,9 +16,13 @@ Please refer to the documentation for a full description of the software.
 
 The latest release can be found in [releases](https://github.com/tboschi/SuperHK/releases).
 
-Differences with SuperHK v2.0:
-* The atmospheric sample is now supported.
-* Cross-compilation across te cluster is now available; see the documentation on how to use it.
+Differences with previous version:
+* Sources and script have been moved to the `src` directory. This is in view of moving to an API+library style.
+* Sparse matrices are used now to compure Jacobian and Hessian improving speed by a factor of 5.
+
+Differences with v2.0:
+* Atmospheric sample is supported.
+* Cross-compilation across the cluster is now available; see the documentation on how to use it.
 * The energy scaling error is handled more exactly as it is implemented as an anlaytic function.
 * The ```Oscillator``` and ```ChiSquared``` classes have been remodelled to improve optimization and maximise use of vector instructions.
 * The chi2 penalisation term is automatically added.
@@ -37,7 +41,7 @@ The requirements for the code to be compiled and run are
 * **gcc-c++** version 4.8 or higher (for C++11);
 * **ROOT** version 5.34/38 or higher;
 * **Eigen** version 3.3 or higher;
-* for running on the cluster **HTCondor** or **SLURM** as workload managers, for distributed computing; if you use another manager you should change the script accordingly
+* for running on the cluster **HTCondor**, **SLURM**, **SGE**, or **PBS** as workload managers for distributed computing; if you use another manager you should change the script accordingly
 
 [ROOT](https://root.cern.ch/) should be installed and properly linked. To test if true, simply run
 ```
@@ -59,15 +63,19 @@ If only one binary is needed, then this can be compiled alone with
 make APP=<main>
 ```
 where main any main file under the local app folder. The .cpp extensions must be omitted. 
-By default, copmilation flags for high optimization are turned on. To deactivate them compile like this
+The `make` command also copies some bash scripts from the source directory to the bin directory.
+It is strongly advised to apply any edits to the source scripts first and then run `make` again.
+
+By default, SMIX and AVX are turned on for Eigen optimization.
+To deactivate them compile like this
 ```
 make ARCH=
 ```
 
-If using a distributed computing  cluster, its nodes could have all different architectures.
-Specific compilation on each node can be achieved by using
+If using a distributed computing cluster, its nodes could have all different architectures.
+Extremely optimized compilation on each node can be achieved by using
 ```
-./cross-compile.sh 
+bin/cross-compile
 ```
 It is not a cross-compilation properly speaking, as both scripts first determine the nodes on the
 cluster, then ssh into each node and only if a new architecture is found a new, optimized binary
@@ -94,7 +102,7 @@ which creates the ```doc/doc.pdf``` file.
 
 After building the executables, run
 ```
-./download.sh
+bin/download
 ```
 to build the folder structure required by the framework.
 The script also downloads the input files from https://pprc.qmul.ac.uk/~tboschi/HK/atmo.
@@ -104,17 +112,6 @@ You can specify a specific path with the ```-p prefix``` option, as explained in
 The subfolders ```errorstudy/reconstruction_beam``` and ```errorstudy/reconstruction_atmo``` are created to contain reconstruction files to build the data samples.
 The subfolders ```errorstudy/systematics_beam``` and ```errorstudy/systematics_atmo``` contain various systematic models that can be used straight away in the analysis.
 
-
-## Prepare the beam systematics - WARNING \*\*out of date\*\*
-
-This step is not necessary if you have run ```download.sh``` before.
-
-Creates correlation matrix of systematic parameters by combining matrices found in files of matrixN.root.
-The script expects to find the systematics folder under root with the spline files to be processed (renaming of files and histograms).
-It uses ```app/purifysystematics.cpp``` and ```app/addmatrix.cpp```.
-```
-./prepare_systematics.sh -r errorstudy/root matrix1.root [matrix2.root ...]
-```
 
 ## Running the fitter
 
@@ -136,10 +133,11 @@ directory. The nominal T2K 2018 systematic model is found under ```errorstudy/0`
 ```
 cp -r errorstudy /0/systematics errorstudy/first_run
 ```
-Finally, the fitter can be launched on the distributed computing system with the trisens_c.sh
-(HTCondor) or the trisens_s.sh (Slurm) utilities, with for example
+Finally, the fitter can be launched on the distributed computing system with the `trisens`
+utilities: it automatically detects the HPC manager.
+For example
 ```
-./trisens.sh -r errorstudy/first_run -d comb -1 NH -2 NH -N 500
+bin/trisens -r errorstudy/first_run -d comb -1 NH -2 NH -N 500
 ```
 will launch 500 jobs (```-N 500```) on the cluster, fitting both the beam and atmospheric samples (```-d comb```) with true and fitted normal mass hierarchies (```-1 NH -2 NH```).
 Other important options are
@@ -148,7 +146,7 @@ Other important options are
 * ```-v <verbosity>``` to change the verbosity of the log files.
 The full list of options can be shown with
 ```
-./trisens.sh -h
+bin/trisens -h
 ```
 
 ## Everything else
