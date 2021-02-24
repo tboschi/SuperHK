@@ -9,15 +9,24 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <map>
+#include <vector>
 #include <memory>
+#include <utility>
 
 #include "tools/CardDealer.h"
+#include "physics/Const.h"
+#include "physics/Flavors.h"
 #include "physics/Oscillator.h"
 
 #include "TFile.h"
+#include "TTree.h"
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TAxis.h"
+#include "TKey.h"
+#include "TMatrixD.h"
+#include "TMatrixT.h"
 
 #include "Eigen/Dense"
 #include "Eigen/Sparse"
@@ -122,7 +131,7 @@ class Sample
 		Oscillator::Profile _lens_dens;
 
 		std::set<std::string> _type;
-		std::unordered_map<std::string, std::pair<Nu::Flavour, Nu::Flavour> > _oscf;
+		std::unordered_map<std::string, std::pair<Nu::Flavor, Nu::Flavor> > _oscf;
 
 		// for binning information
 		int _nBin; //, _allBin;

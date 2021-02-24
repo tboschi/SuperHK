@@ -221,7 +221,7 @@ void Atmosphere::LoadDensityProfile(const CardDealer &cd, std::string table_file
 // 	flv -> initial neutrino flavour
 // 	cosine zenith
 // 	energy
-double Atmosphere::RandomHeight(Nu::Flavour flv, double cosz, double energy)
+double Atmosphere::RandomHeight(Nu::Flavor flv, double cosz, double energy)
 {
 	// no random heights file loaded
 	if (!_problibs.size())
@@ -335,7 +335,7 @@ double Atmosphere::RandomHeight(Nu::Flavour flv, double cosz, double energy)
 // 	atm  = production height in atmosphere
 // return a vector of length-density pairs in order of neutrino travel baseline
 // the first entry will be therefore atmospheric propagation
-Oscillator::Profile Atmosphere::MatterProfile(Nu::Flavour flv, double cosz, double energy)
+Oscillator::Profile Atmosphere::MatterProfile(Nu::Flavor flv, double cosz, double energy)
 {
 	return MatterProfile(cosz, RandomHeight(flv, cosz, energy));
 }
@@ -394,7 +394,7 @@ Oscillator::Profile Atmosphere::MatterProfile(double cosz, double atm)
 /*
 std::map<std::string, Eigen::VectorXd> Atmosphere::Oscillate(
 			const std::vector<std::pair<double, double> > &bins, 
-			const std::map<std::string, std::pair<Nu::Flavour, Nu::Flavour> > &oscf,
+			const std::map<std::string, std::pair<Nu::Flavor, Nu::Flavor> > &oscf,
 			Oscillator *osc)
 {
 	std::map<std::string, Eigen::VectorXd> allprob;

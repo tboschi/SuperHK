@@ -27,7 +27,7 @@ void BeamSample::Init(const CardDealer &cd, std::string process)
 	//	 "nuEB_nuEB", "nuMB_nuMB", "nuMB_nuEB"};
 	//_chan = {"E_CCQE", "M_CCQE", "E_CCnQE", "M_CCnQE", "E_NC", "M_NC"};
 	//_horn = {"FHC", "RHC"};
-	//std::map<std::string, std::pair<flavour, flavour> >
+	//std::map<std::string, std::pair<flavor, flavor> >
 	_oscf = { {"nuE0_nuE0", {Nu::E_, Nu::E_}},
 		  {"nuM0_nuM0", {Nu::M_, Nu::M_}},
 		  {"nuM0_nuE0", {Nu::M_, Nu::E_}},

@@ -201,7 +201,7 @@ done
 #error			= $outlog/L$nameExec.$rr.log
 #stream_output		= True
 #stream_error		= True
-#+JobFlavour="testmatch"
+#+JobFlavor="testmatch"
 #
 #queue
 #

@@ -17,21 +17,7 @@
 #include <map>
 #include <set>
 
-#include "tools/CardDealer.h"
-#include "physics/Flavours.h"
-#include "physics/Oscillator.h"
-
 #include "event/Sample.h"
-
-#include "TObject.h"
-#include "TFile.h"
-#include "TH1D.h"
-#include "TH2D.h"
-#include "TAxis.h"
-#include "TKey.h"
-#include "TMatrixT.h"
-
-#include "Eigen/Dense"
 
 class BeamSample : public Sample
 {

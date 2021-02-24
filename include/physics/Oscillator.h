@@ -1,8 +1,8 @@
 /* Oscillator of the Barger type
  */
 
-#ifndef Oscillator_H
-#define Oscillator_H
+#ifndef OSCILLATOR_H
+#define OSCILLATOR_H
 
 #include <iostream>
 #include <fstream>
@@ -17,7 +17,7 @@
 
 #include "tools/CardDealer.h"
 #include "physics/Const.h"
-#include "physics/Flavours.h"
+#include "physics/Flavors.h"
 
 #include "Eigen/Dense"
 
@@ -76,10 +76,10 @@ class Oscillator
 
 		void FromCard(const CardDealer &cd);
 
-		double Probability(Nu::Flavour in, Nu::Flavour out,
+		double Probability(Nu::Flavor in, Nu::Flavor out,
 				double energy, bool force = false);
 		//void Oscillate(Nu in, Nu out, TH1D* h);
-		Eigen::VectorXd Oscillate(Nu::Flavour in, Nu::Flavour out,
+		Eigen::VectorXd Oscillate(Nu::Flavor in, Nu::Flavor out,
 				const std::vector<double> &bins);
 		void Reset();
 		std::map<double, Eigen::MatrixXd>::iterator FindEnergy(double energy);

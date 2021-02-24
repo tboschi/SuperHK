@@ -321,7 +321,7 @@ std::map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(Oscillator *osc)
 	for (const std::string &it : _type) {
 		const auto &tr = _true_bins[it];
 
-		// map contains the right oscillation flavour combination 
+		// map contains the right oscillation flavor combination 
 		// for this particular type binning
 		// if osc = 0 then probs contains ones only 
 		std::map<std::string, Eigen::VectorXd> probs =
@@ -418,8 +418,8 @@ std::unordered_map<std::string, Eigen::VectorXd> AtmoSample::BuildSamples(std::s
 		//fM = factor_M;
 
 
-		Nu::Flavour nu_out = Nu::fromPDG(ipnu);
-		//Nu::Flavour nue, num;
+		Nu::Flavor nu_out = Nu::fromPDG(ipnu);
+		//Nu::Flavor nue, num;
 		if (osc && std::abs(mode) < 30) {	// NCs have mode >= 30
 			// LUT is cleared in this step
 			// -1 dirnu[2] ?? ???? ?? ? ? ? ? ? ?
@@ -730,7 +730,7 @@ void CreateTensor(CardDealer *cd)
 		std::cout << "hist " << ir.second << "\t" << ny << ", " << nx << std::endl;
 		for (int it : nu_types) {
 			std::string name = Nu::toString(it);
-			// one bin content per neutrino initial flavour
+			// one bin content per neutrino initial flavor
 			if (it > 0) {
 				bin_contents[ir.second + "_nuE0_" + name]
 						= Eigen::MatrixXd::Zero(ny, nx);
@@ -850,7 +850,7 @@ void CreateTensor(CardDealer *cd)
 		// name is histogram type
 		reco_bins[ir.second]->Write();
 		cf << "reco_info\t\"" << reco_bins[ir.second]->GetName() << "\"\n";
-		// name is histogram type + "_" + nu flavour
+		// name is histogram type + "_" + nu flavor
 		true_bins[ir.second]->Write();
 		cf << "true_info\t\"" << true_bins[ir.second]->GetName() << "\"\n";
 

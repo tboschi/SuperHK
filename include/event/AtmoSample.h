@@ -18,35 +18,18 @@
  * 
  */
 
-#ifndef AtmoSample_H
-#define AtmoSample_H
+#ifndef ATMOSAMPLE_H
+#define ATMOSAMPLE_H
 
 #include <iostream>
 #include <string>
 #include <set>
-#include <map>
-#include <vector>
-#include <memory>
-#include <utility>
 
-#include "tools/CardDealer.h"
-#include "physics/Const.h"
-#include "physics/Flavours.h"
-#include "physics/Oscillator.h"
 #include "physics/Atmosphere.h"
 
 #include "event/Sample.h"
 
-#include "TObject.h"
-#include "TFile.h"
 #include "TChain.h"
-#include "TTree.h"
-#include "TH1D.h"
-#include "TH2D.h"
-#include "TKey.h"
-#include "TAxis.h"
-#include "TMatrixD.h"
-#include "TMatrixT.h"
 
 #include "Eigen/Dense"
 

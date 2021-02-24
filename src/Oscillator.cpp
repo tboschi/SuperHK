@@ -116,9 +116,9 @@ void Oscillator::SetMatterProfile(const Oscillator::Profile &l_d)
 	Reset();
 }
 
-//return oscillation probability from flavour in to flavour out at energy given
+//return oscillation probability from flavor in to flavor out at energy given
 //the lengths and densities are fixed beforehand
-double Oscillator::Probability(Nu::Flavour in, Nu::Flavour out, double energy, bool force)
+double Oscillator::Probability(Nu::Flavor in, Nu::Flavor out, double energy, bool force)
 {
 	if (std::abs(in - out) >= 3 && !force)
 	{
@@ -145,7 +145,7 @@ double Oscillator::Probability(Nu::Flavour in, Nu::Flavour out, double energy, b
 }
 
 /* deprecated! */
-Eigen::VectorXd Oscillator::Oscillate(Nu::Flavour in, Nu::Flavour out,
+Eigen::VectorXd Oscillator::Oscillate(Nu::Flavor in, Nu::Flavor out,
 				const std::vector<double> &bins)
 {
 	Eigen::VectorXd vb(bins.size() - 1);
