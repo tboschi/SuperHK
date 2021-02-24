@@ -116,7 +116,7 @@ In this document, the main modules of the software are explained in detail.
 The framework can be found on \href{https://github.com/tboschi/SuperHK}{GitHub}.
 Simply run
 \begin{lstlisting}[language=bash]
-	git clone https://github.com/tboschi/SuperHK.git
+    git clone https://github.com/tboschi/SuperHK.git
 \end{lstlisting}
 to clone the latest version of the repository.
 The framework is a bundle of bash scripts and C++ code.
@@ -133,14 +133,17 @@ The requirements for the code to be compiled and run are
 	\item \textbf{gcc-c++} version 4.8 or higher (for C++11);
 	\item \textbf{ROOT} version 5.34/38 or higher;
 	\item \textbf{Eigen} version 3.3 or higher;
-	\item \textbf{HTCondor} or \textbf{Slurm} as workload managers, for distributed computing.
+	\item \textbf{HTCondor}, \textbf{Slurm}, \textbf{SGE}\footnotemark, %
+		\textbf{PBS}\footnotemark[\value{footnote}] as workload managers %
+		for distributed computing.
 \end{itemize}
+\footnotetezt{Not fully tested. Please email any bug to \mailto
 
 Before starting compilation, the \href{https://root.cern.ch/}{ROOT data analysis framework} %
 should be installed and properly linked.
 A simple test to check that is to run
 \begin{lstlisting}[language=bash]
-	root-config --glibs --cflags
+    root-config --glibs --cflags
 \end{lstlisting}
 If the output looks reasonable, then ROOT is correctly installed.
 Please refer to their documentation on how to install the framework.
@@ -150,7 +153,7 @@ It does not need to be compiled as it is an only header library.
 If Eigen is already installed in the user system, it is necessary to define the environment variable \texttt{EIGEN} %
 pointing to the installation location.
 \begin{lstlisting}[language=bash]
-	export EIGEN=/path/to/eigen
+    export EIGEN=/path/to/eigen
 \end{lstlisting}
 It is important to note that this is the path to the top folder containing the actual headers, %
 usually under a folder called \texttt{Eigen} (note capitalisation).
@@ -158,55 +161,62 @@ Another option is to simply copy the full folder \texttt{Eigen} to the local \te
 
 Certain executables perform better when distributed on a computing cluster.
 The scripts only support either HTCondor or Slurm as workload managers.
-It is assumed that the file system is shared by each node on the cluster.
+\textbf{IMPORTANT}: it is assumed that the file system is shared by each node on the cluster.
 If that is not the case, as for a universe grid system, then some scripts may not work out of the box.
 
 \subsection{Compiling}
 
 Compilation on the local machine is done with
 \begin{lstlisting}[language=bash]
-	make
+    make
 \end{lstlisting}
 If only one binary is needed, this can be specified with
 \begin{lstlisting}[language=bash]
-	make APP=<main>
+    make APP=<main>
 \end{lstlisting}
-where \texttt{main} is any main file under the local \texttt{app} folder.
-The \texttt{.cpp} extension must be omitted.
+where \texttt{main} is any main file under the local \texttt{app} folder;
+the \texttt{.cpp} extension must be omitted.
+This is very useful to avoid waiting the compilation of all the binaries if a change was made to a source file.
 For example, to compile just the fitter executable, it is possible to run
 \begin{lstlisting}[language=bash]
-	make APP=fitter
+    make APP=fitter
 \end{lstlisting}
 as there is a main function in the file \texttt{app/fitter.cpp}.
+The make command also copies some bash scripts from the source directory to the bin directory.
+It is strongly advised to apply any edits to the source scripts first and then run \texttt{make} again.
 
 This documentation can be compiled with
 \begin{lstlisting}[language=bash]
-	make doc
+    make doc
 \end{lstlisting}
 
 \subsection{Cross-compilation}
 
-Due to the default flags passed to the gcc compiler (\texttt{-O3 -march}), the executables are highly optimised %
-for the native architecture.
-The flags are needed to activate special vector instructions required by Eigen which speed up %
-the computation quite considerably.
-The disadvantage of those flags is that the binaries can only run on the local architecture or compatible ones.
-This can be problematic when running parallel jobs on a distributed cluster as different architectures %
-not compatible with each other might be present.
+The executables could be highly optimised for the native architecture of the machine where they are running over.
+Due to the extensive usage of the Eigen library, enabling vector (SMID and AVX) instructions can really speed up %
+the execution of the fitter and certain jobs.
+The gcc flags \texttt{-mavx -msse} should enable such instructions, which should be available on %
+most modern machines, and achieve the desired optimization.
 
+In order to obtain an extra boost in optimization it is possible to compile with the \texttt{-march} flag.
+This activates all attainable optimization available on a given machine; the drawback is that the binaries will not %
+run on other incompatible CPUs and this is not very ideal for distributed jobs.
 This problem can be overcome by compiling the code on each node of the cluster.
 An utility to do this is available and it is simply run as
 \begin{lstlisting}[language=bash]
-	./cross-compile.sh
+    bin/cross-compile
 \end{lstlisting}
-It is not cross-compilation properly speaking, as both scripts first determine the nodes %
+It is not ``cross-compilation'' properly speaking, as both scripts first determine the nodes %
 on the cluster, then ssh into each node and only if a new architecture is found a new, optimised binary is compiled %
 for that particular architecture.
 This workaround works as long as access to the file system is shared on the cluster and that each node can %
-be accessed via ssh by the user.
+be accessed via SSH by the user.
+The script will remember a short list of nodes to visit for future compilations; this speeds up the cross-compilation %
+quite considerably.
 
-The user can test if they can ssh into a node of the cluster first.
-If this is not possible for any node, then the \texttt{cross-compile.sh} script will detect this and generic architecture flags are used instead.
+The user can test if they can SSH into a node of the cluster first.
+If this is not possible for any node, then the \texttt{cross-compile} script will detect this %
+and generic architecture flags are used instead.
 The script creates a generic version of the binaries \texttt{bin/fitter} and \texttt{bin/atmo\_input} anyway.
 
 \subsection{Retrieving the input files}
@@ -214,7 +224,7 @@ The script creates a generic version of the binaries \texttt{bin/fitter} and \te
 
 After a successful compilation, the input files should be downloaded by running the utility
 \begin{lstlisting}[language=bash]
-	./download.sh
+    bin/download
 \end{lstlisting}
 This builds the folder structure required by the framework and downloads the reconstruction %
 and systematic files from \url{https://pprc.qmul.ac.uk/~tboschi/HK/atmo}.
@@ -261,12 +271,12 @@ A card file is nothing but a text file where the parameters are listed as key--v
 It is then only necessary to pass the card file to the binary at run time.
 A card file looks like this
 \begin{lstlisting}[language=bash]
-	# this is a comment
+    # this is a comment
 
-	parameter	3.14156		# this is also a comment
-	path		"/home/user"
-	array		"a", "b", "c"
-	...
+    parameter	3.14156		# this is also a comment
+    path		"/home/user"
+    array		"a", "b", "c"
+    ...
 \end{lstlisting}
 Lines, or parts of lines, starting with ``\texttt{\#}'' are comments and ignored.
 The first element of each line is treated as a \emph{keys} which will be implemented %
@@ -285,8 +295,8 @@ and the generation of the matter profile for atmospheric neutrinos is in %
 \refsec{sec:atmosphere}.
 There are two binaries that are used to test the oscillation classes
 \begin{lstlisting}[language=bash]
-	./bin/beam_oscillation cards/osc_beam.card
-	./bin/atmo_oscillation cards/osc_atmo.card
+    bin/beam_oscillation cards/osc_beam.card
+    bin/atmo_oscillation cards/osc_atmo.card
 \end{lstlisting}
 Both of them will create an output file, specified in the card, with oscillation %
 probabilities in a range of energies and angles.
@@ -310,14 +320,15 @@ The points of the grid are represented by a unique integral number, %
 which is lazily evaluated during run time.
 To see what the unique number of the true point is, the following binary can be used
 \begin{lstlisting}[language=bash]
-	./bin/oscillation_point cards/oscillation.card
+    bin/oscillation_point cards/oscillation.card
 \end{lstlisting}
 To see which points of the grid correspond to a scan on certain parameters, 
 the command would be
 \begin{lstlisting}[language=bash]
-	./bin/oscillation_point cards/oscillation.card <parm1> [<parm2> ...]
+    bin/oscillation_point cards/oscillation.card <parm1> [<parm2> ...]
 \end{lstlisting}
-where \texttt{<parmX>} can typically be any of \texttt{"M12"}, \texttt{"M23"}, \texttt{"S12"}, \texttt{"S13"}, \texttt{"S23"}, or \texttt{"CP"}.
+where \texttt{<parmX>} can typically be any of \texttt{"M12"}, \texttt{"M23"}, \texttt{"S12"}, %
+\texttt{"S13"}, \texttt{"S23"}, or \texttt{"CP"}.
 Specifying all the oscillation parameters would show all the points on the grid.
 
 The typical parameter space spans on four dimensions, the parameters %
@@ -336,7 +347,7 @@ the parameter space is fully scanned in a bit more than 44 hours.
 \subsection{Running the fitter}
 
 The fitter is the most important tool of the framework; %
-the other executables are used for validation or plotting.
+the other executables are just used for validation or plotting.
 As explained in the previous section, the parameter space grid is scanned on which the event %
 distributions are built and the $\chi^2$ computed.
 Due to the potentially large parameter space, the fitting process should be parallelised %
@@ -348,7 +359,7 @@ Each job knows the total number of jobs and it is assigned a unique number such 
 the chunks of parameter space are not processed more than once.
 This process is taken care of by the fitter binary which can be launched as
 \begin{lstlisting}[language=bash]
-	./bin/fitter <id> <jobs> <cards>
+    bin/fitter <id> <jobs> <cards>
 \end{lstlisting}
 where \texttt{<id>} is the unique job ID, a number between 0 and \texttt{<jobs>}$-1$, and %
 \texttt{<card>} is the configuration card.
@@ -374,18 +385,18 @@ oscillation probability.
 A quick start to see if the fitter works can be done with the following instructions.
 A new subfolder in the the analysis directory (see \refsec{sec:download}) should be created like this
 \begin{lstlisting}[language=bash]
-	mkdir <prefix>/example
-	mkdir <prefix>/example/systematics
+    mkdir <prefix>/example
+    mkdir <prefix>/example/systematics
 \end{lstlisting}
 For this test, the T2K 2018 error model will be used and only the beam sample fitted.
 \begin{lstlisting}[language=bash]
-	cp <prefix>/systematics_beam/T2K/* <prefix>/example/systematics/
+    cp <prefix>/systematics_beam/T2K/* <prefix>/example/systematics/
 \end{lstlisting}
 If the \texttt{<prefix>} path is set to default one, there is no need to change the provided card files.  
 If this is not the case, the user should change the cards accordingly.
 The following command should work without any problem
 \begin{lstlisting}[language=bash]
-	sed -i 's:errorstudy:<prefix>:' cards/*.card
+    sed -i 's:errorstudy:<prefix>:' cards/*.card
 \end{lstlisting}
 where \texttt{<prefix>} is the correct analysis directory path.
 The parameter space card linked in the default \texttt{cards/multi.card} is a one-dimensional space in %
@@ -393,14 +404,14 @@ $\delta_\text{CP}$, made of 101 points between $-\pi$ and $\pi$.
 The nominal point is at $\delta_\text{CP} = 0$.
 Given the small space, the fitter can be then run as a single process
 \begin{lstlisting}[language=bash]
-	./bin/fitter 0 1 cards/multi.card
+    bin/fitter 0 1 cards/multi.card
 \end{lstlisting}
 and the output will be saved to \texttt{<prefix>/example/SpaghettiSens.0.root}.
 If the displayed messages do not show any ciritical error and the output file %
 is correctly created, the fitter finished successfully.
 The result can be plotted with root
 \begin{lstlisting}[language=bash]
-	root -l <prefix>/example/SpaghettiSens.0.root
+    root -l <prefix>/example/SpaghettiSens.0.root
 	root [1] stepX2Tree->Draw("X2:CP", "", "L");
 \end{lstlisting}
 
@@ -435,25 +446,25 @@ which will contain systematic files needed for this specific run.
 The user can select only one error model for each sample and copy it to the new input directory.%
 \footnote{There is exactly one for the atmospheric sample at the moment.}
 The card files should be finally edited accordingly.
-As this can easily become a tedious job, the \texttt{trisens.sh} utility was devised to %
+As this can easily become a tedious job, the \texttt{trisens} utility was devised to %
 completely automatize this process and submit the processes on the distributed computing system.
 
 For example, if the user is interested in doing a combined fit between atmospheric and beam data %
 using the T2K 2018 error model and normal hierarcies, they should do
 \begin{lstlisting}[language=bash]
-	mkdir -p <prefix>/first_run/systematics
-	cp <prefix>/systematics_beam/T2K/* <prefix>/first_run/systematics/
-	cp <prefix>/systematics_atmo/SK/*  <prefix>/first_run/systematics/
-	./trisens.sh -r <prefix>/first_run -d comb -1 NH -2 NH -N 500
+    mkdir -p <prefix>/first_run/systematics
+    cp <prefix>/systematics_beam/T2K/* <prefix>/first_run/systematics/
+    cp <prefix>/systematics_atmo/SK/*  <prefix>/first_run/systematics/
+    bin/trisens -r <prefix>/first_run -d comb -1 NH -2 NH -N 500
 \end{lstlisting}
 The command will spawn 500 jobs (\texttt{-N 500}) on the cluster, %
 fitting both the beam and atmospheric samples %
 (\texttt{-d comb}) with true and fitted normal mass hierarchies (\texttt{-1 NH -2 NH}).
 The output will be saved in
 \begin{lstlisting}[language=bash]
-	<prefix>/first_run/NH_NH/sensitivity/point_<nominal>
+    <prefix>/first_run/NH_NH/sensitivity/point_<nominal>
 \end{lstlisting}
-The options of the \texttt{trisens.sh} script to consider are
+The options of the \texttt{trisens} script to consider are
 \begin{itemize}
 	\small
 	\item \texttt{-r <root>} defines the main working folder > which must have a \"systematics\"
@@ -472,12 +483,12 @@ The options of the \texttt{trisens.sh} script to consider are
 \end{itemize}
 The full list of options and the usage can be shown with
 \begin{lstlisting}[language=bash]
-	./trisens.sh -h
+    bin/trisens -h
 \end{lstlisting}
 This utility automatically edits the card files in the \texttt{cards} folder and place copies them %
 in the output folder
 \begin{lstlisting}[language=bash]
-	<prefix>/first_run/NH_NH/sensitivity/
+    <prefix>/first_run/NH_NH/sensitivity/
 \end{lstlisting}
 An \texttt{.info} file will be created as well in the output folder with a name determined %
 by the scan type.
@@ -487,7 +498,7 @@ fitted points.
 The points are generated with the \texttt{bin/oscillation\_point} binary.
 Once the fitter is finished the output results are stored in the folder %
 \begin{lstlisting}[language=bash]
-	<prefix>/first_run/NH_NH/sensitivity/point_<p>
+    <prefix>/first_run/NH_NH/sensitivity/point_<p>
 \end{lstlisting}
 where \texttt{<p>} is the point in the oscillation space.
 For example, \np{49773} is the nominal (\emph{true}) fit point of the default oscillation %
@@ -516,8 +527,9 @@ stored in \texttt{TTree} objects called \texttt{stepX2Tree}.
 The user should use their manager queue utility to control the status of their jobs.
 These commands are
 \begin{lstlisting}[language=bash]
-	condor_q -sub $USER  # for HTCondor
-	squeue -u $USER      # for SLURM
+    condor_q -sub $USER  # for HTCondor
+    squeue -u $USER      # for SLURM
+    qstat -u $USER       # for SGE or PBS
 \end{lstlisting}
 Once the jobs are done, it is worth checking whether they were successful, %
 as it may occur that some job fails.
@@ -529,7 +541,7 @@ As a full fit requires many resources and can take a long time to complete, %
 an utility to fix broken or missing jobs is then provided.
 Following the previous example, this is done with
 \begin{lstlisting}[]
-	./complete.sh <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info
+    bin/complete_sens <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info
 \end{lstlisting}
 The script scans through the output files and tries to understand whether the job failed, %
 the job did not complete, or some other error occurred.
@@ -538,20 +550,20 @@ is not complete.
 Otherwise, error messages will be printed and the user can decide if they want to repair the fit %
 simply by launching the script with the \texttt{-f} option
 \begin{lstlisting}[]
-	./complete.sh -f <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info
+    bin/complete_sens -f <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info
 \end{lstlisting}
-The other option is to repeat the full fit with the \texttt{trisens.sh} utility %
+The other option is to repeat the full fit with the \texttt{trisens} utility %
 or launch the fits manually.
 
 \subsection{Extracting the results}
 
 The $\chi^2$ contours can only be created for single fits (not scans) by calling
 \begin{lstlisting}[language=bash]
-	./contours.sh <prefix>/first_run/NH_NH/sensitivity/point_<p>
+    bin/contours <prefix>/first_run/NH_NH/sensitivity/point_<p>
 \end{lstlisting}
 and the result is saved in 
 \begin{lstlisting}[language=bash]
-	<prefix>/first_run/NH_NH/contours/point_<p>.root
+    <prefix>/first_run/NH_NH/contours/point_<p>.root
 \end{lstlisting}
 The resulting file contains a list of \texttt{TH1} and \texttt{TH2} objects with the %
 $\chi^2$ profile against one or two oscillation parameters.
@@ -559,25 +571,25 @@ The processing is done by the \texttt{build\_contours} binary.
 
 CPV sensitivity curves are instead created with
 \begin{lstlisting}[language=bash]
-	./exclude.sh <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info
+    bin/exclude <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info
 \end{lstlisting}
 In this case, the \texttt{.info} file which lists all the points scanned over should be passed.
 The utility runs the \texttt{exclusion} binary which creates a text file with exclusion power %
 at each value of $\delta_\text{CP}$.
 The file is saved as
 \begin{lstlisting}[language=bash]
-	<prefix>/first_run/NH_NH/contours/CPV_scan.dat
+    <prefix>/first_run/NH_NH/contours/CPV_scan.dat
 \end{lstlisting}
-
-For mass hierarchies studies, the \texttt{exclude.sh} utility can accepts two parameters, for example
+    
+For mass hierarchies studies, the \texttt{exclude} utility can accepts two parameters, for example
 \begin{lstlisting}[language=bash]
-	./exclude.sh <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info \
-		     <prefix>/first_run/NH_IH/sensitivity/CPV_scan.info
+    bin/exclude <prefix>/first_run/NH_NH/sensitivity/CPV_scan.info \
+		<prefix>/first_run/NH_IH/sensitivity/CPV_scan.info
 \end{lstlisting}
 Since the true mass hierarchy is identical for both inputs, the script will make CPV sensitivity curves %
 for an unknown mass hierarchy fit and save it to a new directory
 \begin{lstlisting}[language=bash]
-	<prefix>/first_run/NH/CPV_scan.dat
+    <prefix>/first_run/NH/CPV_scan.dat
 \end{lstlisting}
 
 \subsection{Understanding the output files}
@@ -611,7 +623,7 @@ jobs $N_\text{jobs}$, or approximately
 	\frac{N_\text{points}}{N_\text{jobs}}
 \]
 
-The output of the \texttt{contours.sh} script is also stored in a ROOT file, which %
+The output of the \texttt{contours} script is also stored in a ROOT file, which %
 contains a collection of 1D and 2D histograms.
 Their names have the following meaning
 \begin{itemize}
@@ -628,7 +640,7 @@ Their names have the following meaning
 \end{itemize}
 Only the histogram \texttt{X2min<X>} and \texttt{X2<X><Y>} are relevant for plotting (see \refsec{sec:plot}).
 
-The output of the \texttt{exclude.sh} script is a simple multicolumn TSV file %
+The output of the \texttt{exclude} script is a simple multicolumn TSV file %
 and the meaning of each column is the following
 \begin{enumerate}
 	\item is the true value of $\delta_\text{CP}$;
@@ -660,8 +672,8 @@ These scripts require
 \end{itemize}
 and they are
 \begin{lstlisting}[language=bash]
-	./plot_contours.sh
-	./plot_exclusion.sh
+    bin/plot_contours
+    bin/plot_exclusion
 \end{lstlisting}
 The scripts create plots that combine results from different fitter runs and they are particularly useful %
 when a comparison between systematic models or mass hierarchies is needed.
@@ -669,45 +681,45 @@ However, it is important that all the fitter results are from the same oscillati
 The scripts will detect if that is not the case and will exit with an error.
 
 Before executing them, the user should edit the first lines of each script which for %
-\texttt{plot\_exclusions.sh} will look like this %
+\texttt{plot\_exclusions} will look like this %
 
 \begin{lstlisting}[language=bash]
-	# output name unique to combination of sets
-	# this name will be used to refer to each output file
-	name="one_two_three"
+    # output name unique to combination of sets
+    # this name will be used to refer to each output file
+    name="one_two_three"
+    
+    # list of files with CPV exclusion curves
+    # these are the output of the exclude script
+    # and should be text file with CPV sensitivies
+    model=("<prefix>/one/NH_NH/contours/CPV_scan.dat"
+           "<prefix>/two/NH_NH/contours/CPV_scan.dat"
+           "<prefix>/three/NH_NH/contours/CPV_scan.dat")
 
-	# list of files with CPV exclusion curves
-	# these are the output of the exclude.sh script
-	# and should be text file with CPV sensitivies
-	model=("<prefix>/one/NH_NH/contours/CPV_scan.dat"
-	       "<prefix>/two/NH_NH/contours/CPV_scan.dat"
-	       "<prefix>/three/NH_NH/contours/CPV_scan.dat")
-
-	# names for displaying above results
-	# this will be used by gnuplot to label the curves
-	# in the plots and correspond to the input files above
-	nickn=("one_cpv"
-	       "two_cpv"
-	       "three_cpv")
+    # names for displaying above results
+    # this will be used by gnuplot to label the curves
+    # in the plots and correspond to the input files above
+    nickn=("one_cpv"
+           "two_cpv"
+           "three_cpv")
 \end{lstlisting}
 The first variable \texttt{name} is a unique name that identifies the particular combination of results.
 All the output files will have this specific tag in their names.
-The second variable \texttt{model} is the list of input files generated the \texttt{exclude.sh} script, %
+The second variable \texttt{model} is the list of input files generated the \texttt{exclude} script, %
 whereas the third variable \texttt{nickn} is a list of names associated to the input files.
 These will be used for labelling the results in the plots.
-The \texttt{plot\_contours.sh} script is analogous.
+The \texttt{plot\_contours} script is analogous.
 
 The scripts will automatically create \LaTeX\ files with all the $\chi^2$ contours. 
 The output plots can be bundled together into a single PDF using \texttt{pdflatex} %
 when the option \texttt{-p [<file>]} is passed.
-The graphs created by \texttt{plot\_contours.sh} are of two kinds
+The graphs created by \texttt{plot\_contours} are of two kinds
 \begin{itemize}
 	\item $\chi^2$ profiles versus a single oscillation parameters for which the plot %
 		contains two panels, the top one with all the profiles of the \texttt{model} array %
 		and the bottom one with the differences of the curves with respect to the first one;
 	\item $\chi^2$ contours against two oscillation parameters taken at 1\,$\sigma$ and 3\,$\sigma$.
 \end{itemize}
-The two graphs created by \texttt{plot\_exclusion.sh} are
+The two graphs created by \texttt{plot\_exclusion} are
 \begin{itemize}
 	\item the sensitivity to exclude CP conservation of all the inputs provided by %
 		the \texttt{model} array;
@@ -716,8 +728,8 @@ The two graphs created by \texttt{plot\_exclusion.sh} are
 
 Please note that these scripts are not useful (partially) if texlive is not installed or %
 if the user is not interested in the \LaTeX format or is interested in plotting something different.
-In this case, the $\chi^2$ profiles can be read off the ROOT files created by the \texttt{contours.sh} %
-utility and the CPV sensitivity curves from the text file created by the \texttt{exclusion.sh} script.
+In this case, the $\chi^2$ profiles can be read off the ROOT files created by the \texttt{contours} %
+utility and the CPV sensitivity curves from the text file created by the \texttt{exclusion} script.
 
 
 \section{Tools module}
@@ -727,28 +739,28 @@ This module contains a configuration file parser, done by the \texttt{CardDealer
 Given the large number of input parameters needed in the analysis, it is advised to use this class as much as possible.
 A configuration file, or \emph{card}, looks like this
 \begin{lstlisting}[language=bash]
-	# --- /path/to/card ---
-	#
-	# this is a comment. each line should be in the format
-	# key <space> value [, value1, ...]
-
-	float_value	123.321	  # another comment
-	integer		-54321
-	boolean		0	  # or any other integer
-	string		"hello"
-	array		1, 2, 3	  # of any type
-	key_1		"x1", "y1", "z1"
-	key_2		"x2", "y2", "z2"
-	key_3		"x3", "y3", "z3"
-	...
+    # --- /path/to/card ---
+    #
+    # this is a comment. each line should be in the format
+    # key <space> value [, value1, ...]
+    
+    float_value	123.321	  # another comment
+    integer		-54321
+    boolean		0	  # or any other integer
+    string		"hello"
+    array		1, 2, 3	  # of any type
+    key_1		"x1", "y1", "z1"
+    key_2		"x2", "y2", "z2"
+    key_3		"x3", "y3", "z3"
+    ...
 \end{lstlisting}
 
 A \texttt{CardDealer} object is initialised by passing as argument the name of the configuration file.
 Depending on the application, the user can decide to create the object automatically or dynamically.
 The constructor is
 \begin{lstlisting}[language=C++]
-	template <typename T>
-	CardDealer(T cardFile, bool verb = false);
+    template <typename T>
+    CardDealer(T cardFile, bool verb = false);
 \end{lstlisting}
 where \texttt{cardFile} is the absolute or relative path to the configuration file and %
 \texttt{verb} activates debugging messages.
@@ -789,26 +801,26 @@ In the example above, keys \texttt{key\_1}, \texttt{key\_2}, \texttt{key\_3} hav
 Because of the internal implementation, string values have explicit signatures (\texttt{4}, \texttt{5}).
 The best usage for this function is as the following example:
 \begin{lstlisting}[language=C++]
-	CardDealer cd("/path/to/card");
-
-	double float_value; // create variable
-	if (!cd.Get("float_value", float_value))
-		float_value = 999.999;	// default value if key does not exist
-
-	// retrieve an array-like parameter
-	std::vector<int> array;
-	cd.Get("array", array);
-
-	// retrieve a group of parameters
-	std::map<std::string, std::vector<std::string> > keys;
-	cd.Get("key_", keys);
-
-	for (const auto &ik : keys)
-		std::cout << ik.first << "\t" << ik.second.front() << std::endl;
-	// output is
-	// 1	x1
-	// 2	x2
-	// 3	x3
+    CardDealer cd("/path/to/card");
+    
+    double float_value; // create variable
+    if (!cd.Get("float_value", float_value))
+    	float_value = 999.999;	// default value if key does not exist
+    
+    // retrieve an array-like parameter
+    std::vector<int> array;
+    cd.Get("array", array);
+    
+    // retrieve a group of parameters
+    std::map<std::string, std::vector<std::string> > keys;
+    cd.Get("key_", keys);
+    
+    for (const auto &ik : keys)
+    	std::cout << ik.first << "\t" << ik.second.front() << std::endl;
+    // output is
+    // 1	x1
+    // 2	x2
+    // 3	x3
 \end{lstlisting}
 
 The full list of keys is retrieved with the method
@@ -1132,6 +1144,8 @@ It requires the implementation of certain functions in the derived class and, a 
 (2) virtual void LoadSystematics();
 
 (3) virtual std::map<std::string, Eigen::VectorXd> BuildSamples(Oscillator *osc = 0);
+
+(4) virtual std::unordered_map<std::string, Eigen::VectorXd> Unfold(const Eigen::VectorXd &En);
 \end{lstlisting}
 where
 \begin{enumerate}
@@ -1139,7 +1153,8 @@ where
 	\item loads the systematic error files and sets them in the right format;
 	\item actually constructs the samples using an \texttt{Oscillator} object preconfigured with the oscillation parameters %
 		and returns the full even prediction as a map of sample names and Eigen vectors; if \texttt{osc} is omitted, %
-		the unoscillated distributions are returned.
+		the unoscillated distributions are returned;
+	\item performs the opposite action of the \texttt{ConstructSamples} method (see below).
 \end{enumerate}
 The method 
 \begin{lstlisting}[language=C++]
@@ -1296,7 +1311,7 @@ A part from the binning information, the card file for the atmospheric sample cl
     pre_input_IH	"/precomputed/input/IH/*.root"
     pre_tree_name	"preStuff"   #name of tree
 \end{lstlisting}
-When submitting to a cluster with the \texttt{trisens.sh} script, %
+When submitting to a cluster with the \texttt{trisens} script, %
 the majority of paths are set automatically by the script.
 The only entries the user should modify are which systematics to skip (\texttt{skip)} %
 and the scaling of the input file (\texttt{MC\_scale)} which should take in account any %
@@ -1320,8 +1335,8 @@ If the oscillation parameter space does not change during the analysis, it is po
 all the atmospheric samples for each point of the parameter space.
 This is done with the script
 \begin{lstlisting}[language=bash]
-   ./prepare_atmospheric -r <prefix>/reconstruction_atmo/pre
-   			 -1 [NH | IH] -N JOBS -v verbosity
+    bin/triatmo -r <prefix>/reconstruction_atmo/pre
+		-1 [NH | IH] -N JOBS -v verbosity
 \end{lstlisting}
 The path specified by the key \texttt{pre\_input} in the card file tells the framework where %
 the computed files are.
@@ -1329,6 +1344,11 @@ If those are found, they are loaded by the fitter and are given priority when %
 creating the event samples.
 If a certain combination of oscillation parameters does not have a precomputed sample set, %
 the missing sample is built in the usual way.
+The successful generation of precomputed atmospherics can be checked with a similar tool as for %
+a fitting run and with similar usage:
+\begin{lstlisting}[]
+    bin/complete_atmo <prefix>/reconstruction_atmo/pre/[NH | IH]
+\end{lstlisting}
 
 
 There are 67 systematics for the atmospheric sample, adopted from SK atmospheric studies~\cite{Abe:2017aap}.
