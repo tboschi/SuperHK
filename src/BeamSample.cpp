@@ -240,7 +240,9 @@ std::unordered_map<std::string, Eigen::VectorXd>
 		size_t len = hname.find_last_of('_') - hname.find_first_of('_');
 
 		// this hould be 'nuE0_nuE0' like
-		std::string cname = hname.substr(hname.find("nu"), 9);
+		//std::string cname = hname.substr(hname.find("nu"), 9);
+		auto nuIn  = Nu::fromString(hname.substr(hname.find("_nu")+1, 4));
+		auto nuOut = Nu::fromString(hname.substr(hname.rfind("_nu")+1, 4));
 		// this hould be 'E_FHC' like
 		hname.erase(hname.find_first_of('_'), len);
 
@@ -250,12 +252,11 @@ std::unordered_map<std::string, Eigen::VectorXd>
 			if (kVerbosity > 4)
 				std::cout << "Oscillating spectrum for " << ir.first
 					  << " (" << hname << ") with "
-					  << cname << "\n";
-			const auto &chan = _oscf[cname];
+					  << nuIn << " -> " << nuOut << "\n";
 			const auto &bins = _global_true[hname]; //type?
 
 			for (size_t i = 0; i < bins.size() - 1; ++i) {
-				probs(i) = osc->Probability(chan.first, chan.second,
+				probs(i) = osc->Probability(nuIn, nuOut, //chan.first, chan.second,
 						(bins[i] + bins[i+1]) / 2.);
 			}
 			//std::cout<< "Number of bins " << bins.size() <<std::endl;
@@ -263,8 +264,7 @@ std::unordered_map<std::string, Eigen::VectorXd>
 		}
 		else if (kVerbosity > 4)
 			std::cout << "Not oscillating spectrum for " << ir.first
-				<< " (" << hname << ") with "
-				<< cname << "\n";
+				<< " (" << hname << ")\n";
 
 
 		if (samples.count(hname))

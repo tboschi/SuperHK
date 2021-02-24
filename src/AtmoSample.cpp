@@ -27,6 +27,7 @@ void AtmoSample::Init(const CardDealer &cd, std::string process)
 {
 	_atm_path = std::unique_ptr<Atmosphere>(new Atmosphere(cd));
 
+	/*
 	_oscf = { {"nuE0_nuE0", {Nu::E_, Nu::E_}},
 		  {"nuE0_nuM0", {Nu::E_, Nu::M_}},
 		  {"nuE0_nuT0", {Nu::E_, Nu::T_}},
@@ -40,6 +41,7 @@ void AtmoSample::Init(const CardDealer &cd, std::string process)
 		  {"nuMB_nuEB", {Nu::Mb, Nu::Eb}},
 		  {"nuMB_nuMB", {Nu::Mb, Nu::Mb}},
 		  {"nuMB_nuTB", {Nu::Mb, Nu::Tb}} };
+	*/
 
 	if (!cd.Get("sample", _type))
 		// default value too long..

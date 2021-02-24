@@ -205,7 +205,6 @@ Eigen::VectorXd ChiSquared::ConstructSamples(std::shared_ptr<Oscillator> osc) {
 	Eigen::VectorXd vect(_nBin);
 	int bin_off = 0;
 	for (const auto &is : _sample) {
-		std::cout << "constructing at " << is->_point << "\n";
 		vect.segment(bin_off, is->_nBin) = is->ConstructSamples(osc);
 		bin_off += is->_nBin;
 	}
@@ -219,10 +218,8 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 {
 	//initialize epsil with zeroes
 
-	std::cout << "starting with " << _nSys << " zero entries\n";
 	Eigen::VectorXd epsil = Eigen::VectorXd::Zero(_nSys);
 	double x2 = X2(On, En, epsil);
-	std::cout << "done\n";
 
 	if (std::isnan(x2)) {
 		std::cerr << "ChiSquared: ERROR - X2 is nan - dumping vectors on stdout\n";
@@ -302,7 +299,7 @@ Eigen::VectorXd ChiSquared::FitX2(const Eigen::VectorXd &On, const Eigen::Vector
 		//epsil.normalize();
 
 		//epsil = prev_eps * (1 - step) + step * best_eps; // + epsil.normalized() * stepSize;
-		std::cout << "new step (" << step << ") is " << (epsil-best_eps).norm()
+		std::cout << "new step (" << step << ") is " << (epsil - best_eps).norm()
 			  << " from best after " << rands << " trials\n";
 		//epsil = best_eps + step * epsil / epsil.norm();
 		//epsil = step * epsil;

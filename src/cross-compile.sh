@@ -53,7 +53,7 @@ EOF
 if condor_q &> /dev/null ; then
 	hpc=$(condor_status | awk '/@/ {sub(/.*@/, "", $1); print $1}' | sort -u)
 elif squeue &> /dev/null ; then
-	hpc=$(sinfo -h -N -o "%n" | sort -u)
+	hpc=$(sinfo -pnms_research,shared -h -N -o "%n" | sort -u)
 elif qconf -Q &> /dev/null ; then
 	# magic command which I don't know
 	hpc=$(qconf -Q -o "%n" | sort -u)
@@ -66,7 +66,7 @@ else
 fi
 
 if [ "$all" == "true" ] ; then
-	rm -r $record
+	rm -f $record
 fi
 
 if [ -s $record ] ; then

@@ -72,7 +72,7 @@ void Atmosphere::LoadProductionHeights(const CardDealer &cd)
 	for (const std::string &prod : prod_files) {
 		std::ifstream ip(prod.c_str());
 		if (kVerbosity)
-			std::cout << "Loading production file " << prod << std::endl;
+			std::cout << "Atmosphere: loading production file " << prod << std::endl;
 		std::string line;
 
 		//int iz = 0;	// zenith index
@@ -195,20 +195,19 @@ void Atmosphere::LoadDensityProfile(const CardDealer &cd, std::string table_file
 
 		std::stringstream iss(line);
 
-		double ent;
-		std::vector<double> row;
-		row.reserve(3);	// three columns needed
+		Oscillator::LDY ldy; // length, density, yield
 
-		while (iss >> ent)
-			row.push_back(ent);
+		size_t i = 0;
+		while (i < 3 && iss >> ldy[i])
+			++i;
 
 		// not absolute scale
 		if (!kAbsolute)
-			row[0] *= Const::EarthR;
-		if (row.size() < 3)
-			row[2] = 0.5;	// electron density default
+			ldy[0] *= Const::EarthR;
+		if (i < 3)
+			ldy[2] = 0.5;	// electron density default
 
-		_profile.push_back({row[0], row[1], row[2]});
+		_profile.push_back(std::move(ldy));
 	}
 
 	if (kReverse)

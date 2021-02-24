@@ -2,6 +2,7 @@
 #define FLAVORS_H
 
 #include <string>
+#include <iostream>
 
 struct Nu
 {
@@ -22,12 +23,12 @@ struct Nu
 		_undefined = -1
 	};
 
-	static Flavor fromString(const std::string &flv) {
-		if (flv == "nuEb")
+	static Flavor fromString(std::string flv) {
+		if (flv == "nuEB")
 			return Flavor::Eb;
-		else if (flv == "nuMb")
+		else if (flv == "nuMB")
 			return Flavor::Mb;
-		else if (flv == "nuTb")
+		else if (flv == "nuTB")
 			return Flavor::Tb;
 		else if (flv == "nuE0")
 			return Flavor::E_;
@@ -81,5 +82,9 @@ struct Nu
 		}
 	}
 };
+
+inline std::ostream & operator<<(std::ostream &os, const Nu::Flavor &flv) {
+	return os << Nu::toString(flv);
+}
 
 #endif

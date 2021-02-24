@@ -86,7 +86,6 @@ Oscillator::Profile Oscillator::GetMatterProfile(const std::string &densityFile)
 
 	std::ifstream inf(densityFile);
 	std::string line;
-	//std::cout << "Reading " << densityFile << std::endl;
 	while(std::getline(inf, line))
 	{
 		if (line.find_first_of('#') != std::string::npos)
@@ -96,15 +95,16 @@ Oscillator::Profile Oscillator::GetMatterProfile(const std::string &densityFile)
 			continue;
 
 		std::stringstream ssl(line);
-		LDY row;
+		LDY ldy;
 
 		size_t i = 0;
-		while (i < 3 && ssl >> row[i++]);
+		while (i < 3 && ssl >> ldy[i])
+			++i;
 
-		if (row.size() < 3)
-			row[2] = 0.5;	// electron density default
+		if (i < 3)
+			ldy[2] = 0.5;	// electron density default
 
-		lens_dens.push_back(std::move(row));
+		lens_dens.push_back(std::move(ldy));
 	}
 
 	return lens_dens;
@@ -128,7 +128,6 @@ double Oscillator::Probability(Nu::Flavor in, Nu::Flavor out, double energy, boo
 			  << "        to suppress this message"
 			  << std::endl;
 	}
-
 
 	if (!kLUT)
 		return TransitionMatrix(energy).cwiseAbs2()(out, in);
