@@ -1,0 +1,23 @@
+#! /bin/bash
+
+binary=$1
+name=$2
+njobs=$3
+card=$4
+output=$5
+point=$6
+
+cat << EOF
+#! /bin/bash
+# script submission for SLURM
+# sumbit with "sbatch name"
+
+#SBATCH --job-name=$name
+#SBATCH -o $output/L$name.$point.log
+#SBATCH -p nms_research,shared
+#SBATCH --time=3-0
+#SBATCH --cpus-per-task=1
+
+srun $binary $name $point $njobs $card
+
+EOF

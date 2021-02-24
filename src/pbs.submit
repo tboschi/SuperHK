@@ -1,0 +1,24 @@
+#! /bin/bash
+
+binary=$1
+name=$2
+njobs=$3
+card=$4
+output=$5
+
+maxid=$((njobs - 1))
+
+cat << EOF
+# script submission for PBS
+# submit with "qsub name"
+
+#PBS -S /bin/bash
+#PBS -N $name
+#PBS -l walltime=72:00:00
+#PBS -o $output/L$name.\$PBS_RRAY_INDEX.log
+#PBS -e $output/L$name.\$PBS_RRAY_INDEX.log
+#PBS -J 0-$maxid
+
+$binary $name \$PBS_ARRAY_INDEX $njobs $card
+
+EOF

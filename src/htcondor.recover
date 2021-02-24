@@ -1,0 +1,26 @@
+#! /bin/bash
+
+binary=$1
+name=$2
+njobs=$3
+card=$4
+output=$5
+point=$6
+
+cat << EOF
+# script submission for HTCondor
+# sumbit with "condor_submit name" 
+
+executable		= $binary
+arguments		= $name $point $njobs $card
+getenv			= True
+should_transfer_files	= IF_NEEDED
+when_to_transfer_output	= ON_EXIT
+initialdir		= $PWD
+output			= $output/L$name.$point.log
+error			= $output/L$name.$point.log
+
+queue
+
+EOF
+#

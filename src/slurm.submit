@@ -1,0 +1,25 @@
+#! /bin/bash
+
+binary=$1
+name=$2
+njobs=$3
+card=$4
+output=$5
+
+maxid=$((njobs - 1))
+
+cat << EOF
+#! /bin/bash
+# script submission for SLURM
+# sumbit with "sbatch name"
+
+#SBATCH --array=0-$maxid
+#SBATCH --job-name=$name
+#SBATCH -o $output/L$name.%a.log
+#SBATCH -p nms_research,shared
+#SBATCH --time=3-0
+#SBATCH --cpus-per-task=1
+
+srun $binary $name \$SLURM_ARRAY_TASK_ID $njobs $card
+
+EOF

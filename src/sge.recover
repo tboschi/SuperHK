@@ -1,0 +1,22 @@
+#! /bin/bash
+
+binary=$1
+name=$2
+njobs=$3
+card=$4
+output=$5
+point=$6
+
+cat << EOF
+# script submission for PBS
+# submit with "qsub name"
+
+#$ -S /bin/bash
+#$ -N $name
+#$ -l walltime=72:00:00
+#$ -o $output/L$name.$point.log
+#$ -e $output/L$name.$point.log
+
+$binary $point $njobs $card
+
+EOF
