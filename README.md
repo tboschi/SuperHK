@@ -18,14 +18,14 @@ The latest release can be found in [releases](https://github.com/tboschi/SuperHK
 
 Differences with previous version:
 * Sources and script have been moved to the `src` directory. This is in view of moving to an API+library style.
-* Sparse matrices are used now to compure Jacobian and Hessian improving speed by a factor of 5.
+* Sparse matrices are used now to compute Jacobian and Hessian improving speed by a factor of 5.
 
 Differences with v2.0:
 * Atmospheric sample is supported.
 * Cross-compilation across the cluster is now available; see the documentation on how to use it.
-* The energy scaling error is handled more exactly as it is implemented as an anlaytic function.
-* The ```Oscillator``` and ```ChiSquared``` classes have been remodelled to improve optimization and maximise use of vector instructions.
-* The chi2 penalisation term is automatically added.
+* The energy scaling error is handled more exactly as it is implemented as an analytic function.
+* The ```Oscillator``` and ```ChiSquared``` classes have been remodeled to improve optimization and maximize use of vector instructions.
+* The chi2 penalization term is automatically added.
 * The ```CardDealer``` class has been rewritten as a template class.
 
 
@@ -48,7 +48,7 @@ The requirements for the code to be compiled and run are
 root-config --cflags --glibs
 ```
 
-You must download and extract the [Eigen 3 library](https://eigen.tuxfamily.org/dox/index.html) and set an environmant variable ```EIGEN``` to point to the Eigen top folder, or edit the Makefile and manually change the ```EIGENINC``` variable, or copy the folder ```Eigen/``` from the Eigen installation folder to the local ```include/``` folder.
+You must download and extract the [Eigen 3 library](https://eigen.tuxfamily.org/dox/index.html) and set an environment variable ```EIGEN``` to point to the Eigen top directory, or edit the Makefile and manually change the ```EIGENINC``` variable, or copy the directory ```Eigen/``` from the Eigen installation directory to the local ```include/``` directory.
 
 
 ## Build
@@ -57,16 +57,16 @@ Running
 ```
 make
 ```
-will create the executables in the ```bin/``` folder.
+will create the executables in the ```bin/``` directory.
 If only one binary is needed, then this can be compiled alone with
 ```
 make APP=<main>
 ```
-where main any main file under the local app folder. The .cpp extensions must be omitted. 
+where main any main file under the local app directory. The .cpp extensions must be omitted. 
 The `make` command also copies some bash scripts from the source directory to the bin directory.
 It is strongly advised to apply any edits to the source scripts first and then run `make` again.
 
-By default, SMIX and AVX are turned on for Eigen optimization.
+By default, SMID and AVX are turned on for Eigen optimization.
 To deactivate them compile like this
 ```
 make ARCH=
@@ -104,13 +104,13 @@ After building the executables, run
 ```
 bin/download
 ```
-to build the folder structure required by the framework.
+to build the directory structure required by the framework.
 The script also downloads the input files from https://pprc.qmul.ac.uk/~tboschi/HK/atmo.
 
-You can specify a specific path with the ```-p prefix``` option, as explained in the usage. The default value is the folder ```errorstudy/``` relative to the current working directory 
+You can specify a specific path with the ```-p prefix``` option, as explained in the usage. The default value is the directory ```errorstudy/``` relative to the current working directory 
 
-The subfolders ```errorstudy/reconstruction_beam``` and ```errorstudy/reconstruction_atmo``` are created to contain reconstruction files to build the data samples.
-The subfolders ```errorstudy/systematics_beam``` and ```errorstudy/systematics_atmo``` contain various systematic models that can be used straight away in the analysis.
+The subdirectories ```errorstudy/reconstruction_beam``` and ```errorstudy/reconstruction_atmo``` are created to contain reconstruction files to build the data samples.
+The subdirectories ```errorstudy/systematics_beam``` and ```errorstudy/systematics_atmo``` contain various systematic models that can be used straight away in the analysis.
 
 
 ## Running the fitter
@@ -121,14 +121,13 @@ fit:
 * the beam sample;
 * the atmospheric sample;
 * the beam and atmospheric samples together.
-Next, the true and fitted neutrino mass hirerachy should be chosen and whether or not fit the
+Next, the true and fitted neutrino mass hierarchy should be chosen and whether or not fit the
 systematic errors. The systematic files should be provided in any case.
-A new folder in the analysis directory should be created whenever the samples or the sys-
-tematic models are changed. For example,
+A new directory in the analysis directory should be created whenever the samples or the systematic models are changed. For example,
 ```
 mkdir errorstudy/first_run
 ```
-Then, a sub folder containing the systematic files should be created (or copied) in this new
+Then, a sub directory containing the systematic files should be created (or copied) in this new
 directory. The nominal T2K 2018 systematic model is found under ```errorstudy/0```, therefore
 ```
 cp -r errorstudy /0/systematics errorstudy/first_run

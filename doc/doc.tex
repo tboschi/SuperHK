@@ -137,7 +137,7 @@ The requirements for the code to be compiled and run are
 		\textbf{PBS}\footnotemark[\value{footnote}] as workload managers %
 		for distributed computing.
 \end{itemize}
-\footnotetezt{Not fully tested. Please email any bug to \mailto
+\footnotetext{Not fully tested. Please email any bug to \href{mailto:boschi.tommaso@gmail.com}{boschi.tommaso@gmail.com}.}
 
 Before starting compilation, the \href{https://root.cern.ch/}{ROOT data analysis framework} %
 should be installed and properly linked.
@@ -156,7 +156,7 @@ pointing to the installation location.
     export EIGEN=/path/to/eigen
 \end{lstlisting}
 It is important to note that this is the path to the top folder containing the actual headers, %
-usually under a folder called \texttt{Eigen} (note capitalisation).
+usually under a folder called \texttt{Eigen} (note capitalization).
 Another option is to simply copy the full folder \texttt{Eigen} to the local \texttt{include} folder.
 
 Certain executables perform better when distributed on a computing cluster.
@@ -192,7 +192,7 @@ This documentation can be compiled with
 
 \subsection{Cross-compilation}
 
-The executables could be highly optimised for the native architecture of the machine where they are running over.
+The executables could be highly optimized for the native architecture of the machine where they are running over.
 Due to the extensive usage of the Eigen library, enabling vector (SMID and AVX) instructions can really speed up %
 the execution of the fitter and certain jobs.
 The gcc flags \texttt{-mavx -msse} should enable such instructions, which should be available on %
@@ -207,7 +207,7 @@ An utility to do this is available and it is simply run as
     bin/cross-compile
 \end{lstlisting}
 It is not ``cross-compilation'' properly speaking, as both scripts first determine the nodes %
-on the cluster, then ssh into each node and only if a new architecture is found a new, optimised binary is compiled %
+on the cluster, then ssh into each node and only if a new architecture is found a new, optimized binary is compiled %
 for that particular architecture.
 This workaround works as long as access to the file system is shared on the cluster and that each node can %
 be accessed via SSH by the user.
@@ -232,7 +232,7 @@ The result directory can be specified with the \texttt{-p <prefix>} option.
 By default, the prefix is a new folder called \texttt{<prefix>} inside the current working directory.
 In order to function properly, the framework expects that these files to be located in the same %
 location where the analysis will be run and so the \texttt{<prefix>} should be set accordingly.
-The subfolders
+The subdirectories
 \begin{itemize}
 		\small
 	\item \texttt{<prefix>/reconstruction\_beam},
@@ -309,7 +309,7 @@ One of the key concept of the OA is that the oscillation parameters are scanned 
 a pre-determined, equally spaced grid in a $N$ dimensional space, %
 where each dimension corresponds to an oscillation parameter.
 The grid is configured via a card file, like \texttt{cards/oscillation.card}, which %
-is extensivle described in \refsec{sec:parameter_space}.
+is extensively described in \refsec{sec:parameter_space}.
 Each point in the grid, i.e.\ each combination of oscillation parameters, is used in %
 the analysis to build the event samples at the far detector.
 A specific point is chosen to be the \emph{true} value of oscillation parameters %
@@ -350,7 +350,7 @@ The fitter is the most important tool of the framework; %
 the other executables are just used for validation or plotting.
 As explained in the previous section, the parameter space grid is scanned on which the event %
 distributions are built and the $\chi^2$ computed.
-Due to the potentially large parameter space, the fitting process should be parallelised %
+Due to the potentially large parameter space, the fitting process should be parallelized %
 by means of a distributed computing system.
 The idea of the original \texttt{osc3++} framework is maintained in this new version: %
 divide the parameter space in equal chunks of oscillation points and process them in %
@@ -365,9 +365,9 @@ where \texttt{<id>} is the unique job ID, a number between 0 and \texttt{<jobs>}
 \texttt{<card>} is the configuration card.
 The fitter card is slightly different in concept than the other card files, as it contains %
 paths to other configuration cards.
-The ones needes are for
+The ones needed are for
 \begin{itemize}
-	\item fitter options, such as parameters for the Levenberg-Marquared algorithm, %
+	\item fitter options, such as parameters for the Levenberg-Marquardt algorithm, %
 		maximum number of iterations, and exit conditions (see \refsec{sec:});
 	\item oscillation parameter space, as described above (see \refsec{sec:});
 	\item beam sample options, if the beam sample is to be fitted;
@@ -377,13 +377,13 @@ An example of card can be found in \texttt{cards/multi.card}.
 The true point can be set with the \texttt{point} key; if omitted, the nominal value is used %
 as true point.
 Other options are the mass hierarchy for the true sample and the sample to fit, %
-as this degree of freedom is not parameterised.
+as this degree of freedom is not parameterized.
 The cards for the two samples contain paths to the reconstruction systematic input files, %
 as well further options on systematic parameters and density file for computing the %
 oscillation probability.
 
 A quick start to see if the fitter works can be done with the following instructions.
-A new subfolder in the the analysis directory (see \refsec{sec:download}) should be created like this
+A new subdirectory in the the analysis directory (see \refsec{sec:download}) should be created like this
 \begin{lstlisting}[language=bash]
     mkdir <prefix>/example
     mkdir <prefix>/example/systematics
@@ -407,7 +407,7 @@ Given the small space, the fitter can be then run as a single process
     bin/fitter 0 1 cards/multi.card
 \end{lstlisting}
 and the output will be saved to \texttt{<prefix>/example/SpaghettiSens.0.root}.
-If the displayed messages do not show any ciritical error and the output file %
+If the displayed messages do not show any critical error and the output file %
 is correctly created, the fitter finished successfully.
 The result can be plotted with root
 \begin{lstlisting}[language=bash]
@@ -439,7 +439,7 @@ Next, the true and fitted neutrino mass hierarchy should be chosen and whether o
 fit the systematic errors.
 Please note that the systematic files should be provided in any case, even if not fitted.
 
-A new subfolder in the analysis directory should be created whenever the samples or %
+A new subdirectory in the analysis directory should be created whenever the samples or %
 the systematic models are changed.
 Then, a folder called \texttt{systematics} should be created under this new directory %
 which will contain systematic files needed for this specific run.
@@ -450,7 +450,7 @@ As this can easily become a tedious job, the \texttt{trisens} utility was devise
 completely automatize this process and submit the processes on the distributed computing system.
 
 For example, if the user is interested in doing a combined fit between atmospheric and beam data %
-using the T2K 2018 error model and normal hierarcies, they should do
+using the T2K 2018 error model and normal hierarchies, they should do
 \begin{lstlisting}[language=bash]
     mkdir -p <prefix>/first_run/systematics
     cp <prefix>/systematics_beam/T2K/* <prefix>/first_run/systematics/
@@ -468,7 +468,7 @@ The options of the \texttt{trisens} script to consider are
 \begin{itemize}
 	\small
 	\item \texttt{-r <root>} defines the main working folder > which must have a \"systematics\"
-		subfolder containing systematic input files;
+		subdirectory containing systematic input files;
 	\item \texttt{-d <sample>} defines the samples to fit and \texttt{<sample>} can be one of
 		the following: \texttt{beam}, \texttt{data}, or \texttt{comb}.
 	\item \texttt{-1 <mh1> -2 <mh2>} are respectively the mass hierarchies for the %
@@ -690,7 +690,7 @@ Before executing them, the user should edit the first lines of each script which
     
     # list of files with CPV exclusion curves
     # these are the output of the exclude script
-    # and should be text file with CPV sensitivies
+    # and should be text file with CPV sensitivities
     model=("<prefix>/one/NH_NH/contours/CPV_scan.dat"
            "<prefix>/two/NH_NH/contours/CPV_scan.dat"
            "<prefix>/three/NH_NH/contours/CPV_scan.dat")
@@ -755,7 +755,7 @@ A configuration file, or \emph{card}, looks like this
     ...
 \end{lstlisting}
 
-A \texttt{CardDealer} object is initialised by passing as argument the name of the configuration file.
+A \texttt{CardDealer} object is initialized by passing as argument the name of the configuration file.
 Depending on the application, the user can decide to create the object automatically or dynamically.
 The constructor is
 \begin{lstlisting}[language=C++]
@@ -839,13 +839,13 @@ Finally, the following method returns the name of the card
 
 The physics module has the main purpose of calculating the oscillation probability and setting up the oscillation parameter space.
 It is divided into three subclasses: the oscillator class, the atmosphere class, and the parameter space class.
-There are also two other utilities: the flavour static structure (see below) %
+There are also two other utilities: the flavor static structure (see below) %
 and a physics constant namespace \texttt{Const} defined in \texttt{physics/Const.h}.
 
 \subsubsection{Oscillator class}
 \label{sec:oscillator}
 
-The oscillator class is a C++11 implementation of the solution to the three-neutrino flavour picture proposed by Barger and collaborators~\cite{Barger:1980tf}.
+The oscillator class is a C++11 implementation of the solution to the three-neutrino flavor picture proposed by Barger and collaborators~\cite{Barger:1980tf}.
 The transition amplitude including matter effects is written in the form
 \begin{equation}
 	A(\nu_\alpha \to \nu_\beta) = \sum_{ij} U_{\alpha i} X_{ij} U_{j \beta}^\dagger\ ,
@@ -963,14 +963,14 @@ where \texttt{mode} can be
 \end{itemize}
 are available.
 
-The oscillation probability between neutrino flavours is computed, or retrieved if using the LUT, with the method
+The oscillation probability between neutrino flavors is computed, or retrieved if using the LUT, with the method
 \begin{lstlisting}[language=C++]
     double Probability(Nu::Flavour in, Nu::Flavour out,
 		       double energy, bool force = false);
 \end{lstlisting}
-which expects as input arguments the neutrino flavours and the particle energy.
-The neutrino flavours are specified using the static structure \texttt{Nu} contained in the \texttt{physics/Flavours.h} header.
-Some methods are defined in this structure to convert the flavour type to and from PDG particle codes or simply strings,
+which expects as input arguments the neutrino flavors and the particle energy.
+The neutrino flavors are specified using the static structure \texttt{Nu} contained in the \texttt{physics/Flavours.h} header.
+Some methods are defined in this structure to convert the flavor type to and from PDG particle codes or simply strings,
 such as
 \begin{lstlisting}[language=C++]
     static Flavour fromString(const std::string &flv);
@@ -978,7 +978,7 @@ such as
     static std::string toString(int pdg);
     static std::string toString(Flavour flv);
 \end{lstlisting}
-The following values are accepted to specify neutrino flavours
+The following values are accepted to specify neutrino flavors
 \begin{itemize}
 		\small
 	\item $\nu_e$         can be \texttt{Nu::E\_}, \texttt{Nu::electron}, 12, or \texttt{"nuE0"}
@@ -988,16 +988,16 @@ The following values are accepted to specify neutrino flavours
 	\item $\cj{\nu}_\mu$  can be \texttt{Nu::Mb}, \texttt{Nu::antimuon}, -14, or \texttt{"nuMb"}
 	\item $\cj{\nu}_\tau$ can be \texttt{Nu::Tb}, \texttt{Nu::antitau}, -16, or \texttt{"nuTb"}
 \end{itemize}
-The right utility should be used to convert the flavour type into a \texttt{Nu} object.
+The right utility should be used to convert the flavor type into a \texttt{Nu} object.
 
 
 \subsubsection{Parameter space class}
 \label{sec:parameter_space}
 
-The oscillation parameters are fixed parameters in the analysis, i.e.\ they are not allowed to vary when minimising the $\chi^2$.
+The oscillation parameters are fixed parameters in the analysis, i.e.\ they are not allowed to vary when minimizing the $\chi^2$.
 These parameters are instead changed at each iteration step, selecting the predetermined combinations on a fixed grid in %
 a multidimensional space.
-The parameters space class is a tool helpful when working with distributed resources as it allows to linearise this multidimensional %
+The parameters space class is a tool helpful when working with distributed resources as it allows to linearize this multidimensional %
 parameter space and each iteration can be more easily divided among multiple processes.
 The parameter space itself is a hyper-grid in the space
 \begin{equation}
@@ -1099,7 +1099,7 @@ which is the same function called by the constructor.
 The density profile file should contain two or three columns with lengths, density, and electron yield if known.
 If the last element is unknown, it will default to 50\,\%.
 With the framework, the density profile from Preliminary Reference Earth Model (PREM)~\cite{Dziewonski:1981xy} is included in the \text{data/} folder.
-The original file \texttt{data/PREM.dat} discretises the matter profile into 200 points which may affect performance, %
+The original file \texttt{data/PREM.dat} discretizes the matter profile into 200 points which may affect performance, %
 since the algorithm computes the neutrino transition matrix at any step where the density changes.
 A smaller set of 25 points, \texttt{data/PREM\_25pts.dat} is also included and it is tailored to give an acceptable accuracy without affecting too much performance.
 % mention PREM
@@ -1115,8 +1115,8 @@ This is done by the constructor which expects the key \texttt{production\_height
 Wildcard compatible with \texttt{ls} are supported.
 The input files should be relating to the Kamioka location for HK and be in the Honda format \url{http://www.icrr.u-tokyo.ac.jp/~mhonda/}
 The files contain probability distribution functions (PDFs) which describe the most likely altitude of neutrino production given %
-the neutrino flavour (only $\nu_e$ and $\nu_\mu$), their angle and energy.
-The PDFs are discretised among cumulative probability, energy, and angle.
+the neutrino flavor (only $\nu_e$ and $\nu_\mu$), their angle and energy.
+The PDFs are discretized among cumulative probability, energy, and angle.
 A uniform random variable is sampled and the most likely altitude is computed with trilinear interpolation of the aforementioned PDFs.
 This is performed by the routine 
 \begin{lstlisting}[language=C++]
@@ -1163,17 +1163,17 @@ The method
 provided in the base class \texttt{Sample}, calls the \texttt{BuildSamples} method and concatenates the individual samples %
 into a single Eigen vector.
 This vector can be later used to compute the $\chi^2$.
-The constructor in the derived class should initialised the following private objects 
+The constructor in the derived class should initialized the following private objects 
 \begin{lstlisting}[language=C++]
 (1) std::set<std::string> _type;
 (1) std::map<std::string, std::pair<Nu::Flavour, Nu::Flavour> > _oscf;
 \end{lstlisting}
-The set \texttt{(1)} is typically initialised from a card file, where the user can define which samples (event types) are included in the fit.
+The set \texttt{(1)} is typically initialized from a card file, where the user can define which samples (event types) are included in the fit.
 The sample names are used by the \texttt{BuildSamples} method to construct the map with the predicted distributions.
-The map \texttt{(2)} is at the moment hard-coded in the derived classes and links a pair of neutrino flavours to a string.
+The map \texttt{(2)} is at the moment hard-coded in the derived classes and links a pair of neutrino flavors to a string.
 The string is usually part of the reconstruction file names and string manipulation can therefore reveal which %
 oscillation channel should be used for the respective input file.
-As a matter of fact, the first element of the neutrino flavour pair is the initial flavour and the second element the final flavour.
+As a matter of fact, the first element of the neutrino flavor pair is the initial flavor and the second element the final flavor.
 
 The information needed for building the observables are stored in member variables which are contained in \texttt{std::map} objects.
 These objects are mapped to strings which identify the correct event sample (e.g.\ 1 ring $e$-like in $\nu$-mode, etc etc...) and they are:
@@ -1182,8 +1182,8 @@ These objects are mapped to strings which identify the correct event sample (e.g
 	\item \texttt{Sample::\_offset} to store the absolute offset of the sample which is the number of bins of the previous sample;
 	\item \texttt{Sample::\_global} to store the bin edges information of each sample.
 \end{itemize}
-The last object for the bin edges is initialised in the derived classes when the reconstruction files are loaded.
-The first two objects are initialised by the method
+The last object for the bin edges is initialized in the derived classes when the reconstruction files are loaded.
+The first two objects are initialized by the method
 \begin{lstlisting}[language=C++]
     virtual void DefineBinning();
 \end{lstlisting}
@@ -1202,7 +1202,7 @@ The fractional change on a given bin is computed as one the ratio between the ev
 At $p=0$ the fractional change is assumed to be identically zero for every systematic error at every bin.
 For most systematic parameters a linear response in the $\sigma$ variation is expected, and so %
 the given matrix for $p=1$ is automatically extrapolated to $p=-1, \pm3$ to make the treatment of the systematic errors uniform.
-The amount of change is parameterised by the $\varepsilon_j$ variables in units of the uncertainty $\sigma_j$.
+The amount of change is parameterized by the $\varepsilon_j$ variables in units of the uncertainty $\sigma_j$.
 Since the $\varepsilon_j$ parameters embody the systematic uncertainties, only the correlation matrix between the systematic errors is needed.
 
 The corresponding C++ objects are
@@ -1226,7 +1226,7 @@ For the study, SK atmospheric Monte Carlo (MC) data are adapted and scaled to HK
 The events are then classified and binned into several two-dimensional histograms of $\log p$ and $\cos\vartheta$, %
 where $p$ and $\vartheta$ are respectively the momentum and the azimuthal angle of the reconstructed charged lepton.
 The neutrino energy and direction information are used to compute the oscillation probability on an event-by-event basis (see \refsec{sec:atmosphere}).
-The histograms categorised as fully-contained (FC), %
+The histograms categorized as fully-contained (FC), %
 partially-contained (PC), or upward-going muons (UP-$\mu$) events~\cite{Jiang:2019xwn}.
 There are a total of \np{2224} bins employed for the atmospheric sample.
 The binning can be specified directly with the \texttt{cards/atmo\_sample.card}.
@@ -1326,12 +1326,12 @@ a 25 points Earth density model.
 The MC files contains \texttt{TTree} objects in the standard SK format, where some of the most important branches needed are
 \begin{itemize}
 	\item \texttt{ipnu}, \texttt{dirnu} and \texttt{pnu}, respectively the true neutrino PDG code, direction and momentum (in GeV);
-	\item \texttt{dir} and \texttt{amom}, respectively the reconsutrcted lepton direction and momentum (in MeV);
+	\item \texttt{dir} and \texttt{amom}, respectively the reconstructed lepton direction and momentum (in MeV);
 	\item \texttt{flxho} and \texttt{weightx}, respectively the Honda's flux and MC weights;
 	\item \texttt{itype} and \texttt{mode}, respectively the event type and the interaction mode (CCQE, CC1$\pi$, NC, etc...).
 \end{itemize}
 
-If the oscillation parameter space does not change during the analysis, it is possible to precompute %
+If the oscillation parameter space does not change during the analysis, it is possible to precomputed %
 all the atmospheric samples for each point of the parameter space.
 This is done with the script
 \begin{lstlisting}[language=bash]
@@ -1485,14 +1485,14 @@ known as the BANFF fit, acronym for Beam And ND280 Flux extrapolation task Force
 These are grouped in 50 systematics\,---\,25 for the $\nu$ mode and 25 for the $\cj{\nu}$~mode\,---\,%
 for the main four flux components ($\nu_e$, $\nu_\mu$, $\cj{\nu}_e$, and $\cj{\nu}_\mu$), % 
 and 22 systematics for cross-section parameters.
-Some of them are 2p-2h normalisation and shape for \tapi{16}O, CCQE axial-mass scaling factor, %
-CC and NC interaction normalisations, and random phase approximation (RPA) coefficients.
+Some of them are 2p-2h normalization and shape for \tapi{16}O, CCQE axial-mass scaling factor, %
+CC and NC interaction normalizations, and random phase approximation (RPA) coefficients.
 The binding energy on oxygen is skipped in the T2K 2018 model, whereas a more accurate implementation is used in the improved model.
 The improved model has not been adapted to \texttt{osc3++} input format and the treatment of the binding error is still under study.
 This because the parameter is relevant only for CCQE interactions, but the systematic errors are applied %
 after the samples are formed as combinations of CCQE, CCnQE, and NC events.
 There are also 45 uncertainties for SK detector efficiencies and Final State Interactions (FSI),
-which parameterise the uncertainties on the four final-state event selections at the far detector. %
+which parameterize the uncertainties on the four final-state event selections at the far detector. %
 Among these, one uncorrelated systematic describes the energy scale uncertainty.
 
 The full list of systematics is reported below
@@ -1580,7 +1580,7 @@ BANFF
 		\midrule
 		Parameter &	$\sigma$ (\%)	 \\
 		\midrule
-		2p-2h normalisation for \tapi{16}O		& 0.673 \\
+		2p-2h normalization for \tapi{16}O		& 0.673 \\
 		$C^A_5$ nucleon to $\Delta$ axial form factor	& 0.027	\\
 		Isospin 1/2 nonresonant background scale	& 0.212 \\
 		CCQE axial-mass scaling factor			& 0.006	\\
@@ -1589,12 +1589,12 @@ BANFF
 		Second-class current vector			& 1.000	\\
 		Fermi momentum for \tapi{16}O			& 0.978	\\
 		CC-other shape					& 0.550	\\
-		CC-coherent for \tapi{16}O normalisation	& 0.148	\\
-		NC-coherent normalisation			& 0.235	\\
-		NC-other normalisation				& 0.300	\\
-		CC-$\nu_e$ normalisation			& 0.028	\\
-		NC-1$\gamma$ normalisation			& 1.000	\\
-		CC-$\nu_e$ normalisation			& 0.028	\\
+		CC-coherent for \tapi{16}O normalization	& 0.148	\\
+		NC-coherent normalization			& 0.235	\\
+		NC-other normalization				& 0.300	\\
+		CC-$\nu_e$ normalization			& 0.028	\\
+		NC-1$\gamma$ normalization			& 1.000	\\
+		CC-$\nu_e$ normalization			& 0.028	\\
 		$\cj{\nu}$ 2p2h for 16O				& 0.096	\\
 		BeRPA coefficient A	& 0.741 \\
 		BeRPA coefficient B	& 0.717 \\
@@ -1602,7 +1602,7 @@ BANFF
 		BeRPA coefficient E	& 0.228 \\
 		BeRPA coefficient U	& 0.300 \\
 		2p-2h shape for \tapi{16}O			& 0.487	\\
-		2p-2h \tapi{12}C to \tapi{16}O normalisation	& 0.130	\\
+		2p-2h \tapi{12}C to \tapi{16}O normalization	& 0.130	\\
 		Binding energy on Oxygen			& 1.000	\\
 		\bottomrule
 	\end{tabular}
@@ -1707,7 +1707,7 @@ They are saved as \texttt{TH1D} objects and are identified by numbers, instead o
 The correlation matrix is stored under a separate ROOT file as a \texttt{TMatrix} object.
 The correlation matrix between the beam systematics is shown as a 2D colour map on \reffig{fig:correlation}, %
 from which the three main typologies of uncertainties\,---\,flux, cross-section, and far detector\,---\,%
-are easily recognised.
+are easily recognized.
 The SK and FSI systematics are visibly uncorrelated with the BANFF ones.
 
 
@@ -1808,7 +1808,7 @@ A ChiSquared object is created with the constructors
 (1) ChiSquared(CardDealer *card);
 (2) ChiSquared(std::string card);
 \end{lstlisting}
-where the card contains control parameters for the minimisation and Levenberg-Marquartd algorithm.
+where the card contains control parameters for the minimization and Levenberg-Marquardt algorithm.
 The same object should be used to create locally the sample objects with the following templated function
 \begin{lstlisting}[language=C++]
     template <class S> void Add(std::string card);
@@ -1819,8 +1819,8 @@ After loading/creating the adequate number of samples, the method
 \begin{lstlisting}[language=C++]
     void Combine();
 \end{lstlisting}
-should be called to initialise the sample and the ChiSquared classes.
-The event samples and systematic errors are combined into local objects to facilitate the minimisation algorithm.
+should be called to initialize the sample and the ChiSquared classes.
+The event samples and systematic errors are combined into local objects to facilitate the minimization algorithm.
 The ChiSquared class is friend to Sample-derived classes and so special methods to access member variables are not needed.
 
 Let us define the likelihood
@@ -1854,7 +1854,7 @@ A penalty term that includes variances and covariances of such parameters is add
 using the inverse of the correlation matrix of the systematic errors, $\rho^{-1}$.
 The effect of the systematic uncertainties on the event distributions is embedded in the $f_j^n$ parameters, %
 defined as the fractional change induced on the $n$-th bin by a 1\,$\sigma$ variation of the $j$-th systematic.
-The amount of change is therefore parameterised by the $\varepsilon_j$ variables in units of the uncertainty $\sigma_j$.
+The amount of change is therefore parameterized by the $\varepsilon_j$ variables in units of the uncertainty $\sigma_j$.
 However, being $\rho$ the correlation matrix, the $\varepsilon_j$ are promoted to embody the systematic uncertainties.
 Energy scale shifting parameters are treated differently because they act on the binning rather than on the %
 bin contents.
@@ -1916,7 +1916,7 @@ The $\chi^2$ needs to be profiled with respect to the systematic parameters~$\bs
 	\chi^2(\Theta^H) = \min_{\bs{\varepsilon}}\, \qty\Big[\,\chi^2(\Theta^H;\bs{\varepsilon})\,]\ .
 \end{equation}
 Fixing the combination $\Theta^H$ and dropping it from the notation, %
-the minimisation of the $\chi^2$ leads to the following set of $j$ nonlinear equations %,
+the minimization of the $\chi^2$ leads to the following set of $j$ nonlinear equations %,
 \begin{equation}
 	\pdv{\chi^2}{\varepsilon_j} (\bs{\varepsilon}) = 0\ 
 \end{equation}
@@ -1972,7 +1972,7 @@ which implements the following derivative terms
 Energy scaling is a slow operation because it requires a summation over all the samples for each bin of the event sample.
 During the computation of the Jacobian and Hessian this is needed multiple times and the dimension of these two matricial objects %
 is substantial.
-Various preventive measures are taken together with heavy optimisation of the code.
+Various preventive measures are taken together with heavy optimization of the code.
 The scaling of the bin axes is precomputed for each sample (beam or atmospheric) and stored in each of its variation (see derivatives above) %
 in the following fixed vectors of dimension as number of event bins
 \begin{align*}
@@ -1989,7 +1989,7 @@ then the ``shifted'' content of the $n$-th bin can be expressed as a coefficient
 \begin{equation}
 	E_n' = \tilde{E}^T\ \xi^n = \sum_m \tilde{E}_m\, \xi^n_m
 \end{equation}
-Similarly, the derivative with respect to a non-energy scale parameter can be vectorised as
+Similarly, the derivative with respect to a non-energy scale parameter can be vectorized as
 \begin{equation}
 	\pdv{\tilde{E}_n}{\varepsilon_k} = \tilde{E}_n \frac{f_k^n}{1 + \varepsilon_k f_n^k} =
 	E_n \frac{f_k^n}{1 + \varepsilon_k f_n^k}{\textstyle\prod_i} (1 + \varepsilon_i f_n^i) 
@@ -2008,7 +2008,7 @@ we have for example
 	\tilde{E}^T\ \text{diag}(\gamma^k)\, \text{diag}(\gamma^j)\ \xi^n
 	= \sum_m \tilde{E}_m\, \gamma^k_m\, \gamma^j_m\, \xi^n_m \\
 \end{align}
-Thanks to the Eigen library, the Hadamard products can be compiled as vectorised instruction for the CPU, %
+Thanks to the Eigen library, the Hadamard products can be compiled as vectorized instruction for the CPU, %
 speeding up the computation.
 
 The LM algorithm is implemented in 
@@ -2017,14 +2017,14 @@ The LM algorithm is implemented in
 			   const Eigen::VectorXd &En,
 			   Eigen::VectorXd &epsil, double &x2);
 \end{lstlisting}
-which finds the combination of $\bs{\varepsilon}$ which minimised the $\chi^2$.
+which finds the combination of $\bs{\varepsilon}$ which minimized the $\chi^2$.
 The function should be called within 
 \begin{lstlisting}[language=C++]
     Eigen::VectorXd FitX2(const Eigen::VectorXd &On,
 		          const Eigen::VectorXd &En);
 \end{lstlisting}
 which handles the error code returns of \texttt{MinimumX2}.
-The method \texttt{FitX2} makes sure the minimisation process is proceeding in the right direction %
+The method \texttt{FitX2} makes sure the minimization process is proceeding in the right direction %
 as the LM can sometimes not converge, go out of the boundaries, or stop not at the absolute minimum.
 Thanks to the error codes, \texttt{FitX2} might decide to move the solution $\bs{\varepsilon}$ to %
 a different point to facilitate the LM algorithm.
@@ -2033,7 +2033,7 @@ The maximum number of random trials is set in the card file with key \texttt{max
 The process is repeated until either the LM converges to sufficient error \texttt{fit\_error} or %
 the maximum number of iteration \texttt{max\_iteration} is reached.
 The LM algorithm does not have a maximum number of iteration and it quits when the step taken is smaller than \texttt{fit\_error}.
-Note that the overall minimisation process always starts at $\bs{\varepsilon} = 0$.
+Note that the overall minimization process always starts at $\bs{\varepsilon} = 0$.
 
 
 \bibliography{biblio.bib}
