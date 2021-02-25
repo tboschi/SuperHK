@@ -38,9 +38,9 @@ int main(int argc, char** argv)
 
 	std::unordered_map<std::string, std::shared_ptr<Sample> > samples;
 	if (cd.Get("beam_parameters", sample_card))
-		samples.emplace("beam", new BeamSample(sample_card, "RBS")); // don't discard empty bins
+		samples["beam"] = std::shared_ptr<Sample>(new BeamSample(sample_card, "RBS"));
 	if (cd.Get("atmo_parameters", sample_card))
-		samples.emplace("atmo", new AtmoSample(sample_card, "RBS")); // don't discard empty bins
+		samples["atmo"] = std::shared_ptr<Sample>(new AtmoSample(sample_card, "RBS"));
 
 	std::string outfile;
 	if (!cd.Get("output", outfile))
