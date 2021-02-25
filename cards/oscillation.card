@@ -47,3 +47,6 @@ parm_CP		-3.14159265359,	3.14159265359,	61,	15 # change bins in dCP to 101?
 
 # add central and error values to add a gaussian penalty term
 penalty_S13	0.0218,	0.0007
+
+# turn on lut
+LUT	1
