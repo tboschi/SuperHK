@@ -377,7 +377,7 @@ for t in "${point[@]}" ; do
 	fi
 
 	# this should work for any script
-	$generate $Bin $Sens $NJOBS $this $output > $scriptname
+	$generate $Bin $Sens $NJOBS $this $outlog > $scriptname
 
 	echo Submitting point $tname$t \($NJOBS jobs\) with $SCHED
 	$sub $scriptname
