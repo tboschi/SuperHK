@@ -56,12 +56,15 @@ void BeamSample::Init(const CardDealer &cd, std::string process)
 	else { // length of scale is number of errors
 		_nScale = 0;
 		for (const auto &s : scale) {
+			bool accept = false;
 			for (const std::string &it : _type) {
-				if (it.find(s.first) != std::string::npos)
+				if (it.find(s.first) != std::string::npos) {
+					accept = true;
 					_scale.emplace(it, std::make_pair(s.second, _nScale));
-				else
-					throw std::invalid_argument("BeamSample: not accepted string for scale error \"" + s.first + "\"");
+				}
 			}
+			if (!accept)
+				throw std::invalid_argument("BeamSample: not accepted scale error \"" + s.first + "\"");
 			++_nScale;	// <- contains right number
 		}
 	}
@@ -73,11 +76,16 @@ void BeamSample::Init(const CardDealer &cd, std::string process)
 
 	if (kVerbosity) {
 		std::cout << "BeamSample: types: ";
-		for (const auto &it : _type)
+		for (std::string it : _type)
 			std::cout << "\t" << it;
 		std::cout << "\nBeamSample: number of scale systematics " << _nScale << "\n";
-		for (const auto &it : _scale)
-			std::cout << "\t" << it.first << " -> " << it.second.first << "\n";
+		for (std::string it : _type) {
+			if (_scale.count(it))
+				std::cout << "\t" << it << " -> " << _scale[it].first << "\n";
+			else
+				std::cerr << "WARNING: sample " << it
+					  << " does not have a scale error\n";
+		}
 	}
 
 	std::string profile;
@@ -482,6 +490,15 @@ Eigen::SparseMatrix<double> BeamSample::ScaleMatrix(Xi xi, const Eigen::VectorXd
 	scale.reserve(Eigen::VectorXi::Constant(_nBin, 5));
 
 	for (const std::string it : _type) {
+		size_t i = _offset[it];
+
+		if (!_scale.count(it)) {
+			// make identity block
+			for (size_t j = 0; j < _binpos[it].size(); ++j)
+				scale.insert(i + j, i + j) = 1;
+			continue;
+		}
+
 		// scale error value
 		double skerr = epsil(_scale[it].second);
 		double shift = 1 + skerr * _scale[it].first;
@@ -489,7 +506,6 @@ Eigen::SparseMatrix<double> BeamSample::ScaleMatrix(Xi xi, const Eigen::VectorXd
 		// alias to reco binning
 		std::vector<double> &reco = _global_reco[it];
 
-		int i = _offset[it];
 		for (size_t n : _binpos[it]) {
 
 			// this is just relative bin position

@@ -81,6 +81,9 @@ std::unordered_map<std::string, size_t> Sample::ScaleError() {
 int Sample::ScaleError(std::string it) {
 	if (_type.find(it) == _type.end())
 		throw std::invalid_argument("Sample: unknown sample type " + it);
+	if (!_scale.count(it))
+		throw std::invalid_argument("Sample: sampe " + it
+					+ " does not have a scale error");
 	return _nScale ? _scale[it].second : 0;
 }
 
