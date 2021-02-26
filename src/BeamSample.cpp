@@ -38,7 +38,7 @@ void BeamSample::Init(const CardDealer &cd, std::string process)
 	//_fout = {Nu::E_, Nu::M_, Nu::E_, Nu::Eb, Nu::Mb, Nu::Eb};
 
 	// if sample beam is not defined..
-	if (!cd.Get("sample_beam", _type))
+	if (!cd.Get("sample", _type))
 		// default value
 		_type = {"E_FHC", "E_RHC", "M_FHC", "M_RHC"};
 
