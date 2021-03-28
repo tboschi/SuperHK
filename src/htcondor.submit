@@ -11,13 +11,14 @@ cat << EOF
 # submit with "condor_submit name"
 
 executable		= $binary
-arguments		= $name \$(Proces) $njobs $card
+arguments		= $name \$(Process) $njobs $card
 getenv			= True
 should_transfer_files	= IF_NEEDED
 when_to_transfer_output	= ON_EXIT
 initialdir		= $PWD
 output			= $output/L$name.\$(Process).log
 error			= $output/L$name.\$(Process).log
++JobFlavour 	="testmatch"
 stream_output		= True
 stream_error		= True
 

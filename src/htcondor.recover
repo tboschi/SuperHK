@@ -19,6 +19,9 @@ when_to_transfer_output	= ON_EXIT
 initialdir		= $PWD
 output			= $output/L$name.$point.log
 error			= $output/L$name.$point.log
++JobFlavour 	="testmatch"
+stream_output		= True
+stream_error		= True
 
 queue
 
