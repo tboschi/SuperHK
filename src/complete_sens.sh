@@ -58,7 +58,7 @@ queue=".queue_status"
 if condor_q &> /dev/null ; then
 	SCHED="HTCONDOR"
 	sub=condor_submit
-	generate=src/slurm.recover
+	generate=src/htcondor.recover
 	condor_q -autoformat cmd args > $queue
 elif squeue &> /dev/null ; then
 	SCHED="SLURM"
