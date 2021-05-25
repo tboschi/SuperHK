@@ -1,0 +1,9 @@
+
+# matrices
+matx_old	"/sps/t2k/lmuntean/HyperK/errorstudy/systematics_beam/T2K/matrix.root"
+matx_new	"/sps/t2k/lmuntean/HyperK/errorstudy/CPV_beam_HK/systematics/matrix.root"
+
+skip 55, 56
+
+syst_old	"/sps/t2k/lmuntean/HyperK/errorstudy/systematics_beam/T2K/FHC1Re.fij.spline.root", "/sps/t2k/lmuntean/HyperK/errorstudy/systematics_beam/T2K/FHC1Rmu.fij.spline.root", "/sps/t2k/lmuntean/HyperK/errorstudy/systematics_beam/T2K/RHC1Re.fij.spline.root", "/sps/t2k/lmuntean/HyperK/errorstudy/systematics_beam/T2K/RHC1Rmu.fij.spline.root"
+syst_new	"/sps/t2k/lmuntean/HyperK/errorstudy/systematics_beam/testHK/FHC1Re.fij.spline.root", "/sps/t2k/lmuntean/HyperK/errorstudy/systematics_beam/testHK/FHC1Rmu.fij.spline.root", "/sps/t2k/lmuntean/HyperK/errorstudy/systematics_beam/testHK/RHC1Re.fij.spline.root", "/sps/t2k/lmuntean/HyperK/errorstudy/systematics_beam/testHK/RHC1Rmu.fij.spline.root"
