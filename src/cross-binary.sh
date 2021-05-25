@@ -8,7 +8,7 @@ arch=$(gcc -march=native -Q --help=target | grep march | cut -f3)
 
 exe=$1
 shift 
-
+cd /sps/t2k/lmuntean/HyperK/SuperHK
 echo Running on $(hostname) with $arch
 if [ -s $PWD/bin/arch/"$exe"_$arch ] ; then
 	$PWD/bin/arch/"$exe"_$arch "$@"
