@@ -7,16 +7,14 @@ card=$4
 output=$5
 
 cat << EOF
-# script submission for PBS
-# submit with "qsub name"
 
 #$ -S /bin/bash
 #$ -N $name
-#$ -l walltime=72:00:00
-#$ -o $output/L$name.\$((SGE_TASK_ID - 1)).log
-#$ -e $output/L$name.\$((SGE_TASK_ID - 1)).log
 #$ -t 1-$njobs
+#$ -l sps=1
+#$ -o $output
+#$ -e $output
 
-$binary $name \$((SGE_TASK_ID - 1)) $njobs $card
+$binary $name \$((SGE_TASK_ID-1)) $njobs $card 2>&1 | tee $output/L$name.\$((SGE_TASK_ID-1)).log
 
 EOF
