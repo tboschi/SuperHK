@@ -65,8 +65,8 @@ elif squeue &> /dev/null ; then
 	sub=sbatch
 	generate=src/slurm.recover
 	squeue -h -r -u $USER -o "%o %K" > $queue
-elif qstat -Q &> /dev/null ; then
-	SCHED="PBS"
+elif qstat &> /dev/null ; then
+	SCHED="SGE"
 	sub=qsub
 	generate=src/sge.recover
 	qstat -u $USER -f > $queue
@@ -91,7 +91,7 @@ while read -r point ; do
 
 	outdir=$name'_'$point
 	outdir=$(realpath $outdir)
-	script=$(ls -rt $outdir/R*.$point.sub | tail -n1)
+	script=$(ls -rt $outdir/R*.$point.sh | tail -n1)
 
 	if [ -n "$logr" ] ; then
 		outlog=$logr/$(expr "$outdir" : '.*\(.H_.H/.*\)')
@@ -138,7 +138,7 @@ while read -r point ; do
 	elif grep -q "PBS" $script ; then
 		njobs=$(tail -n1 $script | cut -f4 -d' ')
 	else	# it is SGE
-		njobs=$(tail -n1 $script | cut -f4 -d' ')
+		njobs=$(tail -n2 $script | cut -f4 -d' ')
 	fi
 
 	# now all known files
@@ -152,7 +152,7 @@ while read -r point ; do
 
 		num=${out%.root}
 		num=${num##*.}
-
+		
 		if [ "$num" -ge "$njobs" ] ; then
 			echo Detected: file misplaced $out 
 			if [ "$rep" == "true" ] ; then
@@ -227,7 +227,7 @@ while read -r point ; do
 		fi
 
 
-		recover=$outdir/Recover.$rr.sub
+		recover=$outdir/Recover.$rr.sh
 		#log=$outlog/L$nameExec.$rr.log
 
 		$generate $Bin $Sens $njobs $this $outlog $rr > $recover
