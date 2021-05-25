@@ -46,8 +46,8 @@ if condor_q &> /dev/null ; then
 	SCHED="HTCONDOR"
 elif squeue &> /dev/null ; then
 	SCHED="SLURM"
-elif qstat -Q &> /dev/null ; then
-    SCHED="PBS"
+elif qstat &> /dev/null ; then
+    SCHED="SGE"
 elif qstat -sql &> /dev/null ; then
     SCHED="SGE"
 else
@@ -282,8 +282,8 @@ else # must build folders and card files
 	sed -i "s:^MC_input.*:MC_input\t\"$reco_atmo\":"	$atmo
 	sed -i "s:^MC_tree_name.*:MC_tree_name\t\"osc_tuple\":"	$atmo
 
-	pre_NH=$upper'/../reconstruction_atmo/pre2/NH/atmo.*.root'
-	pre_IH=$upper'/../reconstruction_atmo/pre2/IH/atmo.*.root'
+	pre_NH=$upper'/../reconstruction_atmo_fixedSeed_lxplus/pre/NH/atmo.*.root'
+	pre_IH=$upper'/../reconstruction_atmo_fixedSeed_lxplus/pre/IH/atmo.*.root'
 	#pre computed inputs
 	sed -i "s:^pre_input_NH.*:pre_input_NH\t\"$pre_NH\":" $atmo
 	sed -i "s:^pre_input_IH.*:pre_input_IH\t\"$pre_IH\":" $atmo
@@ -359,7 +359,7 @@ for t in "${point[@]}" ; do
 	sed -i "s:^point.*:point\t$t:" $card
 	sed -i "s:^output.*:output\t\"$output/SpaghettiSens.root\":" $card
 
-	scriptname=$output/R$Sens.$t.sub
+	scriptname=$output/R$Sens.$t.sh
 
 	this=$output/this_sensitivity.card
 	cp $card $this
