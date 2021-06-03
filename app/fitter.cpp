@@ -123,10 +123,12 @@ int main(int argc, char** argv)
 	TTree *stepX2 = new TTree("stepX2Tree", "Fit Axis Info");
 
 	stepX2->Branch("Time",		&Time, "Time/D");
+	NumSys = fitter->NumSys();
 
+	TMatrixD Covariance(NumSys,NumSys);
+	
 	// for CPV scans there is no need to store these
 	if (scan != "CPV") {
-		NumSys = fitter->NumSys();
 		std::string epsilArray = "Epsilons[" +
 				 std::to_string(NumSys) + "]/D";
 		std::string errorArray = "Errors[" +
@@ -217,19 +219,23 @@ int main(int argc, char** argv)
 		Eigen::VectorXd fitSpectra = fitter->ConstructSamples(osc);
 
 		Eigen::VectorXd eps = fitter->FitX2(trueSpectra, fitSpectra);
-
 		ObsX2 = fitter->ObsX2(trueSpectra, fitSpectra, eps);
 		SysX2 = fitter->SysX2(eps);
 		X2 = ObsX2 + SysX2 + PenX2;
 
 		if (scan != "CPV") {
 			Eigen::VectorXd var = fitter->Variance(trueSpectra, fitSpectra, eps);
-			for (int i = 0; i < NumSys; ++i) {
-				Epsilons[i] = eps(i);
-				Errors[i] = sqrt(var(i));
+			Eigen::MatrixXd cov = fitter->Covariance(trueSpectra, fitSpectra, eps);
+			for (int i_sys = 0; i_sys < NumSys; ++i_sys) {
+				Epsilons[i_sys] = eps(i_sys);
+				Errors[i_sys] = sqrt(var(i_sys));
+				for (int j_sys = 0; j_sys < NumSys; ++j_sys){
+					Covariance[i_sys][j_sys] = cov(i_sys,j_sys);
+				}
 			}
 		}
-
+		std::string cov_name = "covariance_point_"+std::to_string(Point);
+		Covariance.Write(cov_name.c_str());
 		if (kVerbosity)
 			std::cout << "Fitter: X2 computed " << X2 << " ("
 				  << ObsX2 << " + " << SysX2 << " + "
